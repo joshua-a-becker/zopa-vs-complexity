@@ -1,0 +1,56 @@
+roles:
+  - role_name: "Buyer"
+    narrative: |
+      The buyer seeks to acquire the asset at the lowest possible price
+      while maintaining a good relationship with the seller. Trade-offs
+      are possible between price, quality, and delivery time.
+    scoresheet:
+      Price:
+        - option: "Low"
+          score: 10
+        - option: "Medium"
+          score: 5
+        - option: "High"
+          score: 0
+      Quality:
+        - option: "High"
+          score: 10
+        - option: "Medium"
+          score: 5
+        - option: "Low"
+          score: 0
+      Delivery_Time:
+        - option: "Fast"
+          score: 10
+        - option: "Standard"
+          score: 5
+        - option: "Slow"
+          score: 0
+
+  - role_name: "Seller"
+    narrative: |
+      The seller seeks to maximize price while ensuring delivery quality and
+      maintaining long-term relationships with buyers. Flexibility exists
+      in timing and service to close the deal favorably.
+    scoresheet:
+      Price:
+        - option: "High"
+          score: 10
+        - option: "Medium"
+          score: 5
+        - option: "Low"
+          score: 0
+      Quality:
+        - option: "High"
+          score: 10
+        - option: "Medium"
+          score: 5
+        - option: "Low"
+          score: 0
+      Delivery_Time:
+        - option: "Fast"
+          score: 10
+        - option: "Standard"
+          score: 5
+        - option: "Slow"
+          score: 0

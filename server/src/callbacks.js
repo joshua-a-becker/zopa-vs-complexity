@@ -1,5 +1,8 @@
 import { ClassicListenersCollector } from "@empirica/core/admin/classic";
 import fetch from "node-fetch";
+import fs from "fs";
+import yaml from "js-yaml";
+import path from "path";
 // import config from "../config.json" assert { type: "json" };
 
 export const Empirica = new ClassicListenersCollector();
@@ -104,7 +107,39 @@ Empirica.onGameStart(({ game }) => {
   const readRoleTime = game.get("treatment")?.readRoleTime ?? 300;
   const negotiateTime = game.get("treatment")?.negotiateTime ?? 1800;
 
-  
+  // Load roles from YAML file
+  const rolesPath = path.join(process.cwd(), "..", "roles.yaml");
+  let roles = [];
+  try {
+    const fileContents = fs.readFileSync(rolesPath, "utf8");
+    const rolesData = yaml.load(fileContents);
+    roles = rolesData.roles || [];
+    console.log(`Loaded ${roles.length} roles from roles.yaml`);
+  } catch (err) {
+    console.error("Failed to load roles.yaml:", err);
+    roles = []; // Fallback to empty array
+  }
+
+  // Randomly assign roles to players
+  // Shuffle players array
+  const players = [...game.players];
+  for (let i = players.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [players[i], players[j]] = [players[j], players[i]];
+  }
+
+  // Assign roles by cycling through roles array
+  players.forEach((player, index) => {
+    if (roles.length > 0) {
+      const assignedRole = roles[index % roles.length];
+      player.set("role", assignedRole);
+      console.log(`Assigned role "${assignedRole.role_name}" to player ${player.id}`);
+    } else {
+      console.warn(`No roles available to assign to player ${player.id}`);
+    }
+  });
+
+
   // Initialize participant timestamps for presence tracking via Daily.co API
   game.set("participantTimestamps", {});
 

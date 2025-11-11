@@ -34,26 +34,14 @@ export function Profile() {
 
       <div className="flex space-x-3 items-center justify-end">
         {/* Dev-only Skip Stage button */}
-        {process.env.NODE_ENV === 'development' && (
+        {/* {process.env.NODE_ENV === 'development' && ( */}
           <button
             onClick={handleSkipStage}
             className="text-white bg-red-600 px-4 py-2 text-base font-medium rounded hover:bg-red-700 transition-colors border border-red-700"
           >
             DEV: Skip Stage
           </button>
-        )}
-
-        <div className="flex flex-col items-center">
-          <div className="text-xs font-semibold uppercase tracking-wide leading-none text-gray-400">
-            Score
-          </div>
-          <div className="text-3xl font-semibold !leading-none tabular-nums">
-            {score}
-          </div>
-        </div>
-        <div className="h-11 w-11">
-          <Avatar player={player} />
-        </div>
+        {/* )} */}
       </div>
     </div>
   );
