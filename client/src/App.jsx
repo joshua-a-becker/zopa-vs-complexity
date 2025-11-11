@@ -78,10 +78,16 @@ export default function App() {
     const introSteps = []
 
     if (skipIntro == "T") {
-      return [DisplayNameEntry]
+      const randomAnimal = ["lion","tiger","bear","elephant","giraffe","zebra","monkey","panda","kangaroo","wolf"][Math.floor(Math.random()*10)];
+      
+      const displayName = player.get("displayName") ?? randomAnimal;
+
+      player.set("displayName", displayName);
+
+      return []
     }
 
-    //introSteps.push(DisplayNameEntry)
+    introSteps.push(DisplayNameEntry)
 
     return introSteps;
   }

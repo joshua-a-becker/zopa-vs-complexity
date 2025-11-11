@@ -5,8 +5,8 @@ import {
 } from "@empirica/core/player/classic/react";
 import { Loading } from "@empirica/core/player/react";
 import React from "react";
-import { VideoChat } from "./components/VideoChat"
-import { Chat } from "@empirica/core/player/classic/react";
+import { ReadRole } from "./components/ReadRole";
+import { VideoNegotiate } from "./components/VideoNegotiate";
 
 export function Stage() {
   const player = usePlayer();
@@ -25,10 +25,21 @@ export function Stage() {
     );
   }
 
-  return(
-    <>
-      <VideoChat />
-      <Chat scope={stage} attribute="chat" />
-    </>
-  )
+  const stageName = stage.get("name");
+
+  // Render component based on stage name
+  if (stageName === "Read Negotiation Role") {
+    return <ReadRole />;
+  }
+
+  if (stageName === "Time To Negotiate") {
+    return <VideoNegotiate />;
+  }
+
+  // Default fallback
+  return (
+    <div className="text-center text-gray-400">
+      Unknown stage: {stageName}
+    </div>
+  );
 }
