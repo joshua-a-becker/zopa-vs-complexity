@@ -1,0 +1,9 @@
+name = "VideoChatApp"
+
+[tajriba.auth]
+srtoken = "PtLGZWxXLNnzsjnj"
+
+[[tajriba.auth.users]]
+name = "Admin"
+username = "admin"
+password = "eIGRedDf"
