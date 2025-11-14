@@ -26,6 +26,14 @@ export function VideoNegotiate({ profileComponent }) {
     }
   };
 
+  // Handle tab change and scroll to top
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (contentScrollRef.current) {
+      contentScrollRef.current.scrollTop = 0;
+    }
+  };
+
   if (!roleName || !roleNarrative || !roleScoresheet) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -59,7 +67,7 @@ export function VideoNegotiate({ profileComponent }) {
         {/* Tab Navigation - cleaner style with all-around borders */}
         <div className="flex gap-2 mb-2 flex-shrink-0">
           <button
-            onClick={() => setActiveTab("narrative")}
+            onClick={() => handleTabChange("narrative")}
             className={`px-4 py-2 rounded font-medium transition-all border ${
               activeTab === "narrative"
                 ? "bg-white text-blue-600 border-blue-400 shadow"
@@ -69,7 +77,7 @@ export function VideoNegotiate({ profileComponent }) {
             Narrative
           </button>
           <button
-            onClick={() => setActiveTab("scoresheet")}
+            onClick={() => handleTabChange("scoresheet")}
             className={`px-4 py-2 rounded font-medium transition-all border ${
               activeTab === "scoresheet"
                 ? "bg-white text-blue-600 border-blue-400 shadow"
@@ -79,7 +87,7 @@ export function VideoNegotiate({ profileComponent }) {
             Scoresheet
           </button>
           <button
-            onClick={() => setActiveTab("calculator")}
+            onClick={() => handleTabChange("calculator")}
             className={`px-4 py-2 rounded font-medium transition-all border ${
               activeTab === "calculator"
                 ? "bg-white text-blue-600 border-blue-400 shadow"

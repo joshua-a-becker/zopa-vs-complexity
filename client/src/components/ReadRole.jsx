@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import { usePlayer } from "@empirica/core/player/classic/react";
 import Markdown from "react-markdown";
 
@@ -9,6 +9,16 @@ export function ReadRole({ profileComponent }) {
   const roleScoresheet = player.get("roleScoresheet");
   const roleBATNA = player.get("roleBATNA");
   const roleRP = player.get("roleRP");
+  const [showFade, setShowFade] = useState(false);
+  const scrollContainerRef = useRef(null);
+
+  // Handle scroll to show/hide fade
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const scrollTop = scrollContainerRef.current.scrollTop;
+      setShowFade(scrollTop > 10);
+    }
+  };
 
   if (!roleName || !roleNarrative || !roleScoresheet) {
     return (
@@ -20,11 +30,22 @@ export function ReadRole({ profileComponent }) {
 
   return (
     <div className="w-full h-full flex flex-col bg-gray-50">
-      {/* Profile bar at top */}
-      {profileComponent}
+      {/* Profile bar at top - sticky */}
+      <div className="sticky top-0 z-20 bg-gray-50">
+        {profileComponent}
+      </div>
+
+      {/* Fade overlay at top - only show when scrolled, positioned below profile border */}
+      {showFade && (
+        <div className="absolute top-[3.6rem] left-0 right-0 h-8 bg-gradient-to-b from-gray-50 to-transparent pointer-events-none z-10"></div>
+      )}
 
       {/* Main content */}
-      <div className="flex-1 overflow-auto">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-auto relative"
+      >
         <div className="max-w-6xl mx-auto px-8 py-8">
         {/* Instructions at top */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
