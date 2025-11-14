@@ -12,10 +12,22 @@ export function DisplayNameEntry({ next }) {
 
   const player = usePlayer();
 
+  const urlParams = new URLSearchParams(window.location.search);
+
+  // Extract all URL parameters except participantKey
+  for (const [key, value] of urlParams.entries()) {
+    if (key !== "participantKey") {
+      player.set(key, value);
+      console.log("setting " + key + " : " + value)
+    }
+  }
+
+
   // Get stored device IDs if they exist (for page refresh)
   const storedVideoDeviceId = player?.get("videoDeviceId");
   const storedAudioDeviceId = player?.get("audioDeviceId");
 
+  console.log("student ID: " + player.get("studentId"))
 
   const handleSubmit = () => {
     if (!displayName.trim()) {

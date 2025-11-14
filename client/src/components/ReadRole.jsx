@@ -1,11 +1,14 @@
 import React from "react";
 import { usePlayer } from "@empirica/core/player/classic/react";
+import Markdown from "react-markdown";
 
 export function ReadRole() {
   const player = usePlayer();
-  const role = player.get("role");
+  const roleName = player.get("roleName");
+  const roleNarrative = player.get("roleNarrative");
+  const roleScoresheet = player.get("roleScoresheet");
 
-  if (!role) {
+  if (!roleName || !roleNarrative || !roleScoresheet) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <p className="text-gray-500">Loading your role...</p>
@@ -33,12 +36,10 @@ export function ReadRole() {
           {/* Left: Narrative */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Your Role: {role.role_name}
+              Your Role: {roleName}
             </h3>
-            <div className="prose prose-gray max-w-none">
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {role.narrative}
-              </p>
+            <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed">
+              <Markdown>{roleNarrative}</Markdown>
             </div>
           </div>
 
@@ -46,7 +47,7 @@ export function ReadRole() {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">Your Scoresheet</h3>
             <div className="space-y-6">
-              {Object.entries(role.scoresheet).map(([category, options]) => (
+              {Object.entries(roleScoresheet).map(([category, options]) => (
                 <div key={category} className="border-b border-gray-200 pb-4 last:border-b-0">
                   <h4 className="text-lg font-semibold text-gray-800 mb-3">
                     {category.replace(/_/g, " ")}

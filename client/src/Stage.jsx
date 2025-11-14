@@ -13,6 +13,8 @@ export function Stage() {
   const players = usePlayers();
   const stage = useStage();
 
+  console.log(player.get("studentId"))
+
   if (player.stage.get("submit")) {
     if (players.length === 1) {
       return <Loading />;

@@ -17,7 +17,7 @@ apt install caddy
 
 # Create Caddyfile
 cat > /etc/caddy/Caddyfile << 'EOF'
-research.negotiation.education {
+platform.negotiation.education {
     reverse_proxy localhost:3000
 }
 EOF
