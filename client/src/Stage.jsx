@@ -8,7 +8,7 @@ import React from "react";
 import { ReadRole } from "./components/ReadRole";
 import { VideoNegotiate } from "./components/VideoNegotiate";
 
-export function Stage() {
+export function Stage({ profileComponent }) {
   const player = usePlayer();
   const players = usePlayers();
   const stage = useStage();
@@ -31,11 +31,11 @@ export function Stage() {
 
   // Render component based on stage name
   if (stageName === "Read Negotiation Role") {
-    return <ReadRole />;
+    return <ReadRole profileComponent={profileComponent} />;
   }
 
   if (stageName === "Time To Negotiate") {
-    return <VideoNegotiate />;
+    return <VideoNegotiate profileComponent={profileComponent} />;
   }
 
   // Default fallback

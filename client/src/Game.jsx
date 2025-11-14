@@ -12,9 +12,8 @@ export function Game() {
 
   return (
     <div className="h-full w-full flex flex-col">
-      <Profile />
       <div className="flex-1 flex items-center justify-center overflow-hidden">
-        <Stage />
+        <Stage profileComponent={<Profile />} />
       </div>
     </div>
   );

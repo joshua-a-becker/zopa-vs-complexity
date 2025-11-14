@@ -39,4 +39,4 @@ echo "Deployed! Available at: http://$IP_ADDRESS:3000"
 # ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$IP_ADDRESS" 'sudo bash -s' < ./setup-caddy.sh
 
 # update caddyfile
-# ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$IP_ADDRESS" 'sudo bash -s' < ./setup-caddy.sh
+# ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$IP_ADDRESS" 'sudo bash -s' < ./update-caddy.sh

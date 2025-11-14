@@ -1,7 +1,8 @@
 import { ClassicListenersCollector } from "@empirica/core/admin/classic";
 import fetch from "node-fetch";
-import { roles } from "../roles.js";
-// import config from "../config.json" assert { type: "json" };
+import rolesData from "../roles.json" assert { type: "json" };
+
+const roles = rolesData.roles;
 
 export const Empirica = new ClassicListenersCollector();
 
@@ -124,6 +125,8 @@ Empirica.onGameStart(({ game }) => {
       player.set("roleName", assignedRole.role_name);
       player.set("roleNarrative", assignedRole.narrative);
       player.set("roleScoresheet", assignedRole.scoresheet);
+      player.set("roleBATNA", assignedRole.BATNA);
+      player.set("roleRP", assignedRole.RP);
       console.log(`Assigned role "${assignedRole.role_name}" to player ${player.id}`);
     } else {
       console.warn(`No roles available to assign to player ${player.id}`);
