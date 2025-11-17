@@ -25,3 +25,8 @@ treatments:
         negotiateTime: 100000
         playerCount: 2
         readRoleTime: 100000
+    - name: trio
+      desc: "3"
+      factors:
+        negotiateTime: 100000
+        playerCount: 3

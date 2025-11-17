@@ -20,11 +20,8 @@ export function Profile() {
   };
 
   return (
-    <div className="w-full px-3 py-2 text-gray-500 grid grid-cols-3 items-center border-b border-gray-300">
+    <div className="w-full px-3 py-0.5 text-gray-500 grid grid-cols-3 items-center border-b border-gray-300">
       <div className="leading-tight">
-        <div className="text-gray-600 font-semibold">
-          {round ? round.get("name") : ""}
-        </div>
         <div className="text-empirica-500 font-medium">
           {stage ? stage.get("name") : ""}
         </div>
@@ -34,14 +31,14 @@ export function Profile() {
 
       <div className="flex space-x-3 items-center justify-end">
         {/* Dev-only Skip Stage button */}
-        {/* {process.env.NODE_ENV === 'development' && ( */}
+        {process.env.NODE_ENV === 'development' && (
           <button
             onClick={handleSkipStage}
-            className="text-white bg-red-600 px-4 py-2 text-base font-medium rounded hover:bg-red-700 transition-colors border border-red-700"
+            className="text-white bg-red-600 px-4 py-0 text-base font-medium rounded hover:bg-red-700 transition-colors border border-red-700"
           >
             DEV: Skip Stage
           </button>
-        {/* )} */}
+        )}
       </div>
     </div>
   );
