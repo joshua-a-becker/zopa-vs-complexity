@@ -3,3 +3,5 @@ node_modules
 modd.conf
 dist
 /data_download
+*.vtt
+*.recording

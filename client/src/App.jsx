@@ -1,3 +1,4 @@
+import Finished from "./intro-exit/Finished.jsx";
 import { EmpiricaClassic } from "@empirica/core/player/classic";
 import { EmpiricaContext } from "@empirica/core/player/classic/react";
 import { EmpiricaMenu, EmpiricaParticipant } from "@empirica/core/player/react";
@@ -6,7 +7,8 @@ import { Game } from "./Game";
 import { ExitSurvey } from "./intro-exit/ExitSurvey";
 import { DisplayNameEntry } from "./intro-exit/DisplayNameEntry.jsx";
 import { AutoPlayerIdForm } from "./intro-exit/AutoPlayerIdForm.jsx";
-// import CustomConsent from './intro-exit/CustomConsent.jsx';
+import CustomConsent from './intro-exit/CustomConsent.jsx';
+import { Introduction } from './intro-exit/Introduction.jsx';
 import DailyIframe from "@daily-co/daily-js";
 
 // Create context for Daily.co call management (includes media stream)
@@ -102,6 +104,8 @@ export default function App() {
       return []
     }
 
+    introSteps.push(Introduction)
+    introSteps.push(CustomConsent)
     introSteps.push(DisplayNameEntry)
 
     return introSteps;
@@ -110,8 +114,6 @@ export default function App() {
    function exitSteps({ game, player }) {
     const exitSteps = []
 
-
-    exitSteps.push(ExitSurvey)
 
     return(exitSteps)
   }
@@ -891,7 +893,8 @@ export default function App() {
         <div className="h-screen relative">
           <EmpiricaMenu position="bottom-left" />
           <div className="h-full overflow-auto">
-            <EmpiricaContext playerCreate={AutoPlayerIdForm} introSteps={introSteps} exitSteps={exitSteps}  disableConsent={true} >
+            <EmpiricaContext playerCreate={AutoPlayerIdForm} finished={Finished}
+            introSteps={introSteps} exitSteps={exitSteps}  disableConsent={true} >
               <Game />
             </EmpiricaContext>
           </div>

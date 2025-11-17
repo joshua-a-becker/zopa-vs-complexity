@@ -6,3 +6,6 @@ dist-ssr
 /data_download
 *.zst
 *.sh
+/data_download/*
+*.recording
+*.vtt

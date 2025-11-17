@@ -11,12 +11,22 @@ export function ReadRole({ profileComponent }) {
   const roleRP = player.get("roleRP");
   const [showFade, setShowFade] = useState(false);
   const scrollContainerRef = useRef(null);
+  const [activeTab, setActiveTab] = useState("scoresheet");
+  const [selectedOptions, setSelectedOptions] = useState({});
 
   // Handle scroll to show/hide fade
   const handleScroll = () => {
     if (scrollContainerRef.current) {
       const scrollTop = scrollContainerRef.current.scrollTop;
       setShowFade(scrollTop > 10);
+    }
+  };
+
+  // Handle tab change and scroll to top
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
     }
   };
 
@@ -71,9 +81,9 @@ export function ReadRole({ profileComponent }) {
             </div>
           </div>
 
-          {/* Right: BATNA and Scoresheet */}
+          {/* Right: BATNA and Scoresheet/Calculator Tabs */}
           <div className="space-y-4">
-            {/* BATNA and RP Card */}
+            {/* BATNA and RP Card - always visible */}
             {(roleBATNA || roleRP !== undefined) && (
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h4 className="text-lg font-bold text-gray-900 mb-2">
@@ -90,32 +100,132 @@ export function ReadRole({ profileComponent }) {
               </div>
             )}
 
-            {/* Scoresheet Card */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-2xl font-bold text-blue-900 mb-4">Your Scoresheet</h3>
-              <div className="space-y-6">
-                {Object.entries(roleScoresheet).map(([category, options]) => (
-                  <div key={category} className="border-gray-200 pb-4">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-0">
-                      {category.replace(/_/g, " ")}
-                    </h4>
-                    <div className="border border-blue-300 rounded overflow-hidden">
-                      {options.map((opt, idx) => (
-                        <div
-                          key={idx}
-                          className={`flex justify-between items-center bg-blue-100 px-3 py-1 ${
-                            idx < options.length - 1 ? 'border-b border-blue-300' : ''
-                          }`}
-                        >
-                          <span className="text-gray-700 font-medium">{opt.option}</span>
-                          <span className="text-blue-600 font-bold text-lg">{opt.score} pts</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {/* Tab Navigation */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleTabChange("scoresheet")}
+                className={`px-4 py-2 rounded font-medium transition-all border ${
+                  activeTab === "scoresheet"
+                    ? "bg-white text-blue-600 border-blue-400 shadow"
+                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                }`}
+              >
+                Your Scoresheet
+              </button>
+              <button
+                onClick={() => handleTabChange("calculator")}
+                className={`px-4 py-2 rounded font-medium transition-all border ${
+                  activeTab === "calculator"
+                    ? "bg-white text-blue-600 border-blue-400 shadow"
+                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                }`}
+              >
+                Calculator
+              </button>
             </div>
+
+            {/* Tab Content */}
+            {activeTab === "scoresheet" && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="text-2xl font-bold text-blue-900 mb-4">Your Scoresheet</h3>
+                <div className="space-y-6">
+                  {Object.entries(roleScoresheet).map(([category, options]) => (
+                    <div key={category} className="border-gray-200 pb-4">
+                      <h4 className="text-lg font-semibold text-gray-800 mb-0">
+                        {category.replace(/_/g, " ")}
+                      </h4>
+                      <div className="border border-blue-300 rounded overflow-hidden">
+                        {options.map((opt, idx) => (
+                          <div
+                            key={idx}
+                            className={`flex justify-between items-center bg-blue-100 px-3 py-1 ${
+                              idx < options.length - 1 ? 'border-b border-blue-300' : ''
+                            }`}
+                          >
+                            <span className="text-gray-700 font-medium">{opt.option}</span>
+                            <span className="text-blue-600 font-bold text-lg">{opt.score} pts</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "calculator" && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Left column: Total display */}
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="text-center">
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Points</h3>
+                      <div className="text-5xl font-bold mb-4">
+                        {Object.keys(selectedOptions).length === Object.keys(roleScoresheet).length ? (
+                          <span className="text-blue-600">
+                            {Object.entries(selectedOptions).reduce((sum, [category, optionIdx]) => {
+                              return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+                            }, 0)}
+                          </span>
+                        ) : (
+                          <span className="text-red-800">---</span>
+                        )}
+                      </div>
+                      {roleRP !== undefined && Object.keys(selectedOptions).length === Object.keys(roleScoresheet).length && (
+                        <div className={`text-sm font-semibold ${
+                          Object.entries(selectedOptions).reduce((sum, [category, optionIdx]) => {
+                            return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+                          }, 0) >= roleRP ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {Object.entries(selectedOptions).reduce((sum, [category, optionIdx]) => {
+                            return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+                          }, 0) >= roleRP ? '✓ Beats your BATNA!' : '✗ Below your BATNA'}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setSelectedOptions({})}
+                      className="mt-6 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  {/* Right column: Dropdowns */}
+                  <div className="space-y-3">
+                    {Object.entries(roleScoresheet).map(([category, options]) => (
+                      <div key={category}>
+                        <label className="block text-sm font-semibold text-gray-800 mb-1">
+                          {category.replace(/_/g, " ")}
+                        </label>
+                        <select
+                          value={selectedOptions[category] ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setSelectedOptions(prev => {
+                              if (value === "") {
+                                const newState = { ...prev };
+                                delete newState[category];
+                                return newState;
+                              }
+                              return { ...prev, [category]: parseInt(value) };
+                            });
+                          }}
+                          className="w-full px-3 py-2 text-sm border border-blue-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">-- Select --</option>
+                          {options.map((opt, idx) => (
+                            <option key={idx} value={idx}>
+                              ({opt.score >= 0 ? '+' : ''}{opt.score} pts) {opt.option}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         </div>

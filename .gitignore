@@ -1,0 +1,4 @@
+*.vtt
+*.recording
+*.zst
+.DS_Store

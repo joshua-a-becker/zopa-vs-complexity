@@ -11,10 +11,10 @@
   "name": "empirica-server",
   "private": true,
   "scripts": {
-    "build": "rsync -aP --exclude=node_modules --exclude=*.js -m src/* dist/ && rsync -aP roles.json dist/ && esbuild src/index.js --color=true --log-level=warning --log-level=warning --platform=node --define:process.env.NODE_ENV='\"production\"' --bundle --minify --outfile=dist/index.js --sourcemap",
+    "build": "rsync -aP --exclude=node_modules --exclude=*.js -m src/* dist/ && rsync -aP dist/ && esbuild src/index.js --color=true --log-level=warning --log-level=warning --platform=node --define:process.env.NODE_ENV='\"production\"' --bundle --minify --outfile=dist/index.js --sourcemap",
     "dev": "npm run build && node --trace-warnings --enable-source-maps --unhandled-rejections=warn-with-error-code dist/index.js",
     "serve": "node --trace-warnings --enable-source-maps --unhandled-rejections=warn-with-error-code index.js",
-    "watch": "nodemon --watch src --watch roles.json --ext js,json --exec 'npm run build'"
+    "watch": "nodemon --watch src --watch --ext js,json --exec 'npm run build'"
   },
   "volta": {
     "node": "20.11.1",
