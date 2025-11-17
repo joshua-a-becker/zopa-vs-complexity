@@ -12,8 +12,23 @@ import DailyIframe from "@daily-co/daily-js";
 // Create context for Daily.co call management (includes media stream)
 export const DailyCallContext = createContext(null);
 
-// Generate random 20-character alphanumeric string
+// Generate participant key - uses studentId from URL if present, otherwise random string
 function generateParticipantKey() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const studentId = urlParams.get("studentId");
+
+  if (studentId) {
+    // Format today's date as YYYYMMDD
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const dateStr = `${year}${month}${day}`;
+
+    return `${studentId}_${dateStr}`;
+  }
+
+  // Fallback to random 20-character alphanumeric string
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < 20; i++) {

@@ -24,13 +24,16 @@ echo "GETTING LIST OF ALL TRANSCRIPTS"
 TRANSCRIPTS_JSON=$(curl -s -H "Authorization: Bearer $API_KEY" "$BASE_URL/transcript")
 
 # Download today's transcripts
-echo "DOWNLOADING TODAYS TRANSCRIPTS"
+echo "DOWNLOADING TODAYS TRANSCRIPTS, NEW ONLY"
 echo "$TRANSCRIPTS_JSON" | jq -c '.data[]' | while read -r t; do
     transcript_id=$(echo "$t" | jq -r '.transcriptId')
     mtgSessionId=$(echo "$t" | jq -r '.mtgSessionId')
 
+    TARGET_FILE="./transcripts/${transcript_id}.vtt"
+
     # Only download if session is in today's recordings
     if echo "$today_ids" | grep -q "^$mtgSessionId$"; then
+        [[ -f "$TARGET_FILE" ]] && continue
         echo "Downloading transcript: $transcript_id"
         LINK=$(curl -s -H "Content-Type: application/json" \
                     -H "Authorization: Bearer $API_KEY" \
@@ -43,14 +46,17 @@ echo "$TRANSCRIPTS_JSON" | jq -c '.data[]' | while read -r t; do
 done
 
 # Download today's recordings
-echo "DOWNLOADING TODAYS RECORDINGS"
+echo "DOWNLOADING TODAYS RECORDINGS, NEW ONLY"
 echo "$RECORDINGS_JSON" | jq -c '.data[]' | while read -r rec; do
     mtgSessionId=$(echo "$rec" | jq -r '.mtgSessionId')
     start_ts=$(echo "$rec" | jq -r '.start_ts')
     RECORDING_ID=$(echo "$rec" | jq -r '.id')
 
+    TARGET_FILE="./recordings/${RECORDING_ID}.recording"
+
     # Only download if it's from today
     if [[ "$start_ts" -ge "$TODAY_START" && "$start_ts" -le "$TODAY_END" ]]; then
+        [[ -f "$TARGET_FILE" ]] && continue
         echo "Downloading recording: $RECORDING_ID"
         LINK=$(curl -s -H "Content-Type: application/json" \
             -H "Authorization: Bearer $API_KEY" \

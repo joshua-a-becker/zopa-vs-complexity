@@ -1,6 +1,6 @@
 import { ClassicListenersCollector } from "@empirica/core/admin/classic";
 import fetch from "node-fetch";
-import rolesData from "../roles.json" assert { type: "json" };
+import rolesData from "./roles.json" assert { type: "json" };
 
 const roles = rolesData.roles;
 
