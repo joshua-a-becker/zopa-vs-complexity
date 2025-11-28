@@ -211,7 +211,7 @@ export function MaterialsPanel({
               {/* Main content area with rows and total points side by side */}
               <div className="flex gap-6">
                 {/* Left side: Scoresheet rows (2/3 width) */}
-                <div className="flex-[2] space-y-2">
+                <div className="flex-[9] space-y-2">
                   {Object.entries(roleScoresheet).map(([category, options]) => {
                     const includeOption = options[0];
                     const isChecked = selectedOptions[category] === 0;
@@ -235,8 +235,12 @@ export function MaterialsPanel({
                         <span className="text-sm font-semibold text-gray-800 flex-shrink-0 w-[140px]">
                           {category.replace(/_/g, " ")}
                         </span>
-                        <span className={`text-base font-bold flex-shrink-0 w-[80px] text-center ${isChecked ? 'text-blue-600' : 'text-gray-400'}`}>
-                          {isChecked ? `${includeOption.score >= 0 ? '+' : ''}${includeOption.score}` : '0'} pts
+                        <span className={`text-base font-bold flex-shrink-0 w-[80px] text-center ${
+                          isChecked
+                            ? (includeOption.score >= 0 ? 'text-blue-600' : 'text-red-600')
+                            : 'text-gray-400'
+                        }`}>
+                          {includeOption.score >= 0 ? '+' : ''}{includeOption.score} pts
                         </span>
                         <span className="text-sm text-gray-600 flex-1 ml-4">
                           {includeOption.reason}
@@ -247,7 +251,7 @@ export function MaterialsPanel({
                 </div>
 
                 {/* Right side: Total Points (1/3 width) */}
-                <div className="flex-[1] flex flex-col items-center justify-start">
+                <div className="flex-[4] flex flex-col items-center justify-start">
                   <div className="text-center bg-white rounded-lg p-6 shadow-md w-full">
                     <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Points</h3>
                     <div className="text-5xl font-bold mb-4">
