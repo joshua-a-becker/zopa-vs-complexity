@@ -161,23 +161,22 @@ export function ReadRole({ profileComponent }) {
                     <div className="text-center">
                       <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Points</h3>
                       <div className="text-5xl font-bold mb-4">
-                        {Object.keys(selectedOptions).length === Object.keys(roleScoresheet).length ? (
-                          <span className="text-blue-600">
-                            {Object.entries(selectedOptions).reduce((sum, [category, optionIdx]) => {
-                              return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
-                            }, 0)}
-                          </span>
-                        ) : (
-                          <span className="text-red-800">---</span>
-                        )}
+                        <span className="text-blue-600">
+                          {Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                            const optionIdx = selectedOptions[category] ?? 1; // Default to exclude (index 1)
+                            return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+                          }, 0).toFixed(2)}
+                        </span>
                       </div>
-                      {roleRP !== undefined && Object.keys(selectedOptions).length === Object.keys(roleScoresheet).length && (
+                      {roleRP !== undefined && (
                         <div className={`text-sm font-semibold ${
-                          Object.entries(selectedOptions).reduce((sum, [category, optionIdx]) => {
+                          Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                            const optionIdx = selectedOptions[category] ?? 1;
                             return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
                           }, 0) >= roleRP ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {Object.entries(selectedOptions).reduce((sum, [category, optionIdx]) => {
+                          {Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                            const optionIdx = selectedOptions[category] ?? 1;
                             return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
                           }, 0) >= roleRP ? '✓ Beats your BATNA!' : '✗ Below your BATNA'}
                         </div>
@@ -187,41 +186,46 @@ export function ReadRole({ profileComponent }) {
                       onClick={() => setSelectedOptions({})}
                       className="mt-6 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium"
                     >
-                      Reset
+                      Reset All
                     </button>
                   </div>
 
-                  {/* Right column: Dropdowns */}
+                  {/* Right column: Checkboxes */}
                   <div className="space-y-3">
-                    {Object.entries(roleScoresheet).map(([category, options]) => (
-                      <div key={category}>
-                        <label className="block text-sm font-semibold text-gray-800 mb-1">
-                          {category.replace(/_/g, " ")}
-                        </label>
-                        <select
-                          value={selectedOptions[category] ?? ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setSelectedOptions(prev => {
-                              if (value === "") {
-                                const newState = { ...prev };
-                                delete newState[category];
-                                return newState;
-                              }
-                              return { ...prev, [category]: parseInt(value) };
-                            });
-                          }}
-                          className="w-full px-3 py-2 text-sm border border-blue-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">-- Select --</option>
-                          {options.map((opt, idx) => (
-                            <option key={idx} value={idx}>
-                              ({opt.score >= 0 ? '+' : ''}{opt.score} pts) {opt.option}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ))}
+                    {Object.entries(roleScoresheet).map(([category, options]) => {
+                      // Get the "Include" option (should be index 0)
+                      const includeOption = options[0];
+                      const isChecked = selectedOptions[category] === 0;
+
+                      return (
+                        <div key={category} className="flex items-center justify-between bg-white rounded px-4 py-3 border border-blue-300">
+                          <label className="flex items-center cursor-pointer flex-1">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                setSelectedOptions(prev => {
+                                  if (e.target.checked) {
+                                    // Check = Include (index 0)
+                                    return { ...prev, [category]: 0 };
+                                  } else {
+                                    // Uncheck = Exclude (index 1, which is 0 points)
+                                    return { ...prev, [category]: 1 };
+                                  }
+                                });
+                              }}
+                              className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="ml-3 text-sm font-semibold text-gray-800">
+                              {category.replace(/_/g, " ")}
+                            </span>
+                          </label>
+                          <span className={`text-sm font-bold ml-3 ${isChecked ? 'text-blue-600' : 'text-gray-400'}`}>
+                            {isChecked ? `${includeOption.score >= 0 ? '+' : ''}${includeOption.score}` : '0'} pts
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

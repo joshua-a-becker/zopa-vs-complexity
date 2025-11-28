@@ -218,7 +218,7 @@ const RemoteVideoComponent = React.memo(({ stream, name, isRepresentative, sessi
   const hasRemoteParticipants = Object.keys(allDailyParticipants).length > 0;
 
   return (
-    <div className="flex justify-center gap-2 h-full w-full">
+    <div className="flex flex-col justify-center gap-2 h-full w-full">
       {!hasRemoteParticipants ? (
         <div className="flex items-center justify-center h-full w-full text-gray-500">
           Remote participants loading...
@@ -231,7 +231,7 @@ const RemoteVideoComponent = React.memo(({ stream, name, isRepresentative, sessi
           const audioState = participantAudioStates[sessionId] || participant.tracks?.audio?.state || "unknown";
 
           return (
-            <div key={sessionId} className="flex-1 min-w-0 h-full">
+            <div key={sessionId} className="flex-1 min-h-0 w-full">
               <RemoteVideoComponent
                 stream={stream}
                 name={name}
@@ -621,8 +621,8 @@ export function VideoChat({ defaultHideSelf = false }) {
   
   return (
     <div className="flex flex-col gap-2 h-full w-full overflow-hidden">
-      {/* Top Row - Your Video (centered) */}
-      <div className="flex-shrink-0 max-h-[50%] overflow-hidden">
+      {/* Local Video - equal size with others */}
+      <div className="flex-1 min-h-0 overflow-hidden">
         <LocalVideoComponent
           localVideoRef={localVideoRef}
           displayName={localDisplayName}
@@ -636,18 +636,27 @@ export function VideoChat({ defaultHideSelf = false }) {
         />
       </div>
 
-      {/* Bottom Row - Remote Videos (side by side) */}
-      <div className="flex-shrink-0 max-h-[50%] overflow-hidden">
-        <RemoteVideosComponent
-          allDailyParticipants={allDailyParticipants}
-          remoteStreams={remoteStreams}
-          participantNames={participantNames}
-          participantRepStatus={participantRepStatus}
-          participantVideoStates={participantVideoStates}
-          participantAudioStates={participantAudioStates}
-          onRequestRefresh={refreshRemoteParticipant}
-        />
-      </div>
+      {/* Remote Videos - each gets equal size */}
+      {Object.entries(allDailyParticipants).map(([sessionId, participant]) => {
+        const stream = remoteStreams[sessionId];
+        const name = participantNames[sessionId] || participant.userData?.displayName || "Participant";
+        const videoState = participantVideoStates[sessionId] || participant.tracks?.video?.state || "unknown";
+        const audioState = participantAudioStates[sessionId] || participant.tracks?.audio?.state || "unknown";
+
+        return (
+          <div key={sessionId} className="flex-1 min-h-0 overflow-hidden">
+            <RemoteVideoComponent
+              stream={stream}
+              name={name}
+              isRepresentative={participantRepStatus[sessionId] || false}
+              sessionId={sessionId}
+              onRequestRefresh={refreshRemoteParticipant}
+              videoState={videoState}
+              audioState={audioState}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -32,7 +32,7 @@ export function MaterialsPanel({
   };
 
   return (
-    <div className="w-[55%] bg-gray-300 p-6 flex flex-col relative">
+    <div className="w-[70%] bg-gray-300 p-6 flex flex-col relative">
       {/* Tab Navigation - cleaner style with all-around borders */}
       <div className="flex gap-2 mb-2 flex-shrink-0">
         <button
@@ -44,16 +44,6 @@ export function MaterialsPanel({
           }`}
         >
           Narrative
-        </button>
-        <button
-          onClick={() => handleTabChange("scoresheet")}
-          className={`px-4 py-2 rounded font-medium transition-all border ${
-            activeTab === "scoresheet"
-              ? "bg-white text-blue-600 border-blue-400 shadow"
-              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
-          }`}
-        >
-          Scoresheet
         </button>
         <button
           onClick={() => handleTabChange("calculator")}
@@ -82,18 +72,16 @@ export function MaterialsPanel({
         className="flex-1 overflow-y-auto"
       >
         {activeTab === "narrative" && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Your Role: {roleName}
-            </h3>
-            <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed">
-              <Markdown>{roleNarrative}</Markdown>
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Your Role: {roleName}
+              </h3>
+              <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed">
+                <Markdown>{roleNarrative}</Markdown>
+              </div>
             </div>
-          </div>
-        )}
 
-        {activeTab === "scoresheet" && (
-          <div className="space-y-3 max-w-[500px] mx-auto">
             {/* BATNA and RP Card */}
             {(roleBATNA || roleRP !== undefined) && (
               <div className="bg-white rounded-lg shadow-sm p-4">
@@ -112,29 +100,40 @@ export function MaterialsPanel({
             )}
 
             {/* Scoresheet Card */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="text-xl font-bold text-blue-900 mb-3">Your Scoresheet</h3>
-              <div className="space-y-4">
-                {Object.entries(roleScoresheet).map(([category, options]) => (
-                  <div key={category}>
-                    <h4 className="text-sm font-semibold text-gray-800 mb-1">
-                      {category.replace(/_/g, " ")}
-                    </h4>
-                    <div className="border border-blue-300 rounded overflow-hidden">
-                      {options.map((opt, idx) => (
-                        <div
-                          key={idx}
-                          className={`flex justify-between items-center bg-blue-100 px-3 py-1.5 ${
-                            idx < options.length - 1 ? 'border-b border-blue-300' : ''
-                          }`}
-                        >
-                          <span className="text-sm text-gray-700">{opt.option}</span>
-                          <span className="text-blue-600 font-bold text-base">{opt.score} pts</span>
-                        </div>
-                      ))}
+
+              {/* Column Headers */}
+              <div className="flex items-center px-4 py-2 mb-1">
+                <span className="text-xs font-bold text-gray-700 uppercase flex-shrink-0 w-[200px]">
+                  Feature
+                </span>
+                <span className="text-xs font-bold text-gray-700 uppercase flex-shrink-0 w-[80px] text-center">
+                  Points
+                </span>
+                <span className="text-xs font-bold text-gray-700 uppercase flex-1 ml-4">
+                  Reason
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {Object.entries(roleScoresheet).map(([category, options]) => {
+                  // Get the "Include" option (index 0) - skip "Exclude" since it's always 0
+                  const includeOption = options[0];
+                  return (
+                    <div key={category} className="flex items-center bg-white rounded px-4 py-2.5 border border-blue-300">
+                      <span className="text-sm font-semibold text-gray-800 flex-shrink-0 w-[200px]">
+                        {category.replace(/_/g, " ")}
+                      </span>
+                      <span className="text-blue-600 font-bold text-base flex-shrink-0 w-[80px] text-center">
+                        {includeOption.score >= 0 ? '+' : ''}{includeOption.score} pts
+                      </span>
+                      <span className="text-sm text-gray-600 flex-1 ml-4">
+                        {includeOption.reason}
+                      </span>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -148,23 +147,22 @@ export function MaterialsPanel({
                 <div className="text-center">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Points</h3>
                   <div className="text-5xl font-bold mb-4">
-                    {Object.keys(selectedOptions).length === Object.keys(roleScoresheet).length ? (
-                      <span className="text-blue-600">
-                        {Object.entries(selectedOptions).reduce((sum, [category, optionIdx]) => {
-                          return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
-                        }, 0)}
-                      </span>
-                    ) : (
-                      <span className="text-red-800">---</span>
-                    )}
+                    <span className="text-blue-600">
+                      {Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                        const optionIdx = selectedOptions[category] ?? 1; // Default to exclude (index 1)
+                        return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+                      }, 0).toFixed(2)}
+                    </span>
                   </div>
-                  {roleRP !== undefined && Object.keys(selectedOptions).length === Object.keys(roleScoresheet).length && (
+                  {roleRP !== undefined && (
                     <div className={`text-sm font-semibold ${
-                      Object.entries(selectedOptions).reduce((sum, [category, optionIdx]) => {
+                      Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                        const optionIdx = selectedOptions[category] ?? 1;
                         return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
                       }, 0) >= roleRP ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {Object.entries(selectedOptions).reduce((sum, [category, optionIdx]) => {
+                      {Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                        const optionIdx = selectedOptions[category] ?? 1;
                         return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
                       }, 0) >= roleRP ? '✓ Beats your BATNA!' : '✗ Below your BATNA'}
                     </div>
@@ -174,41 +172,46 @@ export function MaterialsPanel({
                   onClick={() => setSelectedOptions({})}
                   className="mt-6 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium"
                 >
-                  Reset
+                  Reset All
                 </button>
               </div>
 
-              {/* Right column: Dropdowns */}
+              {/* Right column: Checkboxes */}
               <div className="space-y-3">
-                {Object.entries(roleScoresheet).map(([category, options]) => (
-                  <div key={category}>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1">
-                      {category.replace(/_/g, " ")}
-                    </label>
-                    <select
-                      value={selectedOptions[category] ?? ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setSelectedOptions(prev => {
-                          if (value === "") {
-                            const newState = { ...prev };
-                            delete newState[category];
-                            return newState;
-                          }
-                          return { ...prev, [category]: parseInt(value) };
-                        });
-                      }}
-                      className="w-full px-3 py-2 text-sm border border-blue-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">-- Select --</option>
-                      {options.map((opt, idx) => (
-                        <option key={idx} value={idx}>
-                          ({opt.score >= 0 ? '+' : ''}{opt.score} pts) {opt.option}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
+                {Object.entries(roleScoresheet).map(([category, options]) => {
+                  // Get the "Include" option (should be index 0)
+                  const includeOption = options[0];
+                  const isChecked = selectedOptions[category] === 0;
+
+                  return (
+                    <div key={category} className="flex items-center justify-between bg-white rounded px-4 py-3 border border-blue-300">
+                      <label className="flex items-center cursor-pointer flex-1">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            setSelectedOptions(prev => {
+                              if (e.target.checked) {
+                                // Check = Include (index 0)
+                                return { ...prev, [category]: 0 };
+                              } else {
+                                // Uncheck = Exclude (index 1, which is 0 points)
+                                return { ...prev, [category]: 1 };
+                              }
+                            });
+                          }}
+                          className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <span className="ml-3 text-sm font-semibold text-gray-800">
+                          {category.replace(/_/g, " ")}
+                        </span>
+                      </label>
+                      <span className={`text-sm font-bold ml-3 ${isChecked ? 'text-blue-600' : 'text-gray-400'}`}>
+                        {isChecked ? `${includeOption.score >= 0 ? '+' : ''}${includeOption.score}` : '0'} pts
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

@@ -1,88 +1,242 @@
 {
   "roles": [
     {
-      "role_name": "Community Harvest Food Bank",
-      "narrative": "# General Overview\n\nCitizens' Resource Hub and Community Harvest food bank are both seeking to open branches in the same area. Because you have compatible needs and serve overlapping populations, but utilize the space differently, you could save considerable resources by sharing space.\n\nCitizens Resource Hub works primarily out of offices but occasionally partners with other providers for classes and workshops. Meanwhile, Community Harvest is highly flexible in their space needs, and is planning to host a full-time youth service worker focused on community education.\n\n## Private Information: \n\nCommunity Harvest is expanding its distribution network into this area. You're a program manager investigating this partnership. It wasn't your initiative—frankly, you're surprised they're establishing a new location during such a financially difficult and uncertain time.\n\nOn the one hand, it's a great opportunity. By partnering with Citizens Resource Hub (CRH), you'll be able to get a larger space and offer programming beyond your typical activities. But you're determined to make it make fiscal sense against your core mission—food distribution. While senior staff are blinded with excitement, your line manager has made clear that budgets are tighter than ever. If there's an advantage to be had in this partnership, it's your job to get it. Otherwise, you're doing it yourselves.\n\n**Your Mission:** Community Harvest collects and distributes food. This location will serve as both a distribution point and a volunteer hub for sorting donations and managing logistics. You'll have 1 AmeriCorps worker (full-time, grant-funded at minimal cost) plus 15-25 volunteers, serving 80-120 households weekly.\n\n**Your Operations:** Client distribution typically happens Tuesday/Thursday afternoons and requires minimal space, just a check-in desk and shelving. The real space demands come from behind-the-scenes logistics: receiving donations, sorting perishables, breaking down bulk quantities, organizing into distribution parcels, and maintaining proper storage.\n\nSaturdays are when most volunteers are available—you could easily have 10-15 people receiving donations at once, unloading trucks, sorting across tables, and packing parcels. It's organized chaos that requires spreading out. Some locations manage to work weekday-only, but it's not ideal. Plus, you want flexibility for community programming.\n\nYour AmeriCorps worker will oversee and run day-to-day distribution operations, but their grant-funded role focuses on expanding community capacity through nutrition-related services beyond food distribution. This work will include offering benefits guidance, running educational sessions, and organizing creative initiatives like bulk-buying cooperatives. A larger shared space will enable programming you couldn't otherwise manage without external partners.\n\n**Your Funding Reality:** As a mostly volunteer-run organization, rent and maintenance are your largest budget items—every dollar matters. You need to keep both upfront and ongoing costs low. Because CRH operates 9-5 weekdays and your biggest activity is Saturday logistics, your work shouldn't clash. Importantly, since CRH will use most of the space most of the time, you expect substantial rent savings.\n\n**Your Space Needs:** Day-to-day operations need one private office for admin and client meetings. The logistics work can happen in just about any flexible space, provided you can spread out and take over as needed. More storage and delivery bay access help but aren't essential.\n\n**Your Strategic Position:** You're flexible on space configuration, so your own renovation needs will be negligible. Every space you're considering already has at least 1 office and a large open area. Still, there is always some cost to setting up a new location, and so you prefer a longer lease to justify upfront investment.\n\n**Your Priorities:**\n\n- **Location:** Space size and price savings are primary, as compared with a central location.\n- **Renovation Costs:** A major issue. CRH has specific office requirements, so they should pay more.\n- **Rent Split:** Your largest ongoing expense. Since CRH needs more dedicated space, they should pay proportionally more.\n- **Lease Term:** Stability to justify upfront investment—longer is better.\n- **Weekend Access:** Critical for volunteer coordination. Exclusive weekend access ideal, but you can manage without.\n- **Space Allocation:** More flex space helps logistics but isn't strictly necessary—you're adaptable.",
-      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to proceed with your original plan, and rent on your own.",
-      "RP": 170,
+      "role_name": "Party A - EASY",
+      "narrative": "You're going on a vacation with two friends and need to agree on some trip details. You're adventurous but on a tight budget, so you want to stay active without spending much. At the same time, you prefer a relaxed schedule, since a good vacation for you means getting the most value with minimal stress and plenty of adventure. You also know your friends differ: some may not care about saving money and may want to travel at a faster pace. You might need to make compromises to find a plan everyone enjoys.\n\nBelow are your preferences for each possible vacation detail. Higher points mean greater satisfaction. If your total score is above zero, then it's a plan you prefer to the option of staying home. If your score is below zero, you'd rather not go on the vacation at all. All three of you must agree to the vacation, or you're all staying home. The total points you earn correspond directly to your bonus on Prolific.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to stay home instead of going on vacation.",
+      "RP": 0,
       "scoresheet": {
-        "Location_Choice": [
-          { "option": "A: Far from center - huge", "score": 60 },
-          { "option": "B: Outside town - medium", "score": 45 },
-          { "option": "C: Edge of town, medium-small", "score": 30 },
-          { "option": "D: Central-small", "score": 15 }
+        "Budget_Hotel": [
+          { "option": "Include", "score": 1.10, "reason": "Saves a lot of money" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ],
-        "Renovation_Cost_Percent_CRH": [
-          { "option": "45%", "score": -20 },
-          { "option": "50%", "score": 0 },
-          { "option": "55%", "score": 20 },
-          { "option": "60%", "score": 40 },
-          { "option": "70%", "score": 60 }
+        "Hiking": [
+          { "option": "Include", "score": 1.05, "reason": "Adventurous, active experience" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ],
-        "Rent_Split_Percent_CRH": [
-          { "option": "45%", "score": -20 },
-          { "option": "50%", "score": 0 },
-          { "option": "55%", "score": 20 },
-          { "option": "60%", "score": 40 }
+        "Sleep_Early_at_Night": [
+          { "option": "Include", "score": 0.77, "reason": "Saves a little money; More relaxation" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ],
-        "Lease_Term": [
-          { "option": "3 years", "score": 0 },
-          { "option": "5 years", "score": 13 },
-          { "option": "7 years", "score": 27 },
-          { "option": "10 years", "score": 40 }
+        "Packed_Lunches": [
+          { "option": "Include", "score": 0.48, "reason": "Saves a little money" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ],
-        "Evening_Weekend_Access": [
-          { "option": "Closed", "score": 0 },
-          { "option": "Shared, booking system", "score": 40 },
-          { "option": "CH only", "score": 80 }
+        "Michelin_Star_Dinner": [
+          { "option": "Include", "score": -0.75, "reason": "Quite costly" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ],
-        "Space_Allocation": [
-          { "option": "60% office", "score": 0 },
-          { "option": "50% office", "score": 10 },
-          { "option": "40% office", "score": 20 }
+        "Multiple_Day_Activities": [
+          { "option": "Include", "score": -0.87, "reason": "Costly and feels rushed and unrelaxed" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Short_Layover": [
+          { "option": "Include", "score": -0.91, "reason": "Very stressful and risks missing flight" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Premium_Flight": [
+          { "option": "Include", "score": -0.95, "reason": "Extremely costly" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ]
       }
     },
     {
-      "role_name": "Citizens' Resource Hub",
-      "narrative": "# General Overview\n\nCitizens' Resource Hub and Community Harvest food bank are both seeking to open branches in the same area. Because you have compatible needs and serve overlapping populations, but utilize the space differently, you could save considerable resources by sharing space.\n\nCitizens Resource Hub works primarily out of offices but occasionally partners with other providers for classes and workshops. Meanwhile, Community Harvest is highly flexible in their space needs, and is planning to host a full-time youth service worker focused on community education.\n\n## Private Information:\n\n Thanks to a donor's ringfenced cash, Citizens Resource Hub is opening a new location with minimal strategic planning. The catch: they're funding upfront costs generously but providing little for ongoing operations, leaving CRH on the hook for monthly bills.\n\nYou're the program manager making sense of this venture, meeting with Community Harvest to explore whether a partnership offers benefits. If there's an advantage to be had, your job is to get it—and to get as much value as possible. You're intrigued by the potential but the plan must make sense. If you can't get value out of this partnership, you'll proceed alone.\n\n**Your Mission:** Your organization helps people navigate a wide range of benefits, housing, debt, and legal issues. Your primary work happens through confidential one-on-one consultations. The local branch will have 4-5 salaried advisors plus volunteers, serving 150-200 clients monthly in 45-90 minute appointments. Your work requires quiet, private spaces where people feel safe discussing sensitive situations.\n\n**Your Operations:** Consultations happen Monday-Friday, 9am-5pm. You typically have no activity outside these hours. Most locations save on maintenance and insurance costs by being closed outside business hours—a practice you prefer to maintain. However, you could get some benefit from odd hours if the space is going to be open for CH. You've been experimenting with flex hours for staff, which also offers flexibility for client meetings, and you have some interest in hosting out-of-hours educational sessions.\n\n**Your Funding Reality:** Your largest budget item is staff salaries—rent is a smaller percentage. The donor will cover the vast majority of upfront renovation costs, although every piece of expenditure must be justified and approved. This makes you more sensitive to long-term commitments than renovation costs.\n\n**Your Space Needs:** You need a minimum of 2 private offices for confidential meetings—non-negotiable. Ideally you'll have 3-4 dedicated offices for staff. You've been getting some encouragement to think \"modern\" and utilize more open floor plan, but you're a traditionalist with a strong preference for maximizing office space to serve your core function.\n\n**Your Priorities:**\n\n- **Location:** Space and savings matter more than central location.\n- **Renovation Costs:** Donor funding gives flexibility, though you'd still prefer to pay less.\n- **Rent Split:** Ongoing costs matter more than one-time expenses.\n- **Lease Term:** Shorter is safer—avoid being trapped if the branch struggles.\n- **Weekend Access:** Prefer closed to save on costs, but if open, you want access.\n- **Space Allocation:** Strong preference for maximizing office space for core functions.",
-      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to proceed with your original plan, and rent on your own.",
-      "RP": 210,
+      "role_name": "Party A - HARD",
+      "narrative": "You're going on a vacation with two friends and need to agree on some trip details. You're adventurous but on a tight budget, so you want to stay active without spending much. At the same time, you prefer a relaxed schedule, since a good vacation for you means getting the most value with minimal stress and plenty of adventure. You also know your friends differ: some may not care about saving money and may want to travel at a faster pace. You might need to make compromises to find a plan everyone enjoys.\n\nBelow are your preferences for each possible vacation detail. Higher points mean greater satisfaction. If your total score is above zero, then it's a plan you prefer to the option of staying home. If your score is below zero, you'd rather not go on the vacation at all. All three of you must agree to the vacation, or you're all staying home. The total points you earn correspond directly to your bonus on Prolific.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to stay home instead of going on vacation.",
+      "RP": 0,
       "scoresheet": {
-        "Location_Choice": [
-          { "option": "A: Far from center - huge", "score": 60 },
-          { "option": "B: Outside town - medium", "score": 45 },
-          { "option": "C: Edge of town, medium-small", "score": 30 },
-          { "option": "D: Central-small", "score": 15 }
+        "Budget_Hotel": [
+          { "option": "Include", "score": 1.35, "reason": "Saves a lot of money" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ],
-        "Renovation_Cost_Percent_CRH": [
-          { "option": "45%", "score": 40 },
-          { "option": "50%", "score": 30 },
-          { "option": "55%", "score": 20 },
-          { "option": "60%", "score": 10 },
-          { "option": "70%", "score": 0 }
+        "Hiking": [
+          { "option": "Include", "score": 1.14, "reason": "Adventurous, active experience" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ],
-        "Rent_Split_Percent_CRH": [
-          { "option": "45%", "score": 60 },
-          { "option": "50%", "score": 40 },
-          { "option": "55%", "score": 20 },
-          { "option": "60%", "score": 0 }
+        "Sleep_Early_at_Night": [
+          { "option": "Include", "score": 1.28, "reason": "Saves a little money; More relaxation" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ],
-        "Lease_Term": [
-          { "option": "3 years", "score": 80 },
-          { "option": "5 years", "score": 40 },
-          { "option": "7 years", "score": 20 },
-          { "option": "10 years", "score": 0 }
+        "Packed_Lunches": [
+          { "option": "Include", "score": 0.79, "reason": "Saves a little money" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ],
-        "Evening_Weekend_Access": [
-          { "option": "Closed", "score": 20 },
-          { "option": "Shared, booking system", "score": 10 },
-          { "option": "CH only", "score": 0 }
+        "Michelin_Star_Dinner": [
+          { "option": "Include", "score": -0.04, "reason": "A little costly (your job gets you a discount)" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ],
-        "Space_Allocation": [
-          { "option": "60% office", "score": 80 },
-          { "option": "50% office", "score": 40 },
-          { "option": "40% office", "score": 0 }
+        "Multiple_Day_Activities": [
+          { "option": "Include", "score": -0.51, "reason": "Costly and feels rushed or unrelaxed" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Short_Layover": [
+          { "option": "Include", "score": -1.01, "reason": "Very stressful and risks missing flight" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Premium_Flight": [
+          { "option": "Include", "score": -1.27, "reason": "Extremely costly" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ]
+      }
+    },
+    {
+      "role_name": "Party B - EASY",
+      "narrative": "You're going on a vacation with two friends and need to agree on some trip details. You're adventurous and aren't on a tight budget, so you want to stay active and have quality experiences. At the same time, you are okay with a rushed pace, since a good vacation for you means getting many quality experiences over relaxation or cost-savings. You also know your friends differ: some may care about saving money or may want a more relaxed schedule. You might need to make compromises to find a plan everyone enjoys.\n\nBelow are your preferences for each possible vacation detail. Higher points mean greater satisfaction. If your total score is above zero, then it's a plan you prefer to the option of staying home. If your score is below zero, you'd rather not go on the vacation at all. All three of you must agree to the vacation, or you're all staying home. The total points you earn correspond directly to your bonus on Prolific.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to stay home instead of going on vacation.",
+      "RP": 0,
+      "scoresheet": {
+        "Budget_Hotel": [
+          { "option": "Include", "score": -0.47, "reason": "Reduces trip quality" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Hiking": [
+          { "option": "Include", "score": 1.15, "reason": "Adventurous, active experience" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Sleep_Early_at_Night": [
+          { "option": "Include", "score": -0.15, "reason": "Wants to do several late night activities" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Packed_Lunches": [
+          { "option": "Include", "score": -1.07, "reason": "Wants to eat restaurant-quality food" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Michelin_Star_Dinner": [
+          { "option": "Include", "score": 0.84, "reason": "Greatly improves trip experience" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Multiple_Day_Activities": [
+          { "option": "Include", "score": 0.10, "reason": "Increases variety of experiences" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Short_Layover": [
+          { "option": "Include", "score": 1.39, "reason": "Frees up more activity time in destination" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Premium_Flight": [
+          { "option": "Include", "score": 0.00, "reason": "Provides added comfort but not significantly" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ]
+      }
+    },
+    {
+      "role_name": "Party B - HARD",
+      "narrative": "You're going on a vacation with two friends and need to agree on some trip details. You're adventurous and aren't on a tight budget, so you want to stay active and have quality experiences. At the same time, you prefer a relaxed schedule, since a good vacation for you means relaxation and getting many quality experiences over cost-savings. You also know your friends differ: some may care about saving money or may want to travel at a faster pace. You might need to make compromises to find a plan everyone enjoys.\n\nBelow are your preferences for each possible vacation detail. Higher points mean greater satisfaction. If your total score is above zero, then it's a plan you prefer to the option of staying home. If your score is below zero, you'd rather not go on the vacation at all. All three of you must agree to the vacation, or you're all staying home. The total points you earn correspond directly to your bonus on Prolific.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to stay home instead of going on vacation.",
+      "RP": 0,
+      "scoresheet": {
+        "Budget_Hotel": [
+          { "option": "Include", "score": -2.18, "reason": "Reduces trip quality" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Hiking": [
+          { "option": "Include", "score": 1.82, "reason": "Adventurous, active experience" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Sleep_Early_at_Night": [
+          { "option": "Include", "score": -1.34, "reason": "Wants to do several late night activities" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Packed_Lunches": [
+          { "option": "Include", "score": -1.29, "reason": "Wants to eat restaurant-quality food" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Michelin_Star_Dinner": [
+          { "option": "Include", "score": 0.20, "reason": "Slightly improves trip experience" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Multiple_Day_Activities": [
+          { "option": "Include", "score": -1.64, "reason": "Increases variety of experiences" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Short_Layover": [
+          { "option": "Include", "score": -1.61, "reason": "More time in destination but is very risky" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Premium_Flight": [
+          { "option": "Include", "score": 2.02, "reason": "Provides added significant added comfort" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ]
+      }
+    },
+    {
+      "role_name": "Party C - EASY",
+      "narrative": "You're going on a vacation with two friends and need to agree on some trip details. You're not adventurous and are on a tight budget, so you seek city and in-door comforts without spending much. At the same time, you are okay with a rushed pace, since a good vacation for you means getting many quality experiences at maximum value, even if it isn't stress-free. You also know your friends differ: some may not care about saving money and may want to travel at a relaxed pace. You might need to make compromises to find a plan everyone enjoys.\n\nBelow are your preferences for each possible vacation detail. Higher points mean greater satisfaction. If your total score is above zero, then it's a plan you prefer to the option of staying home. If your score is below zero, you'd rather not go on the vacation at all. All three of you must agree to the vacation, or you're all staying home. The total points you earn correspond directly to your bonus on Prolific.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to stay home instead of going on vacation.",
+      "RP": 0,
+      "scoresheet": {
+        "Budget_Hotel": [
+          { "option": "Include", "score": 0.11, "reason": "Saves money but a little far from activities" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Hiking": [
+          { "option": "Include", "score": -1.60, "reason": "Opposite of city and in-door comforts" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Sleep_Early_at_Night": [
+          { "option": "Include", "score": 0.04, "reason": "Saves a little money; reduces activities" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Packed_Lunches": [
+          { "option": "Include", "score": 0.94, "reason": "Saves a little money" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Michelin_Star_Dinner": [
+          { "option": "Include", "score": -1.27, "reason": "Quite costly for you" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Multiple_Day_Activities": [
+          { "option": "Include", "score": 0.94, "reason": "Increases variety of experiences" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Short_Layover": [
+          { "option": "Include", "score": 1.40, "reason": "Frees up more activity time in destination" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Premium_Flight": [
+          { "option": "Include", "score": -1.97, "reason": "Extremely costly" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ]
+      }
+    },
+    {
+      "role_name": "Party C - HARD",
+      "narrative": "You're going on a vacation with two friends and need to agree on some trip details. You're not adventurous and are on a tight budget, so you seek city and in-door comforts without spending much. At the same time, you are okay with a rushed pace, since a good vacation for you means getting many quality experiences at maximum value, even if it isn't stress-free. You also know your friends differ: some may not care about saving money and may want to travel at a relaxed pace. You might need to make compromises to find a plan everyone enjoys.\n\nBelow are your preferences for each possible vacation detail. Higher points mean greater satisfaction. If your total score is above zero, then it's a plan you prefer to the option of staying home. If your score is below zero, you'd rather not go on the vacation at all. All three of you must agree to the vacation, or you're all staying home. The total points you earn correspond directly to your bonus on Prolific.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to stay home instead of going on vacation.",
+      "RP": 0,
+      "scoresheet": {
+        "Budget_Hotel": [
+          { "option": "Include", "score": 2.13, "reason": "Saves a lot of money" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Hiking": [
+          { "option": "Include", "score": -2.37, "reason": "Opposite of city and in-door comforts" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Sleep_Early_at_Night": [
+          { "option": "Include", "score": 2.67, "reason": "Saves a little money; More relaxation" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Packed_Lunches": [
+          { "option": "Include", "score": 1.49, "reason": "Saves a little money" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Michelin_Star_Dinner": [
+          { "option": "Include", "score": -0.47, "reason": "Quite costly for you" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Multiple_Day_Activities": [
+          { "option": "Include", "score": 1.86, "reason": "Increases variety of experiences" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Short_Layover": [
+          { "option": "Include", "score": 0.98, "reason": "Frees up more activity time in destination" },
+          { "option": "Exclude", "score": 0, "reason": "" }
+        ],
+        "Premium_Flight": [
+          { "option": "Include", "score": -0.17, "reason": "A little costly (your job gets you a discount)" },
+          { "option": "Exclude", "score": 0, "reason": "" }
         ]
       }
     }

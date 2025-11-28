@@ -36,7 +36,7 @@ export function Profile() {
             onClick={handleSkipStage}
             className="text-white bg-red-600 px-4 py-0 text-base font-medium rounded hover:bg-red-700 transition-colors border border-red-700"
           >
-            DEV: Skip Stage
+            skp
           </button>
         )}
       </div>
