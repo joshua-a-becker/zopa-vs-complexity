@@ -17,7 +17,7 @@ apt install caddy
 
 # Create Caddyfile
 cat > /etc/caddy/Caddyfile << 'EOF'
-platform.negotiation.education {
+challenge.negotiation.education {
     reverse_proxy localhost:3000
 }
 EOF
@@ -26,6 +26,3 @@ EOF
 systemctl reload caddy
 systemctl enable caddy
 
-echo "Caddy setup completed!"
-echo "Your site will be available at: https://research.negotiation.education"
-echo "Caddy will automatically get SSL certificates from Let's Encrypt"

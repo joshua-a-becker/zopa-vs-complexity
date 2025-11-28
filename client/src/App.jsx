@@ -4,7 +4,7 @@ import { EmpiricaContext } from "@empirica/core/player/classic/react";
 import { EmpiricaMenu, EmpiricaParticipant } from "@empirica/core/player/react";
 import React, { useState, createContext, useEffect, useRef, useMemo, useCallback } from "react";
 import { Game } from "./Game";
-import { ExitSurvey } from "./intro-exit/ExitSurvey";
+import { CustomLobby } from "./intro-exit/CustomLobby";
 import { DisplayNameEntry } from "./intro-exit/DisplayNameEntry.jsx";
 import { AutoPlayerIdForm } from "./intro-exit/AutoPlayerIdForm.jsx";
 import CustomConsent from './intro-exit/CustomConsent.jsx';
@@ -41,17 +41,37 @@ function generateParticipantKey() {
 
 export default function App() {
   const urlParams = new URLSearchParams(window.location.search);
-  const playerKey = urlParams.get("participantKey") || "";
 
-  // If no participantKey, generate one and redirect
-  useEffect(() => {
-    if (!playerKey) {
-      const newKey = generateParticipantKey();
-      urlParams.set("participantKey", newKey);
-      const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-      window.location.replace(newUrl);
-    }
-  }, [playerKey, urlParams]);
+  // Generate random participantKey if missing and devKey is "oandi"
+  let playerKey = urlParams.get("participantKey") || "";
+  const devKey = urlParams.get("devKey") || "";
+
+  console.log(devKey)
+  if (!playerKey && devKey === "oandi") {
+    // Generate 15 digit random alphanumeric string
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    playerKey = Array.from({ length: 15 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    console.log("Generated random participantKey:", playerKey);
+
+    // Add the generated participantKey to the URL
+    urlParams.set("participantKey", playerKey);
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.replaceState({}, "", newUrl);
+  }
+
+  // If still no participantKey, show invalid URL page
+  if (!playerKey) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+          <h1 className="text-3xl font-bold text-red-600 mb-4">Invalid URL</h1>
+          <p className="text-gray-700 mb-2">
+            We're sorry, you have reached this page via an invalid URL.  Please contact the study administrator for more information.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
 
   const { protocol, host } = window.location;
@@ -892,6 +912,7 @@ export default function App() {
           <EmpiricaMenu position="bottom-left" />
           <div>
             <EmpiricaContext playerCreate={AutoPlayerIdForm} finished={Finished}
+             lobby={CustomLobby}
             introSteps={introSteps} exitSteps={exitSteps}  disableConsent={true} >
               <Game />
             </EmpiricaContext>
