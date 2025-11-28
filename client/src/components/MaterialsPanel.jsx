@@ -114,6 +114,15 @@ export function MaterialsPanel({
     }
   };
 
+  // Handle modifying a rejected proposal
+  const handleModifyProposal = (proposalOptions) => {
+    // Set the calculator checkboxes to match the proposal
+    setSelectedOptions(proposalOptions);
+
+    // Switch to calculator tab
+    handleTabChange("calculator");
+  };
+
   // Get proposals for display
   const proposals = stage.get("proposals") || [];
   const pendingProposal = proposals.find(p => p.status === "pending");
@@ -440,6 +449,23 @@ export function MaterialsPanel({
                     // Count yes votes
                     const yesVotes = Object.values(proposal.votes).filter(v => v === "accept").length;
 
+                    // Calculate acceptance percentage for color coding
+                    const acceptancePercentage = (yesVotes / playerCount) * 100;
+
+                    // Determine color based on percentage: red (0%) -> yellow (50%) -> green (100%)
+                    let voteColor;
+                    if (acceptancePercentage === 0) {
+                      voteColor = "text-red-400 opacity-95";
+                    } else if (acceptancePercentage < 50) {
+                      voteColor = "text-orange-500 opacity-95";
+                    } else if (acceptancePercentage === 50) {
+                      voteColor = "text-yellow-600";
+                    } else if (acceptancePercentage < 100) {
+                      voteColor = "text-lime-600";
+                    } else {
+                      voteColor = "text-green-600";
+                    }
+
                     return (
                       <div key={proposal.id} className="bg-gray-50 rounded p-4 border border-gray-200">
                         <div className="flex items-start justify-between gap-4 mb-3">
@@ -462,7 +488,7 @@ export function MaterialsPanel({
 
                           {/* Vote count and points - more prominent */}
                           <div className="text-center bg-white rounded p-3 border border-gray-300 min-w-[120px]">
-                            <p className="text-3xl font-bold text-red-600 mb-1">
+                            <p className={`text-3xl font-bold ${voteColor} mb-1`}>
                               {yesVotes}/{playerCount}
                             </p>
                             <p className="text-xs text-gray-500 uppercase font-semibold mb-2">
@@ -475,10 +501,7 @@ export function MaterialsPanel({
                         </div>
                         <button
                           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
-                          onClick={() => {
-                            // TODO: Implement modify functionality
-                            alert("Modify functionality will be implemented later");
-                          }}
+                          onClick={() => handleModifyProposal(proposal.options)}
                         >
                           Modify
                         </button>
