@@ -195,7 +195,7 @@ export default function App() {
         if (a?.track) tracks.push(a.track);
 
         if (!tracks.length) {
-          console.log(`[Daily] No tracks available for ${p.userData?.displayName || p.session_id}, skipping stream update`);
+          // console.log(`[Daily] No tracks available for ${p.userData?.displayName || p.session_id}, skipping stream update`);
           return;
         }
 
@@ -306,10 +306,10 @@ export default function App() {
           const participantNames = Object.entries(currentParticipants)
             .filter(([id]) => id !== "local")
             .map(([id, p]) => p.userData?.displayName || id);
-          console.log(`[Daily] Fast polling - found ${Object.keys(currentParticipants).length - 1} remote participants:`, participantNames);
+          // console.log(`[Daily] Fast polling - found ${Object.keys(currentParticipants).length - 1} remote participants:`, participantNames);
           Object.entries(currentParticipants).forEach(([id, p]) => {
             if (id !== "local") {
-              console.log(`[Daily] Checking participant ${p.userData?.displayName || id}`);
+              // console.log(`[Daily] Checking participant ${p.userData?.displayName || id}`);
               const hasPlayableVideo = p.tracks?.video?.state === "playable";
               const hasPlayableAudio = p.tracks?.audio?.state === "playable";
               const hasVideoTrack = p.tracks?.video?.track;
@@ -350,20 +350,20 @@ export default function App() {
             const currentParticipants = callObject.participants();
             const currentRemoteIds = Object.keys(currentParticipants).filter(id => id !== "local");
 
-            console.log(`[Daily] Slow polling - checking ${currentRemoteIds.length} participants`);
+            // console.log(`[Daily] Slow polling - checking ${currentRemoteIds.length} participants`);
 
             // Add new/rejoined participants
             Object.entries(currentParticipants).forEach(([id, p]) => {
               if (id !== "local") {
-                console.log(`[Daily Slow Poll] Participant ${p.userData?.displayName || id}:`, {
-                  sessionId: id,
-                  videoState: p.tracks?.video?.state,
-                  audioState: p.tracks?.audio?.state,
-                  hasVideoTrack: !!p.tracks?.video?.track,
-                  hasAudioTrack: !!p.tracks?.audio?.track,
-                  videoTrackId: p.tracks?.video?.track?.id,
-                  audioTrackId: p.tracks?.audio?.track?.id,
-                });
+                // console.log(`[Daily Slow Poll] Participant ${p.userData?.displayName || id}:`, {
+                //   sessionId: id,
+                //   videoState: p.tracks?.video?.state,
+                //   audioState: p.tracks?.audio?.state,
+                //   hasVideoTrack: !!p.tracks?.video?.track,
+                //   hasAudioTrack: !!p.tracks?.audio?.track,
+                //   videoTrackId: p.tracks?.video?.track?.id,
+                //   audioTrackId: p.tracks?.audio?.track?.id,
+                // });
                 const hasPlayableVideo = p.tracks?.video?.state === "playable";
                 const hasPlayableAudio = p.tracks?.audio?.state === "playable";
                 const hasVideoTrack = p.tracks?.video?.track;
@@ -514,11 +514,11 @@ export default function App() {
       const handleTrackStarted = (ev) => {
         // console.log("handleTrackStarted fired!", ev);
         const { participant, track } = ev;
-        console.log(`[Daily] Track started for ${participant.userData?.displayName || participant.session_id}:`, {
-          trackKind: track.kind,
-          isLocal: participant.local,
-          sessionId: participant.session_id,
-        });
+        // console.log(`[Daily] Track started for ${participant.userData?.displayName || participant.session_id}:`, {
+        //   trackKind: track.kind,
+        //   isLocal: participant.local,
+        //   sessionId: participant.session_id,
+        // });
 
         if (participant.local) {
           if (track.kind === "video") {
@@ -884,8 +884,6 @@ export default function App() {
     setIsVideoEnabled,
     setIsVideoChatMounted,
   }), [mediaStream, callState, registerCallData, refreshRemoteParticipant, isAudioEnabled, isVideoEnabled]);
-
-  console.log("here")
 
   return (
     <EmpiricaParticipant url={url} ns={playerKey} modeFunc={EmpiricaClassic}>

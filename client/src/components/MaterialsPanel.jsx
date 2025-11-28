@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import Markdown from "react-markdown";
+import { usePlayer, useStage, useGame } from "@empirica/core/player/classic/react";
 
 export function MaterialsPanel({
   roleName,
@@ -8,6 +9,10 @@ export function MaterialsPanel({
   roleBATNA,
   roleRP
 }) {
+  const player = usePlayer();
+  const stage = useStage();
+  const game = useGame();
+  const { playerCount } = game.get("treatment");
   const [activeTab, setActiveTab] = useState("narrative");
   const [selectedOptions, setSelectedOptions] = useState({});
   const [showTopFade, setShowTopFade] = useState(false);
@@ -30,6 +35,89 @@ export function MaterialsPanel({
       contentScrollRef.current.scrollTop = 0;
     }
   };
+
+  // Calculate current total points
+  const calculateTotalPoints = () => {
+    return Object.entries(roleScoresheet).reduce((sum, [category]) => {
+      const optionIdx = selectedOptions[category] ?? 1; // Default to exclude (index 1)
+      return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+    }, 0);
+  };
+
+  // Handle proposal submission
+  const handleSubmitProposal = () => {
+    const totalPoints = calculateTotalPoints();
+    const proposalId = `${Date.now()}-${player.id}`;
+
+    // Get current proposals or initialize empty array
+    const currentProposals = stage.get("proposals") || [];
+
+    // Create new proposal
+    const newProposal = {
+      id: proposalId,
+      submittedBy: player.id,
+      submittedByName: player.get("name") || player.id,
+      timestamp: Date.now(),
+      options: { ...selectedOptions },
+      votes: {}, // Will store playerId: "accept" | "reject"
+      status: "pending" // "pending" | "accepted" | "rejected"
+    };
+
+    // Add to proposals array
+    stage.set("proposals", [...currentProposals, newProposal]);
+
+    // Switch to Proposal tab
+    handleTabChange("proposal");
+  };
+
+  // Handle vote on proposal
+  const handleVote = (proposalId, vote) => {
+    const currentProposals = stage.get("proposals") || [];
+    const proposalIndex = currentProposals.findIndex(p => p.id === proposalId);
+
+    if (proposalIndex === -1) return;
+
+    const updatedProposals = [...currentProposals];
+    const proposal = { ...updatedProposals[proposalIndex] };
+
+    // Update vote
+    proposal.votes = {
+      ...proposal.votes,
+      [player.id]: vote
+    };
+
+    // Check if all players have voted
+    const voteCount = Object.keys(proposal.votes).length;
+    const allVoted = voteCount === playerCount;
+
+    if (allVoted) {
+      // Check if all votes are "accept"
+      const allAccepted = Object.values(proposal.votes).every(v => v === "accept");
+
+      if (allAccepted) {
+        proposal.status = "accepted";
+        updatedProposals[proposalIndex] = proposal;
+        stage.set("proposals", updatedProposals);
+
+        // End the stage for this player
+        player.stage.set("submit", true);
+      } else {
+        // At least one rejection
+        proposal.status = "rejected";
+        updatedProposals[proposalIndex] = proposal;
+        stage.set("proposals", updatedProposals);
+      }
+    } else {
+      // Still waiting for votes
+      updatedProposals[proposalIndex] = proposal;
+      stage.set("proposals", updatedProposals);
+    }
+  };
+
+  // Get proposals for display
+  const proposals = stage.get("proposals") || [];
+  const pendingProposal = proposals.find(p => p.status === "pending");
+  const rejectedProposals = proposals.filter(p => p.status === "rejected");
 
   return (
     <div className="w-[70%] bg-gray-300 p-6 flex flex-col relative">
@@ -54,6 +142,19 @@ export function MaterialsPanel({
           }`}
         >
           Calculator
+        </button>
+        <button
+          onClick={() => handleTabChange("proposal")}
+          className={`px-4 py-2 rounded font-medium transition-all border ${
+            activeTab === "proposal"
+              ? "bg-white text-blue-600 border-blue-400 shadow"
+              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+          }`}
+        >
+          Proposal
+          {pendingProposal && (
+            <span className="ml-2 inline-flex items-center justify-center w-2 h-2 bg-red-500 rounded-full"></span>
+          )}
         </button>
       </div>
 
@@ -168,12 +269,25 @@ export function MaterialsPanel({
                     </div>
                   )}
                 </div>
-                <button
-                  onClick={() => setSelectedOptions({})}
-                  className="mt-6 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium"
-                >
-                  Reset All
-                </button>
+                <div className="mt-6 flex flex-col gap-2">
+                  <button
+                    onClick={handleSubmitProposal}
+                    disabled={pendingProposal !== undefined}
+                    className={`px-4 py-2 rounded font-semibold transition-colors text-sm ${
+                      pendingProposal
+                        ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                        : "bg-green-600 text-white hover:bg-green-700"
+                    }`}
+                  >
+                    {pendingProposal ? "Proposal Pending" : "Submit Proposal"}
+                  </button>
+                  <button
+                    onClick={() => setSelectedOptions({})}
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium"
+                  >
+                    Reset All
+                  </button>
+                </div>
               </div>
 
               {/* Right column: Checkboxes */}
@@ -214,6 +328,166 @@ export function MaterialsPanel({
                 })}
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === "proposal" && (
+          <div className="space-y-4">
+            {/* Pending Proposal */}
+            {pendingProposal ? (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Current Proposal
+                  </h3>
+                  <span className="text-sm text-gray-500">
+                    by {pendingProposal.submittedByName}
+                  </span>
+                </div>
+
+                {/* Calculate points for this player */}
+                {(() => {
+                  const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                    const optionIdx = pendingProposal.options[category] ?? 1;
+                    return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+                  }, 0);
+
+                  return (
+                    <div className="mb-6">
+                      <div className="text-center mb-4">
+                        <p className="text-sm text-gray-600 mb-1">Value to you:</p>
+                        <p className="text-4xl font-bold text-blue-600">
+                          {proposalPoints.toFixed(2)} points
+                        </p>
+                        {roleRP !== undefined && (
+                          <p className={`text-sm font-semibold mt-1 ${
+                            proposalPoints >= roleRP ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {proposalPoints >= roleRP ? '✓ Beats your BATNA' : '✗ Below your BATNA'}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Show proposal details */}
+                      <div className="bg-blue-50 rounded p-4 mb-4">
+                        <h4 className="text-sm font-bold text-gray-700 mb-2">Proposal Details:</h4>
+                        <div className="space-y-1">
+                          {Object.entries(roleScoresheet).map(([category]) => {
+                            const optionIdx = pendingProposal.options[category] ?? 1;
+                            const isIncluded = optionIdx === 0;
+                            return (
+                              <div key={category} className="flex items-center text-sm">
+                                <span className={`w-4 h-4 mr-2 rounded ${isIncluded ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                                <span className="text-gray-700">{category.replace(/_/g, " ")}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Vote buttons or status */}
+                      {pendingProposal.votes[player.id] ? (
+                        <div className="text-center p-4 bg-gray-100 rounded">
+                          <p className="text-sm text-gray-600">
+                            You voted: <span className="font-bold">
+                              {pendingProposal.votes[player.id] === "accept" ? "✓ Accept" : "✗ Reject"}
+                            </span>
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Waiting for other players... ({Object.keys(pendingProposal.votes).length}/{playerCount} voted)
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => handleVote(pendingProposal.id, "accept")}
+                            className="flex-1 px-4 py-3 bg-green-600 text-white rounded hover:bg-green-700 transition-colors font-semibold"
+                          >
+                            ✓ Accept
+                          </button>
+                          <button
+                            onClick={() => handleVote(pendingProposal.id, "reject")}
+                            className="flex-1 px-4 py-3 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-semibold"
+                          >
+                            ✗ Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <p className="text-gray-500">No pending proposal. Submit a proposal from the Calculator tab.</p>
+              </div>
+            )}
+
+            {/* Rejected Proposals History */}
+            {rejectedProposals.length > 0 && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  Rejected Proposals
+                </h3>
+                <div className="space-y-3">
+                  {rejectedProposals.map((proposal) => {
+                    // Calculate points for this player
+                    const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                      const optionIdx = proposal.options[category] ?? 1;
+                      return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+                    }, 0);
+
+                    // Count yes votes
+                    const yesVotes = Object.values(proposal.votes).filter(v => v === "accept").length;
+
+                    return (
+                      <div key={proposal.id} className="bg-gray-50 rounded p-4 border border-gray-200">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          {/* Proposal items list */}
+                          <div className="flex-1">
+                            <h5 className="text-xs font-bold text-gray-600 uppercase mb-2">Proposal Items:</h5>
+                            <div className="space-y-1">
+                              {Object.entries(roleScoresheet).map(([category]) => {
+                                const optionIdx = proposal.options[category] ?? 1;
+                                const isIncluded = optionIdx === 0;
+                                return (
+                                  <div key={category} className="flex items-center text-xs">
+                                    <span className={`w-3 h-3 mr-2 rounded ${isIncluded ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                                    <span className="text-gray-700">{category.replace(/_/g, " ")}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Vote count and points - more prominent */}
+                          <div className="text-center bg-white rounded p-3 border border-gray-300 min-w-[120px]">
+                            <p className="text-3xl font-bold text-red-600 mb-1">
+                              {yesVotes}/{playerCount}
+                            </p>
+                            <p className="text-xs text-gray-500 uppercase font-semibold mb-2">
+                              Accepted
+                            </p>
+                            <p className="text-lg font-bold text-gray-700">
+                              {proposalPoints.toFixed(2)} pts
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                          onClick={() => {
+                            // TODO: Implement modify functionality
+                            alert("Modify functionality will be implemented later");
+                          }}
+                        >
+                          Modify
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
