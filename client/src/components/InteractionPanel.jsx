@@ -3,7 +3,7 @@ import { VideoChat } from "./VideoChat";
 
 export function InteractionPanel({ profileComponent }) {
   return (
-    <div className="w-[30%] flex flex-col bg-gray-300 p-6 pt-6 pb-6">
+    <div className="w-full h-full flex flex-col bg-gray-300 p-6 pt-6 pb-6">
       {/* Floating white panel with profile and video */}
       <div className="flex-1 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
         {/* Profile bar at top */}

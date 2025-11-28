@@ -888,9 +888,9 @@ export default function App() {
   return (
     <EmpiricaParticipant url={url} ns={playerKey} modeFunc={EmpiricaClassic}>
       <DailyCallContext.Provider value={dailyCallContextValue}>
-        <div className="h-screen relative">
+        <div className="relative">
           <EmpiricaMenu position="bottom-left" />
-          <div className="h-full overflow-auto">
+          <div>
             <EmpiricaContext playerCreate={AutoPlayerIdForm} finished={Finished}
             introSteps={introSteps} exitSteps={exitSteps}  disableConsent={true} >
               <Game />

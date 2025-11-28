@@ -20,15 +20,19 @@ export function VideoNegotiate({ profileComponent }) {
   }
 
   return (
-    <div className="w-full h-full flex">
-      <MaterialsPanel
-        roleName={roleName}
-        roleNarrative={roleNarrative}
-        roleScoresheet={roleScoresheet}
-        roleBATNA={roleBATNA}
-        roleRP={roleRP}
-      />
-      <InteractionPanel profileComponent={profileComponent} />
+    <div className="w-full min-h-screen flex">
+      <div className="w-[70%]">
+        <MaterialsPanel
+          roleName={roleName}
+          roleNarrative={roleNarrative}
+          roleScoresheet={roleScoresheet}
+          roleBATNA={roleBATNA}
+          roleRP={roleRP}
+        />
+      </div>
+      <div className="w-[30%] fixed right-0 top-0 h-screen">
+        <InteractionPanel profileComponent={profileComponent} />
+      </div>
     </div>
   );
 }

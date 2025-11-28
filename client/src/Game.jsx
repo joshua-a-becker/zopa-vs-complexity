@@ -9,8 +9,8 @@ export function Game() {
   const { playerCount } = game.get("treatment");
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <div className="flex-1 flex items-center justify-center overflow-hidden">
+    <div className="w-full flex flex-col">
+      <div className="w-full">
         <Stage profileComponent={<Profile />} />
       </div>
     </div>

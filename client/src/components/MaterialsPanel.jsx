@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import Markdown from "react-markdown";
 import { usePlayer, useStage, useGame } from "@empirica/core/player/classic/react";
 
@@ -15,25 +15,12 @@ export function MaterialsPanel({
   const { playerCount } = game.get("treatment");
   const [activeTab, setActiveTab] = useState("narrative");
   const [selectedOptions, setSelectedOptions] = useState({});
-  const [showTopFade, setShowTopFade] = useState(false);
-  const [showBottomFade, setShowBottomFade] = useState(false);
-  const contentScrollRef = useRef(null);
 
-  // Handle scroll to show/hide fades
-  const handleContentScroll = () => {
-    if (contentScrollRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = contentScrollRef.current;
-      setShowTopFade(scrollTop > 10);
-      setShowBottomFade(scrollTop + clientHeight < scrollHeight - 10);
-    }
-  };
-
-  // Handle tab change and scroll to top
+  // Handle tab change
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (contentScrollRef.current) {
-      contentScrollRef.current.scrollTop = 0;
-    }
+    // Scroll to top of page
+    window.scrollTo(0, 0);
   };
 
   // Calculate current total points
@@ -129,9 +116,9 @@ export function MaterialsPanel({
   const rejectedProposals = proposals.filter(p => p.status === "rejected");
 
   return (
-    <div className="w-[70%] bg-gray-300 p-6 flex flex-col relative">
+    <div className="w-full bg-gray-300 p-6 flex flex-col relative min-h-screen">
       {/* Tab Navigation - cleaner style with all-around borders */}
-      <div className="flex gap-2 mb-2 flex-shrink-0">
+      <div className="flex gap-2 mb-2">
         <button
           onClick={() => handleTabChange("narrative")}
           className={`px-4 py-2 rounded font-medium transition-all border ${
@@ -167,20 +154,8 @@ export function MaterialsPanel({
         </button>
       </div>
 
-      {/* Fade overlays */}
-      {showTopFade && (
-        <div className="absolute left-6 right-6 top-[4.5rem] h-8 bg-gradient-to-b from-gray-100 to-transparent pointer-events-none z-10"></div>
-      )}
-      {showBottomFade && (
-        <div className="absolute left-6 right-6 bottom-6 h-8 bg-gradient-to-t from-gray-100 to-transparent pointer-events-none z-10"></div>
-      )}
-
-      {/* Scrollable Tab Content */}
-      <div
-        ref={contentScrollRef}
-        onScroll={handleContentScroll}
-        className="flex-1 overflow-y-auto"
-      >
+      {/* Tab Content */}
+      <div className="flex-1">
         {activeTab === "narrative" && (
           <div className="space-y-4">
             <div className="bg-white rounded-lg shadow-md p-6">
