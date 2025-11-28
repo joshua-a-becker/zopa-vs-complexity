@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Markdown from "react-markdown";
-import { usePlayer, useStage, useGame } from "@empirica/core/player/classic/react";
+import { usePlayer, useStage, useRound, useGame } from "@empirica/core/player/classic/react";
 
 export function MaterialsPanel({
   roleName,
@@ -11,10 +11,89 @@ export function MaterialsPanel({
 }) {
   const player = usePlayer();
   const stage = useStage();
+  const round = useRound();
   const game = useGame();
   const { playerCount } = game.get("treatment");
   const [activeTab, setActiveTab] = useState("narrative");
   const [selectedOptions, setSelectedOptions] = useState({});
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+  const [showNegativePointsModal, setShowNegativePointsModal] = useState(false);
+
+  // Get proposal history from round state (single source of truth)
+  const history = round.get("proposalHistory") || [];
+  const currentProposal = history.length > 0 ? history[history.length - 1] : null;
+
+  // Compute proposal state from vote counts (derived state, no useEffect needed)
+  let proposalState = "none"; // "none" | "collecting-initial" | "collecting-final" | "complete"
+
+  if (currentProposal) {
+    const initialVoteCount = Object.keys(currentProposal.initialVotes).length;
+
+    if (initialVoteCount < playerCount) {
+      proposalState = "collecting-initial";
+    } else {
+      const rejectCount = Object.values(currentProposal.initialVotes).filter(v => v === "reject").length;
+
+      if (rejectCount >= 1) {
+        proposalState = "complete"; // Failed at initial stage
+      } else {
+        // All accepted, check final votes
+        const finalVoteCount = Object.keys(currentProposal.finalVotes).length;
+
+        if (finalVoteCount < playerCount) {
+          proposalState = "collecting-final";
+        } else {
+          proposalState = "complete"; // Either finalized or failed at ratification
+        }
+      }
+    }
+  }
+
+  // Determine what to show
+  const pendingProposal = proposalState === "collecting-initial" ? currentProposal : null;
+
+  // Determine if we should show the finalize modal (persist even after voting completes)
+  let acceptedPendingProposal = null;
+  if (currentProposal) {
+    const allInitialAccept = Object.keys(currentProposal.initialVotes).length === playerCount &&
+                            Object.values(currentProposal.initialVotes).every(v => v === "accept");
+
+    if (allInitialAccept) {
+      const finalVoteCount = Object.keys(currentProposal.finalVotes).length;
+      const allFinalize = finalVoteCount === playerCount &&
+                         Object.values(currentProposal.finalVotes).every(v => v === "finalize");
+      const hasPlayerDismissed = currentProposal.modalDismissed?.[player.id];
+
+      // Show modal if:
+      // - Still collecting final votes, OR
+      // - Voting complete but not unanimous finalize AND player hasn't dismissed
+      if (finalVoteCount < playerCount || (!allFinalize && !hasPlayerDismissed)) {
+        acceptedPendingProposal = currentProposal;
+      }
+    }
+  }
+
+  const allHistoryProposals = proposalState === "none" || proposalState === "complete" ? history : history.slice(0, -1);
+
+  // Auto-show finalize modal when acceptedPendingProposal exists and player hasn't voted
+  useEffect(() => {
+    if (acceptedPendingProposal && !acceptedPendingProposal.finalVotes[player.id] && !showFinalizeModal) {
+      setShowFinalizeModal(true);
+    }
+  }, [acceptedPendingProposal?.id, player.id, showFinalizeModal]);
+
+  // Check if everyone voted to finalize and submit for this player
+  useEffect(() => {
+    if (currentProposal) {
+      const finalVoteCount = Object.keys(currentProposal.finalVotes).length;
+      if (finalVoteCount === playerCount) {
+        const allFinalize = Object.values(currentProposal.finalVotes).every(v => v === "finalize");
+        if (allFinalize) {
+          player.stage.set("submit", true);
+        }
+      }
+    }
+  }, [currentProposal?.finalVotes, playerCount, player]);
 
   // Handle tab change
   const handleTabChange = (tab) => {
@@ -33,72 +112,49 @@ export function MaterialsPanel({
 
   // Handle proposal submission
   const handleSubmitProposal = () => {
-    const totalPoints = calculateTotalPoints();
-    const proposalId = `${Date.now()}-${player.id}`;
-
-    // Get current proposals or initialize empty array
-    const currentProposals = stage.get("proposals") || [];
-
-    // Create new proposal
     const newProposal = {
-      id: proposalId,
+      id: `${Date.now()}-${player.id}`,
       submittedBy: player.id,
       submittedByName: player.get("name") || player.id,
       timestamp: Date.now(),
       options: { ...selectedOptions },
-      votes: {}, // Will store playerId: "accept" | "reject"
-      status: "pending" // "pending" | "accepted" | "rejected"
+      initialVotes: {},
+      finalVotes: {},
+      modalDismissed: {}
     };
-
-    // Add to proposals array
-    stage.set("proposals", [...currentProposals, newProposal]);
+    round.set("proposalHistory", [...history, newProposal]);
 
     // Switch to Proposal tab
     handleTabChange("proposal");
   };
 
-  // Handle vote on proposal
+  // Handle vote on proposal (initial votes)
   const handleVote = (proposalId, vote) => {
-    const currentProposals = stage.get("proposals") || [];
-    const proposalIndex = currentProposals.findIndex(p => p.id === proposalId);
+    // If voting "accept", check if proposal has negative points for this player
+    if (vote === "accept") {
+      const proposal = history.find(p => p.id === proposalId);
 
-    if (proposalIndex === -1) return;
+      if (proposal) {
+        const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
+          const optionIdx = proposal.options[category] ?? 1;
+          return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+        }, 0);
 
-    const updatedProposals = [...currentProposals];
-    const proposal = { ...updatedProposals[proposalIndex] };
-
-    // Update vote
-    proposal.votes = {
-      ...proposal.votes,
-      [player.id]: vote
-    };
-
-    // Check if all players have voted
-    const voteCount = Object.keys(proposal.votes).length;
-    const allVoted = voteCount === playerCount;
-
-    if (allVoted) {
-      // Check if all votes are "accept"
-      const allAccepted = Object.values(proposal.votes).every(v => v === "accept");
-
-      if (allAccepted) {
-        proposal.status = "accepted";
-        updatedProposals[proposalIndex] = proposal;
-        stage.set("proposals", updatedProposals);
-
-        // End the stage for this player
-        player.stage.set("submit", true);
-      } else {
-        // At least one rejection
-        proposal.status = "rejected";
-        updatedProposals[proposalIndex] = proposal;
-        stage.set("proposals", updatedProposals);
+        if (proposalPoints < 0) {
+          setShowNegativePointsModal(true);
+          return;
+        }
       }
-    } else {
-      // Still waiting for votes
-      updatedProposals[proposalIndex] = proposal;
-      stage.set("proposals", updatedProposals);
     }
+
+    const updatedHistory = [...history];
+    const proposal = updatedHistory.find(p => p.id === proposalId);
+
+    if (!proposal) return;
+
+    // Update initial vote
+    proposal.initialVotes[player.id] = vote;
+    round.set("proposalHistory", updatedHistory);
   };
 
   // Handle modifying a rejected proposal
@@ -110,10 +166,35 @@ export function MaterialsPanel({
     handleTabChange("calculator");
   };
 
-  // Get proposals for display
-  const proposals = stage.get("proposals") || [];
-  const pendingProposal = proposals.find(p => p.status === "pending");
-  const rejectedProposals = proposals.filter(p => p.status === "rejected");
+  // Handle finalize decision (finalize or continue)
+  const handleFinalizeVote = (proposalId, decision) => {
+    const updatedHistory = [...history];
+    const proposal = updatedHistory.find(p => p.id === proposalId);
+
+    if (!proposal) return;
+
+    // Update final vote
+    proposal.finalVotes[player.id] = decision;
+
+    round.set("proposalHistory", updatedHistory);
+    // useEffect will handle stage submission if everyone votes to finalize
+  };
+
+  // Handle dismissing the finalize modal
+  const handleDismissModal = (proposalId) => {
+    const updatedHistory = [...history];
+    const proposal = updatedHistory.find(p => p.id === proposalId);
+
+    if (!proposal) return;
+
+    if (!proposal.modalDismissed) {
+      proposal.modalDismissed = {};
+    }
+    proposal.modalDismissed[player.id] = true;
+
+    round.set("proposalHistory", updatedHistory);
+    setShowFinalizeModal(false);
+  };
 
   return (
     <div className="w-full bg-gray-300 p-6 flex flex-col relative min-h-screen">
@@ -271,14 +352,14 @@ export function MaterialsPanel({
                   <div className="mt-6 flex flex-col gap-2 w-full">
                     <button
                       onClick={handleSubmitProposal}
-                      disabled={pendingProposal !== undefined}
+                      disabled={pendingProposal !== null}
                       className={`px-4 py-2 rounded font-semibold transition-colors text-sm ${
-                        pendingProposal
+                        pendingProposal !== null
                           ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                           : "bg-green-600 text-white hover:bg-green-700"
                       }`}
                     >
-                      {pendingProposal ? "Proposal Pending" : "Submit Proposal"}
+                      {pendingProposal !== null ? "Proposal Pending" : "Submit Proposal"}
                     </button>
                     <button
                       onClick={() => setSelectedOptions({})}
@@ -348,15 +429,15 @@ export function MaterialsPanel({
                       </div>
 
                       {/* Vote buttons or status */}
-                      {pendingProposal.votes[player.id] ? (
+                      {pendingProposal.initialVotes[player.id] ? (
                         <div className="text-center p-4 bg-gray-100 rounded">
                           <p className="text-sm text-gray-600">
                             You voted: <span className="font-bold">
-                              {pendingProposal.votes[player.id] === "accept" ? "✓ Accept" : "✗ Reject"}
+                              {pendingProposal.initialVotes[player.id] === "accept" ? "✓ Accept" : "✗ Reject"}
                             </span>
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            Waiting for other players... ({Object.keys(pendingProposal.votes).length}/{playerCount} voted)
+                            Waiting for other players... ({Object.keys(pendingProposal.initialVotes).length}/{playerCount} voted)
                           </p>
                         </div>
                       ) : (
@@ -381,26 +462,26 @@ export function MaterialsPanel({
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                <p className="text-gray-500">No pending proposal. Submit a proposal from the Calculator tab.</p>
+                <p className="text-gray-500">No pending proposal. Submit a proposal from the Scoring tab.</p>
               </div>
             )}
 
-            {/* Rejected Proposals History */}
-            {rejectedProposals.length > 0 && (
+            {/* Proposal History (Rejected + Accepted Pending) */}
+            {allHistoryProposals.length > 0 && (
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  Rejected Proposals
+                  Proposal History
                 </h3>
                 <div className="space-y-3">
-                  {rejectedProposals.map((proposal) => {
+                  {[...allHistoryProposals].reverse().map((proposal) => {
                     // Calculate points for this player
                     const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
                       const optionIdx = proposal.options[category] ?? 1;
                       return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
                     }, 0);
 
-                    // Count yes votes
-                    const yesVotes = Object.values(proposal.votes).filter(v => v === "accept").length;
+                    // Count yes votes (from initial votes)
+                    const yesVotes = Object.values(proposal.initialVotes).filter(v => v === "accept").length;
 
                     // Calculate acceptance percentage for color coding
                     const acceptancePercentage = (yesVotes / playerCount) * 100;
@@ -467,6 +548,133 @@ export function MaterialsPanel({
           </div>
         )}
       </div>
+
+      {/* Finalize Modal - Popup */}
+      {showFinalizeModal && acceptedPendingProposal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4">
+            {/* Calculate points for this player */}
+            {(() => {
+              const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                const optionIdx = acceptedPendingProposal.options[category] ?? 1;
+                return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+              }, 0);
+
+              const finalVoteCount = Object.keys(acceptedPendingProposal.finalVotes).length;
+              const hasVoted = !!acceptedPendingProposal.finalVotes?.[player.id];
+              const allVoted = finalVoteCount === playerCount;
+              const allFinalize = allVoted && Object.values(acceptedPendingProposal.finalVotes).every(v => v === "finalize");
+
+              // If player has voted, show waiting screen
+              if (hasVoted) {
+                return (
+                  <div>
+                    <div className="text-center mb-6">
+                      <div className="text-6xl mb-4">⏳</div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                        Waiting for other votes...
+                      </h3>
+                      <p className="text-lg text-gray-600 mb-4">
+                        {allVoted && !allFinalize ? (
+                          <span>Outcome: <span className="font-bold text-blue-700">Continue</span></span>
+                        ) : (
+                          <span>You voted: <span className="font-bold text-green-700">
+                            {acceptedPendingProposal.finalVotes[player.id] === "finalize" ? "Finalize" : "Continue"}
+                          </span></span>
+                        )}
+                      </p>
+                      <div className="text-center p-4 bg-gray-100 rounded">
+                        <p className="text-4xl font-bold text-blue-600 mb-2">
+                          {finalVoteCount}/{playerCount}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          players have voted
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Show close button if voting is complete but not unanimous */}
+                    {allVoted && !allFinalize && (
+                      <button
+                        onClick={() => handleDismissModal(acceptedPendingProposal.id)}
+                        className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+                      >
+                        Close
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
+              // If player hasn't voted, show decision screen
+              return (
+                <div>
+                  <div className="text-center mb-6">
+                    <h3 className="text-3xl font-bold text-green-700 mb-3">
+                      🎉 Congratulations!
+                    </h3>
+                    <p className="text-lg text-gray-700 mb-2">
+                      Everyone has accepted this proposal.
+                    </p>
+                    <p className="text-md text-gray-600">
+                      Would you like to finalize this deal, or keep discussing?
+                    </p>
+                  </div>
+
+                  <div className="text-center mb-6 p-4 bg-green-50 rounded">
+                    <p className="text-sm text-gray-600 mb-1">Your score with this proposal:</p>
+                    <p className="text-4xl font-bold text-green-600">
+                      {proposalPoints.toFixed(2)} points
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={() => {
+                        handleFinalizeVote(acceptedPendingProposal.id, "finalize");
+                      }}
+                      className="w-full px-6 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold text-lg"
+                    >
+                      Finalize Deal
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleFinalizeVote(acceptedPendingProposal.id, "continue");
+                      }}
+                      className="w-full px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold text-lg"
+                    >
+                      Keep Discussing
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Negative Points Warning Modal */}
+      {showNegativePointsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold text-red-600 mb-3">
+                Cannot Accept Deal
+              </h3>
+              <p className="text-lg text-gray-700">
+                You can't accept a deal with negative points.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowNegativePointsModal(false)}
+              className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
