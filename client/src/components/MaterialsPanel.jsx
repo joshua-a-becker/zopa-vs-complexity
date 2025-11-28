@@ -117,6 +117,9 @@ export function MaterialsPanel({
 
   return (
     <div className="w-full bg-gray-300 p-6 flex flex-col relative min-h-screen">
+      {/* Bottom fade overlay */}
+      <div className="fixed left-0 bottom-0 w-[70%] h-12 bg-gradient-to-t from-gray-300 to-transparent pointer-events-none z-10"></div>
+
       {/* Tab Navigation - cleaner style with all-around borders */}
       <div className="flex gap-2 mb-2">
         <button

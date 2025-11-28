@@ -1,3 +1,7 @@
+body {
+  background-color: #d1d5db; /* gray-300 */
+}
+
 @layer utilities {
   /* Chrome, Safari, Edge, Opera */
   input.number-arrows-none::-webkit-outer-spin-button,
@@ -5,7 +9,7 @@
     -webkit-appearance: none;
     margin: 0;
   }
-  
+
   /* Firefox */
   input.number-arrows-none[type="number"] {
     -moz-appearance: textfield;
