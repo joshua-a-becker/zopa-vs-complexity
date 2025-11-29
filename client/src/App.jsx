@@ -1,3 +1,4 @@
+import { NoGameExitStep } from "./intro-exit/NoGameExitStep.jsx";
 import Finished from "./intro-exit/Finished.jsx";
 import { EmpiricaClassic } from "@empirica/core/player/classic";
 import { EmpiricaContext } from "@empirica/core/player/classic/react";
@@ -132,7 +133,14 @@ export default function App() {
     return introSteps;
   }
 
-   function exitSteps({ game, player }) {
+  function exitSteps({ game, player }) {
+    const endedReason = player?.get("ended");
+    // Check if player failed to be assigned to a game
+    if (endedReason === "lobby timed out" || endedReason === "No games available") {
+      // Return different exit steps for players who didn't get into a game
+      return [NoGameExitStep];
+    }
+
     const exitSteps = []
 
     exitSteps.push(NegotiationOutcome)
