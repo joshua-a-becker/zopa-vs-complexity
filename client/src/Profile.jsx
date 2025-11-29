@@ -14,6 +14,10 @@ export function Profile() {
 
   const score = player.get("score") || 0;
 
+  // Check for dev mode or devKey URL parameter
+  const isDevMode = process.env.NODE_ENV === 'development' ||
+    new URLSearchParams(window.location.search).get('devKey') === 'oandi';
+
   // Dev mode skip stage handler
   const handleSkipStage = () => {
     player.stage.set("submit", true);
@@ -31,7 +35,7 @@ export function Profile() {
 
       <div className="flex space-x-3 items-center justify-end">
         {/* Dev-only Skip Stage button */}
-        {process.env.NODE_ENV === 'development' && (
+        {isDevMode && (
           <button
             onClick={handleSkipStage}
             className="text-white bg-red-600 px-4 py-0 text-base font-medium rounded hover:bg-red-700 transition-colors border border-red-700"

@@ -16,32 +16,26 @@ export function Introduction({ next }) {
           <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-lg">
             <h2 className="text-xl font-semibold text-gray-900 mb-3">What to Expect</h2>
             <p className="text-base leading-relaxed">
-              This platform will match you with another participant, provide you with role materials for a negotiation, and then give you <span className="font-semibold">10 minutes to prepare</span>.
+              You will be assigned a fictional role as a member of a group planning a vacation.  
             </p>
-          </div>
-
-          <p className="text-base leading-relaxed">
-            After 10 minutes, you will be automatically placed into a <span className="font-semibold">video chat</span> with your negotiation counterpart.
-          </p>
-
-          <div className="bg-indigo-50 border-l-4 border-indigo-500 p-5 rounded-r-lg">
+            <br/>
             <p className="text-base leading-relaxed">
-              You will have <span className="font-semibold">30 minutes</span> to try to reach a satisfactory agreement. Your goal is to get as many points as possible.
-            </p>
-            <p className="text-base leading-relaxed mt-3">
-              Your scoresheet will include a "no alternative" points value. <span className="font-semibold text-red-600">You must not accept any deal worth fewer points than this alternative.</span>
+            You will have <span className="font-semibold">10 minutes to read and prepare</span>. After 5 minutes, you will be automatically placed into a <span className="font-semibold">video chat</span> with your negotiation group.
+          </p>
+          <br/>
+            <p className="text-base leading-relaxed">
+              You will have <span className="font-semibold">20 minutes</span> to try to reach a satisfactory agreement. Your goal is to get as many points as possible.  Points determine your bonus on Prolific. 1 point = $1 dollar.
             </p>
           </div>
 
           <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-lg">
-            <p className="text-base leading-relaxed font-semibold">
-              This session is being conducted as part of research by University College London. We will be recording this session for use in our research.
-            </p>
-            <p className="text-base leading-relaxed mt-3">
-              <span className="font-medium">Principal Investigator:</span> Joshua Becker
-              <br/>
-              <span className="font-medium">Contact:</span> <a href="mailto:joshua.becker@ucl.ac.uk" className="text-indigo-600 hover:text-indigo-800 underline">joshua.becker@ucl.ac.uk</a>
-            </p>
+            
+          
+
+          <p className="text-base leading-relaxed">
+            If you are not comfortable being on video, please close this page and return the task on Prolific.
+          </p>
+
           </div>
 
           <p className="text-base leading-relaxed text-center text-gray-600 pt-4">

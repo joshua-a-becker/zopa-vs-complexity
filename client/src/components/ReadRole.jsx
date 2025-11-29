@@ -56,7 +56,14 @@ export function ReadRole({ profileComponent }) {
         className="flex-1 overflow-auto relative"
       >
         <div className="max-w-5xl mx-auto px-8 py-8 space-y-6">
-        
+
+        {/* Prominent header */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-lg p-8 text-center mb-8">
+          <h1 className="text-4xl font-bold tracking-tight">
+            It's Time to Prepare for Your Negotiation
+          </h1>
+        </div>
+
         {/* Instructions at top */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
           <h2 className="text-xl font-bold text-blue-900 mb-3">How Negotiations Activities Work</h2>

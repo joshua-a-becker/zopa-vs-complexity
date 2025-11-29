@@ -14,10 +14,16 @@ export function MaterialsPanel({
   const round = useRound();
   const game = useGame();
   const { playerCount } = game.get("treatment");
-  const [activeTab, setActiveTab] = useState("narrative");
+  const [activeTab, setActiveTab] = useState("calculator");
   const [selectedOptions, setSelectedOptions] = useState({});
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
   const [showNegativePointsModal, setShowNegativePointsModal] = useState(false);
+  const [showBlankProposalModal, setShowBlankProposalModal] = useState(false);
+
+  // Check if welcome modal has been shown before (stored in player state)
+  const hasSeenWelcomeModal = player.get("hasSeenWelcomeModal") || false;
+  const [showWelcomeModal, setShowWelcomeModal] = useState(!hasSeenWelcomeModal);
+  const [flashProposalTab, setFlashProposalTab] = useState(false);
 
   // Get proposal history from round state (single source of truth)
   const history = round.get("proposalHistory") || [];
@@ -95,6 +101,19 @@ export function MaterialsPanel({
     }
   }, [currentProposal?.finalVotes, playerCount, player]);
 
+  // Flash the Proposal tab when there's a pending proposal
+  useEffect(() => {
+    if (pendingProposal && activeTab !== "proposal") {
+      const interval = setInterval(() => {
+        setFlashProposalTab(prev => !prev);
+      }, 1000); // Flash every second
+
+      return () => clearInterval(interval);
+    } else {
+      setFlashProposalTab(false);
+    }
+  }, [pendingProposal, activeTab]);
+
   // Handle tab change
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -112,6 +131,14 @@ export function MaterialsPanel({
 
   // Handle proposal submission
   const handleSubmitProposal = () => {
+    // Check if at least one item is selected (at least one category has option 0)
+    const hasAtLeastOneItem = Object.values(selectedOptions).some(optionIdx => optionIdx === 0);
+
+    if (!hasAtLeastOneItem) {
+      setShowBlankProposalModal(true);
+      return;
+    }
+
     const newProposal = {
       id: `${Date.now()}-${player.id}`,
       submittedBy: player.id,
@@ -228,6 +255,8 @@ export function MaterialsPanel({
           className={`px-4 py-2 rounded font-medium transition-all border ${
             activeTab === "proposal"
               ? "bg-white text-blue-600 border-blue-400 shadow"
+              : pendingProposal && flashProposalTab
+              ? "bg-red-100 text-red-700 border-red-400 shadow-md"
               : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
           }`}
         >
@@ -663,7 +692,7 @@ export function MaterialsPanel({
                 Cannot Accept Deal
               </h3>
               <p className="text-lg text-gray-700">
-                You can't accept a deal with negative points.
+                You can't accept negative points.
               </p>
             </div>
             <button
@@ -671,6 +700,60 @@ export function MaterialsPanel({
               className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
             >
               OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Blank Proposal Warning Modal */}
+      {showBlankProposalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold text-red-600 mb-3">
+                Cannot Submit Blank Proposal
+              </h3>
+              <p className="text-lg text-gray-700">
+                You must select at least one item.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowBlankProposalModal(false)}
+              className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Welcome Modal */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-lg w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">🤝</div>
+              <h3 className="text-3xl font-bold text-blue-700 mb-4">
+                It's Time to Negotiate!
+              </h3>
+              <div className="text-left text-gray-700 leading-relaxed space-y-3">
+                <p>
+                  You can videochat with other participants, review your role narrative, and vote on proposals.
+                </p>
+                <p className="text-red-600 text-opacity-80 font-semibold">
+                  To <strong>submit</strong> a proposal, click "Submit Proposal" in your calculator.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                player.set("hasSeenWelcomeModal", true);
+                setShowWelcomeModal(false);
+              }}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
+            >
+              Let's Go!
             </button>
           </div>
         </div>

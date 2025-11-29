@@ -43,7 +43,7 @@ export default function CustomConsent({ next }) {
               Procedures
             </h2>
             <p className="text-base ml-5">
-              You will be provided with a role narrative and a scoresheet. You will be placed into a video chat with another participant. Your goal in the activity is to maximize the number of points obtained for your role by reaching the best possible agreement, or earning the points of your no-agreement alternative.
+              You will be provided with a role narrative and a scoresheet. You will be placed into a video chat with two other participants. Your goal in the activity is to maximize the number of points obtained for your role by reaching the best possible agreement, or earning the points of your no-agreement alternative.
             </p>
           </section>
 
@@ -63,7 +63,7 @@ export default function CustomConsent({ next }) {
               Benefits
             </h2>
             <p className="text-base ml-5">
-              By participating, you will receive educational material with a market value of £100.
+              By participating, you will receive practice negotiating comparable to university classroom exercises.  After the task is completed, we will provide you a link to free resources to improve your negotiation skills.
             </p>
           </section>
 
@@ -73,7 +73,7 @@ export default function CustomConsent({ next }) {
               Anonymity
             </h2>
             <p className="text-base ml-5">
-              All data will be anonymized prior to analysis. No identifying information will be processed or shared as part of this research. All personal data will be stored securely within a UCL research data environment.
+              All data will be anonymized prior to analysis. No identifying information will shared outside this research team. All personal data will be stored securely within a UCL research data environment.
             </p>
           </section>
         </div>
