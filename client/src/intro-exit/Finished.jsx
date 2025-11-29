@@ -23,7 +23,7 @@ export default function Finished() {
           Thanks for participating!
         </h1>
         <p className="text-gray-600">
-          Please go back to the main classroom session.
+          Please enter the code "VACATION25"
         </p>
       </div>
     </div>

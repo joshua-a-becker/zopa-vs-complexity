@@ -6,9 +6,55 @@ const roles = rolesData.roles;
 
 export const Empirica = new ClassicListenersCollector();
 
+Empirica.onRoundEnded(({ round }) => {
+  const game = round.currentGame;
+  const history = round.get("proposalHistory") || [];
+  const finalProposal = history.length > 0 ? history[history.length - 1] : null;
 
-// Empirica.onRoundEnded(({round})=>{
-// })
+  // Check if agreement was reached (all players voted to finalize)
+  const finalVotes = finalProposal?.finalVotes || {};
+  const playerCount = game.get("treatment")?.playerCount || game.players.length;
+  const finalVoteCount = Object.keys(finalVotes).length;
+  const allFinalized = finalVoteCount === playerCount &&
+                      Object.values(finalVotes).every(vote => vote === "finalize");
+  const reachedAgreement = finalProposal && allFinalized;
+
+  console.log("onRoundEnded - Agreement check:", {
+    historyLength: history.length,
+    finalVoteCount,
+    playerCount,
+    allFinalized,
+    reachedAgreement
+  });
+
+  // Calculate and save bonus for each player
+  game.players.forEach((player) => {
+    let bonus = 0;
+
+    if (reachedAgreement) {
+      // Calculate player's score from the finalized proposal
+      const roleScoresheet = player.get("roleScoresheet");
+      const proposalOptions = finalProposal.options;
+
+      if (roleScoresheet && proposalOptions) {
+        bonus = Object.entries(roleScoresheet).reduce((sum, [category]) => {
+          const optionIdx = proposalOptions[category] ?? 1; // Default to exclude (index 1)
+          return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+        }, 0);
+      }
+    } else {
+      // No agreement reached, use BATNA (reservation price)
+      bonus = player.get("roleRP") || 0;
+    }
+
+    player.set("bonus", bonus);
+    console.log(`Player ${player.id} bonus: ${bonus} (agreement: ${reachedAgreement})`);
+  });
+
+  // Save whether agreement was reached to the round
+  round.set("agreementReached", reachedAgreement);
+  Empirica.flush();
+});
 
 Empirica.onGameStart(({ game }) => {
 
@@ -147,6 +193,11 @@ Empirica.onGameStart(({ game }) => {
   round.addStage({
     name: "Read Negotiation Role",
     duration: readRoleTime,
+  });
+
+  round.addStage({
+    name: "Ready To Negotiate",
+    duration: 30,
   });
 
   round.addStage({

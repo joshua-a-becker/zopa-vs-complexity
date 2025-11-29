@@ -9,6 +9,7 @@ import { DisplayNameEntry } from "./intro-exit/DisplayNameEntry.jsx";
 import { AutoPlayerIdForm } from "./intro-exit/AutoPlayerIdForm.jsx";
 import CustomConsent from './intro-exit/CustomConsent.jsx';
 import { Introduction } from './intro-exit/Introduction.jsx';
+import { NegotiationOutcome } from './intro-exit/NegotiationOutcome.jsx';
 import DailyIframe from "@daily-co/daily-js";
 
 // Create context for Daily.co call management (includes media stream)
@@ -134,6 +135,7 @@ export default function App() {
    function exitSteps({ game, player }) {
     const exitSteps = []
 
+    exitSteps.push(NegotiationOutcome)
 
     return(exitSteps)
   }

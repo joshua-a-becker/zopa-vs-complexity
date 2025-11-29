@@ -6,6 +6,7 @@ import {
 import { Loading } from "@empirica/core/player/react";
 import React from "react";
 import { ReadRole } from "./components/ReadRole";
+import { ReadyToNegotiate } from "./components/ReadyToNegotiate";
 import { VideoNegotiate } from "./components/VideoNegotiate";
 
 export function Stage({ profileComponent }) {
@@ -30,6 +31,10 @@ export function Stage({ profileComponent }) {
   // Render component based on stage name
   if (stageName === "Read Negotiation Role") {
     return <ReadRole profileComponent={profileComponent} />;
+  }
+
+  if (stageName === "Ready To Negotiate") {
+    return <ReadyToNegotiate profileComponent={profileComponent} />;
   }
 
   if (stageName === "Time To Negotiate") {
