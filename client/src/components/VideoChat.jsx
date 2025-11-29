@@ -4,7 +4,7 @@ import { DailyCallContext } from "../App";
 import { VolumeX, MicOff, VideoOff, Video } from "lucide-react";
 
 // Memoized components outside the main component to prevent recreation
-const LocalVideoComponent = React.memo(({ localVideoRef, displayName, isRepresentative, isHidden, onToggleHide, isAudioEnabled, isVideoEnabled, onToggleAudio, onToggleVideo }) => {
+const LocalVideoComponent = React.memo(({ localVideoRef, displayName, isHidden, onToggleHide, isAudioEnabled, isVideoEnabled, onToggleAudio, onToggleVideo }) => {
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center py-1">
@@ -87,7 +87,7 @@ const LocalVideoComponent = React.memo(({ localVideoRef, displayName, isRepresen
 
         {/* Name/rep text - always visible */}
         <div className="mt-1 text-[clamp(0.75rem,10vh,1rem)] font-semibold">
-          {displayName} {isRepresentative ? " (Rep)" : ""} (You)
+          {displayName} (You)
           {!isHidden && (
             <>
               {" "}
@@ -110,7 +110,6 @@ const LocalVideoComponent = React.memo(({ localVideoRef, displayName, isRepresen
   return (
     prevProps.localVideoRef === nextProps.localVideoRef &&
     prevProps.displayName === nextProps.displayName &&
-    prevProps.isRepresentative === nextProps.isRepresentative &&
     prevProps.isHidden === nextProps.isHidden &&
     prevProps.onToggleHide === nextProps.onToggleHide &&
     prevProps.isAudioEnabled === nextProps.isAudioEnabled &&
@@ -120,7 +119,7 @@ const LocalVideoComponent = React.memo(({ localVideoRef, displayName, isRepresen
   );
 });
 
-const RemoteVideoComponent = React.memo(({ stream, name, isRepresentative, sessionId, onRequestRefresh, videoState, audioState }) => {
+const RemoteVideoComponent = React.memo(({ stream, name, sessionId, onRequestRefresh, videoState, audioState }) => {
   const ref = useRef();
   const retryCountRef = useRef(0);
   const maxRetries = 3;
@@ -207,13 +206,13 @@ const RemoteVideoComponent = React.memo(({ stream, name, isRepresentative, sessi
           )}
         </div>
 
-        <div className="mt-1 text-[clamp(0.5rem,10vw,1rem)] font-semibold text-center">{name}{isRepresentative ? " (Rep)" : ""}</div>
+        <div className="mt-1 text-[clamp(0.5rem,10vw,1rem)] font-semibold text-center">{name}</div>
       </div>
     </div>
   );
 });
 
-  const RemoteVideosComponent = React.memo(({ allDailyParticipants, remoteStreams, participantNames, participantRepStatus, participantVideoStates, participantAudioStates, onRequestRefresh }) => {
+  const RemoteVideosComponent = React.memo(({ allDailyParticipants, remoteStreams, participantNames, participantVideoStates, participantAudioStates, onRequestRefresh }) => {
 
   const hasRemoteParticipants = Object.keys(allDailyParticipants).length > 0;
 
@@ -235,7 +234,6 @@ const RemoteVideoComponent = React.memo(({ stream, name, isRepresentative, sessi
               <RemoteVideoComponent
                 stream={stream}
                 name={name}
-                isRepresentative={participantRepStatus[sessionId] || false}
                 sessionId={sessionId}
                 onRequestRefresh={onRequestRefresh}
                 videoState={videoState}
@@ -253,7 +251,6 @@ const RemoteVideoComponent = React.memo(({ stream, name, isRepresentative, sessi
     Object.keys(prevProps.allDailyParticipants).length === Object.keys(nextProps.allDailyParticipants).length &&
     Object.keys(prevProps.remoteStreams).length === Object.keys(nextProps.remoteStreams).length &&
     Object.keys(prevProps.participantNames).length === Object.keys(nextProps.participantNames).length &&
-    Object.keys(prevProps.participantRepStatus).length === Object.keys(nextProps.participantRepStatus).length &&
     Object.keys(prevProps.participantVideoStates).length === Object.keys(nextProps.participantVideoStates).length &&
     Object.keys(prevProps.participantAudioStates).length === Object.keys(nextProps.participantAudioStates).length &&
     Object.keys(prevProps.allDailyParticipants).every(id =>
@@ -264,9 +261,6 @@ const RemoteVideoComponent = React.memo(({ stream, name, isRepresentative, sessi
     ) &&
     Object.keys(prevProps.participantNames).every(id =>
       prevProps.participantNames[id] === nextProps.participantNames[id]
-    ) &&
-    Object.keys(prevProps.participantRepStatus).every(id =>
-      prevProps.participantRepStatus[id] === nextProps.participantRepStatus[id]
     ) &&
     Object.keys(prevProps.participantVideoStates).every(id =>
       prevProps.participantVideoStates[id] === nextProps.participantVideoStates[id]
@@ -308,11 +302,9 @@ export function VideoChat({ defaultHideSelf = false }) {
 
   // Get local player info
   const localDisplayName = player?.get("displayName") || "You";
-  const localIsRepresentative = player?.get("isRepresentative") || false;
-  const representativeId = game?.get("representativeId");
 
   // Destructure call state from context
-  const { remoteStreams, participantNames, participantRepStatus, participantVideoStates, participantAudioStates, localVideoTrack } = callState;
+  const { remoteStreams, participantNames, participantVideoStates, participantAudioStates, localVideoTrack } = callState;
 
   // Ensure media stream is available (handles page refresh after intro)
   // VideoChat only mounts when user is in game stages (past intro/DisplayNameEntry)
@@ -477,44 +469,6 @@ export function VideoChat({ defaultHideSelf = false }) {
     }
   }, [localVideoTrack, mediaStream, isVideoEnabled]);
 
-  // Update participantRepStatus when representative changes
-  // Use refs to avoid dependency loops
-  const participantNamesRef = useRef(participantNames);
-  const participantRepStatusRef = useRef(participantRepStatus);
-
-  useEffect(() => {
-    participantNamesRef.current = participantNames;
-    participantRepStatusRef.current = participantRepStatus;
-  });
-
-  useEffect(() => {
-    if (!players || !setCallState) return;
-
-    const currentParticipantNames = participantNamesRef.current;
-    if (!currentParticipantNames || Object.keys(currentParticipantNames).length === 0) return;
-
-    const updatedRepStatus = {};
-    Object.entries(currentParticipantNames).forEach(([sessionId, displayName]) => {
-      const participant = players.find(p => p.get("displayName") === displayName);
-      if (participant) {
-        updatedRepStatus[sessionId] = participant.get("isRepresentative") || false;
-      }
-    });
-
-    // Only update if there are actual changes
-    const currentRepStatus = participantRepStatusRef.current;
-    const hasChanges = Object.keys(updatedRepStatus).some(
-      sessionId => updatedRepStatus[sessionId] !== currentRepStatus[sessionId]
-    );
-
-    if (hasChanges) {
-      // console.log("VideoChat: Updating participant rep status");
-      setCallState((prev) => ({
-        ...prev,
-        participantRepStatus: updatedRepStatus,
-      }));
-    }
-  }, [representativeId, players, setCallState]);
 
   // Poll Daily.co for all participants (including those without tracks)
   useEffect(() => {
@@ -626,7 +580,6 @@ export function VideoChat({ defaultHideSelf = false }) {
         <LocalVideoComponent
           localVideoRef={localVideoRef}
           displayName={localDisplayName}
-          isRepresentative={localIsRepresentative}
           isHidden={isSelfVideoHidden}
           onToggleHide={toggleSelfVideoVisibility}
           isAudioEnabled={isAudioEnabled}
@@ -648,7 +601,6 @@ export function VideoChat({ defaultHideSelf = false }) {
             <RemoteVideoComponent
               stream={stream}
               name={name}
-              isRepresentative={participantRepStatus[sessionId] || false}
               sessionId={sessionId}
               onRequestRefresh={refreshRemoteParticipant}
               videoState={videoState}

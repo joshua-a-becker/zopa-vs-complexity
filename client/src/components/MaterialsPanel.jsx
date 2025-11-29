@@ -142,7 +142,7 @@ export function MaterialsPanel({
     const newProposal = {
       id: `${Date.now()}-${player.id}`,
       submittedBy: player.id,
-      submittedByName: player.get("name") || player.id,
+      submittedByName: player.get("displayName") || player.id,
       timestamp: Date.now(),
       options: { ...selectedOptions },
       initialVotes: {},
@@ -413,7 +413,7 @@ export function MaterialsPanel({
                     Current Proposal
                   </h3>
                   <span className="text-sm text-gray-500">
-                    by {pendingProposal.submittedByName}
+                    Submitted by: {pendingProposal.submittedByName}
                   </span>
                 </div>
 
