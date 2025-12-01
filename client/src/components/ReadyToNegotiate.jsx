@@ -1,26 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { usePlayer } from "@empirica/core/player/classic/react";
-import { Button } from "../components/Button";
+import React from "react";
+import { useStageTimer } from "@empirica/core/player/classic/react";
 
 export function ReadyToNegotiate({ profileComponent }) {
-  const player = usePlayer();
-  const [countdown, setCountdown] = useState(15);
-
-  useEffect(() => {
-    // Start countdown
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          player.stage.set("submit", true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [player]);
+  const timer = useStageTimer();
+  const remaining = timer?.remaining ? Math.round(timer.remaining / 1000) : 0;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
@@ -44,7 +27,7 @@ export function ReadyToNegotiate({ profileComponent }) {
               You will be automatically redirected to the video call in
             </p>
             <div className="text-6xl font-bold text-indigo-600 my-4">
-              {countdown}
+              {remaining}
             </div>
             <p className="text-lg text-gray-600">
               seconds

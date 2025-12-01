@@ -197,7 +197,7 @@ Empirica.onGameStart(({ game }) => {
 
   round.addStage({
     name: "Ready To Negotiate",
-    duration: 30,
+    duration: 15,
   });
 
   round.addStage({

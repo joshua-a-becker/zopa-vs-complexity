@@ -155,6 +155,7 @@ export default function App() {
   // hasJoinedCall is never reset to false - the call persists across VideoChat mount/unmount
   // This ensures the call stays connected as users navigate between stages
   useEffect(() => {
+    console.log("UPDATED")
     // Wait for all required data before joining
     if (!mediaStream || !callJoinData || hasJoinedCall) {
       return;
@@ -515,8 +516,18 @@ export default function App() {
         }
 
         try {
+          // await callObject.startRecording({
+          //   type: "cloud",
+          //   layout: {
+          //     preset: 'custom',
+          //     composition_params: {
+          //       'videoSettings.showParticipantLabels': true,
+          //     },
+          //   },
+          // });
+
           await callObject.startRecording({
-            type: "cloud",
+            type: "raw-tracks",
             layout: {
               preset: 'custom',
               composition_params: {
@@ -526,7 +537,7 @@ export default function App() {
           });
 
           setCallState((prev) => ({ ...prev, isRecording: true }));
-          // console.log("Recording started in Daily Cloud.");
+          console.log("RAW TRACKS Recording started in Daily Cloud.");
         } catch (err) {
           console.error("Failed to start recording:", err);
         }
