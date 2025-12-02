@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Markdown from "react-markdown";
 import { usePlayer, useStage, useRound, useGame } from "@empirica/core/player/classic/react";
+import rolesData from "../../../server/src/roles.json";
 
 export function MaterialsPanel({
   roleName,
@@ -265,6 +266,16 @@ export function MaterialsPanel({
             <span className="ml-2 inline-flex items-center justify-center w-2 h-2 bg-red-500 rounded-full"></span>
           )}
         </button>
+        <button
+          onClick={() => handleTabChange("tips")}
+          className={`px-4 py-2 rounded font-medium transition-all border ${
+            activeTab === "tips"
+              ? "bg-white text-blue-600 border-blue-400 shadow"
+              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+          }`}
+        >
+          Tips
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -273,7 +284,7 @@ export function MaterialsPanel({
           <div className="space-y-4">
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Your Role: {roleName}
+                Your Role
               </h3>
               <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed">
                 <Markdown>{roleNarrative}</Markdown>
@@ -574,6 +585,17 @@ export function MaterialsPanel({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === "tips" && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Tips on Negotiation
+              </h3>
+              <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: rolesData.tips }} />
+            </div>
           </div>
         )}
       </div>

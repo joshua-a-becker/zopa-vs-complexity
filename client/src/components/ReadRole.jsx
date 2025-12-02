@@ -1,9 +1,11 @@
 import React, { useState, useRef } from "react";
-import { usePlayer } from "@empirica/core/player/classic/react";
+import { usePlayer, useGame } from "@empirica/core/player/classic/react";
 import Markdown from "react-markdown";
+import rolesData from "../../../server/src/roles.json";
 
 export function ReadRole({ profileComponent }) {
   const player = usePlayer();
+  const game = useGame();
   const roleName = player.get("roleName");
   const roleNarrative = player.get("roleNarrative");
   const roleScoresheet = player.get("roleScoresheet");
@@ -12,6 +14,10 @@ export function ReadRole({ profileComponent }) {
   const [showFade, setShowFade] = useState(false);
   const scrollContainerRef = useRef(null);
   const [selectedOptions, setSelectedOptions] = useState({});
+
+  // Welcome modal state
+  const hasSeenReadRoleModal = player.get("hasSeenReadRoleModal") || false;
+  const [showWelcomeModal, setShowWelcomeModal] = useState(!hasSeenReadRoleModal);
 
   // Handle scroll to show/hide fade
   const handleScroll = () => {
@@ -89,7 +95,7 @@ export function ReadRole({ profileComponent }) {
           {/* 1. Narrative Section */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Your Role: {roleName}
+              Your Role
             </h3>
             <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed">
               <Markdown>{roleNarrative}</Markdown>
@@ -107,7 +113,7 @@ export function ReadRole({ profileComponent }) {
               )}
               {roleRP !== undefined && (
                 <p className="text-sm text-gray-700">
-                  If you don't reach agreement, you will earn <span className="font-bold">{roleRP} points</span>.
+                  <br/>If you don't reach agreement, you will earn <span className="font-bold">{roleRP} points</span>.
                 </p>
               )}
             </div>
@@ -202,8 +208,47 @@ export function ReadRole({ profileComponent }) {
               </div>
             </div>
           </div>
+
+          {/* 4. Tips on Negotiation Section */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              Tips on Negotiation
+            </h3>
+            <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: rolesData.tips }} />
+          </div>
         </div>
       </div>
+
+      {/* Welcome Modal */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-lg w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">📚</div>
+              <h3 className="text-3xl font-bold text-blue-700 mb-4">
+                Get Ready to Negotiate!
+              </h3>
+              <div className="text-left text-gray-700 leading-relaxed space-y-3">
+                <p>
+                  You now have <strong>{game.get("treatment")?.readRoleTime/60}</strong> minutes to read your role materials and prepare to negotiate.
+                </p>
+                <p>
+                  Don't worry if you need more time, <strong>You'll be able to review this information while you negotiate.</strong>
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                player.set("hasSeenReadRoleModal", true);
+                setShowWelcomeModal(false);
+              }}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
+            >
+              Got It!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

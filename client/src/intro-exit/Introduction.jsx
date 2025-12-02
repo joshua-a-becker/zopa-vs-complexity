@@ -20,11 +20,14 @@ export function Introduction({ next }) {
             </p>
             <br/>
             <p className="text-base leading-relaxed">
-            You will have <span className="font-semibold">10 minutes to read and prepare</span>. After 5 minutes, you will be automatically placed into a <span className="font-semibold">video chat</span> with your negotiation group.
+            You will have <span className="font-semibold">5 minutes to read and prepare</span>. After 5 minutes, you will be automatically placed into a <span className="font-semibold">video chat</span> with your negotiation group.
           </p>
           <br/>
             <p className="text-base leading-relaxed">
-              You will have <span className="font-semibold">20 minutes</span> to try to reach a satisfactory agreement. Your goal is to get as many points as possible.  Points determine your bonus on Prolific. 1 point = $1 dollar.
+              You will have <span className="font-semibold">20 minutes</span> to try to reach a satisfactory agreement. Your goal is to get as many points as possible.  
+            </p>
+            <br/><p className="text-base leading-relaxed">
+              Points determine your bonus on Prolific. 1 point = $1 dollar.
             </p>
           </div>
 
