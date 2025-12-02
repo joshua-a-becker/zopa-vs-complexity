@@ -528,12 +528,6 @@ export default function App() {
 
           await callObject.startRecording({
             type: "raw-tracks",
-            layout: {
-              preset: 'custom',
-              composition_params: {
-                'videoSettings.showParticipantLabels': true,
-              },
-            },
           });
 
           setCallState((prev) => ({ ...prev, isRecording: true }));

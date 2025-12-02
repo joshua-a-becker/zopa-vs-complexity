@@ -79,7 +79,7 @@ Empirica.onGameStart(({ game }) => {
           name: roomName,
           properties: {
             exp: roomExp,
-            enable_recording: "cloud",
+            enable_recording: "raw-tracks",
             enable_transcription_storage: true,
           },
         }),
