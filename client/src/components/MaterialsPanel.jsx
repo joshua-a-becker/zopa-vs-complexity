@@ -333,7 +333,9 @@ export function MaterialsPanel({
               <div className="flex gap-6">
                 {/* Left side: Scoresheet rows (2/3 width) */}
                 <div className="flex-[9] space-y-2">
-                  {Object.entries(roleScoresheet).map(([category, options]) => {
+                  {Object.entries(roleScoresheet)
+                    .sort(([, optionsA], [, optionsB]) => optionsB[0].score - optionsA[0].score)
+                    .map(([category, options]) => {
                     const includeOption = options[0];
                     const isChecked = selectedOptions[category] === 0;
 

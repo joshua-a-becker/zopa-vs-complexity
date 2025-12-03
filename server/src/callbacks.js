@@ -61,8 +61,10 @@ Empirica.onGameStart(({ game }) => {
 
   // Create Daily.co room for this game
   (async () => {
+    const d = new Date();
+    const today = `${d.getFullYear()}_${String(d.getMonth()+1).padStart(2,'0')}_${String(d.getDate()).padStart(2,'0')}`;
     const DAILY_API_KEY = "d9ff4a046f2a0c3571efa7655fbf80907ad2ffd4d7c89cae0a89e89424d63642";
-    const roomName = `${game.id}_video_room`;
+    const roomName = `${game.id}_video_room_${today}`;
 
     console.log("Creating Daily.co room for game:", game.id);
     try {
