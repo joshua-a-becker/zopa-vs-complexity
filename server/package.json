@@ -2,7 +2,8 @@
   "dependencies": {
     "@empirica/core": "1.12.5",
     "js-yaml": "^4.1.1",
-    "minimist": "1.2.6"
+    "minimist": "1.2.6",
+    "sync-fetch": "^0.6.0-2"
   },
   "devDependencies": {
     "esbuild": "0.14.47",

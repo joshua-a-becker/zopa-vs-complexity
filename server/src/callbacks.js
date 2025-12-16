@@ -1,8 +1,9 @@
 import { ClassicListenersCollector } from "@empirica/core/admin/classic";
 import fetch from "node-fetch";
-import rolesData from "./roles.json" assert { type: "json" };
+import syncFetch from "sync-fetch";
 
-const roles = rolesData.roles;
+// import rolesData from "./roles.json" assert { type: "json" };
+// const roles = rolesData.roles;
 
 export const Empirica = new ClassicListenersCollector();
 
@@ -58,6 +59,12 @@ Empirica.onRoundEnded(({ round }) => {
 
 Empirica.onGameStart(({ game }) => {
 
+
+  const roleDataURL = game.get("treatment").roleDataURL;
+  const rolesData = syncFetch(roleDataURL).json();
+  const roles = rolesData.roles;
+
+  console.log(`Fetched ${roles.length} roles from ${roleDataURL}`);
 
   // Create Daily.co room for this game
   (async () => {
@@ -154,8 +161,6 @@ Empirica.onGameStart(({ game }) => {
   const readRoleTime = game.get("treatment")?.readRoleTime ?? 300;
   const negotiateTime = game.get("treatment")?.negotiateTime ?? 1800;
 
-  // Roles are now imported from roles.js at the top of the file
-  console.log(`Loaded ${roles.length} roles from roles.js`);
 
   // Randomly assign roles to players
   // Shuffle players array

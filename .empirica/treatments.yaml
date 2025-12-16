@@ -18,6 +18,12 @@ factors:
         - value: 100000
         - value: 30000
         - value: 300
+    - name: roleDatURL
+      values:
+        - value: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/server/src/roles_v1.json
+    - name: roleDataURL
+      values:
+        - value: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/server/src/roles_v1.json
 treatments:
     - name: trio_long
       desc: three person negotiation
@@ -31,3 +37,4 @@ treatments:
         negotiateTime: 300
         playerCount: 3
         readRoleTime: 300
+        roleDataURL: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/server/src/roles_v1.json
