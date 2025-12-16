@@ -7,6 +7,611 @@ import { execSync } from "child_process";
 
 export const Empirica = new ClassicListenersCollector();
 
+// Daily.co API key for creating rooms and tokens
+const DAILY_API_KEY = "d9ff4a046f2a0c3571efa7655fbf80907ad2ffd4d7c89cae0a89e89424d63642";
+
+// Store context reference for polling and assignment
+let globalCtx = null;
+let pollingStarted = false;
+
+// Configuration
+const ASSIGNMENT_TIMEZONE = "America/New_York";
+const ASSIGNMENT_HOUR = 18; // 6 PM
+const ASSIGNMENT_MINUTE = 0;
+
+// Helper function to create Daily.co room for waiting game
+async function createDailyRoom(roomName) {
+  const roomExp = Math.round(Date.now() / 1000) + 60 * 60 * 8; // 8 hour expiry
+
+  try {
+    const res = await fetch("https://api.daily.co/v1/rooms", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${DAILY_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: roomName,
+        properties: {
+          exp: roomExp,
+          enable_recording: "raw-tracks",
+          enable_transcription_storage: true,
+        },
+      }),
+    });
+
+    const data = await res.json();
+    if (!data.url) {
+      console.error("[DAILY] Failed to create room:", data);
+      return null;
+    }
+    console.log(`[DAILY] Room created: ${data.url}`);
+    return { url: data.url, roomName, expiry: roomExp };
+  } catch (error) {
+    console.error("[DAILY] Error creating room:", error);
+    return null;
+  }
+}
+
+// Helper function to create meeting token for a player
+async function createMeetingToken(roomName, player, expiry) {
+  try {
+    const displayName = player.get("displayName") || "Anonymous";
+    const userName = `${displayName} - Player ${player.id}`;
+
+    const res = await fetch("https://api.daily.co/v1/meeting-tokens", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${DAILY_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        properties: {
+          room_name: roomName,
+          user_name: userName,
+          user_id: player.id,
+          is_owner: false,
+          permissions: {
+            canAdmin: ["transcription"]
+          },
+          exp: expiry,
+        },
+      }),
+    });
+
+    const tokenData = await res.json();
+    if (tokenData.token) {
+      console.log(`[DAILY] Created token for player ${displayName}`);
+      return tokenData.token;
+    } else {
+      console.error(`[DAILY] Failed to create token for ${displayName}:`, tokenData);
+      return null;
+    }
+  } catch (err) {
+    console.error(`[DAILY] Error creating token for player ${player.id}:`, err);
+    return null;
+  }
+}
+
+// Helper function to create waiting game with Daily.co room
+async function createWaitingGame(ctx, batch) {
+  const games = Array.from(ctx.scopesByKind("game").values());
+  const existingWaitingGame = games.find(g =>
+    g.get("batchID") === batch.id &&
+    g.get("isWaiting") === true &&
+    !g.get("hasEnded")
+  );
+
+  if (existingWaitingGame) {
+    console.log(`[BATCH] Waiting game already exists for batch ${batch.id}`);
+    return existingWaitingGame;
+  }
+
+  // Create Daily.co room for waiting game
+  const d = new Date();
+  const today = `${d.getFullYear()}_${String(d.getMonth()+1).padStart(2,'0')}_${String(d.getDate()).padStart(2,'0')}`;
+  const roomName = `waiting_room_${batch.id}_${today}`;
+
+  const roomData = await createDailyRoom(roomName);
+
+  // Create waiting game with large playerCount so it never auto-starts
+  const waitingGame = batch.addGame([
+    {
+      key: "treatment",
+      value: { playerCount: 1000 },
+      immutable: true
+    },
+    { key: "batchID", value: batch.id },  // CRITICAL: Set batchID for lookup
+    { key: "isWaiting", value: true },
+    { key: "name", value: "Waiting Room" },
+    { key: "roomUrl", value: roomData?.url || null },
+    { key: "dailyRoomName", value: roomData?.roomName || null },
+    { key: "dailyRoomExpiry", value: roomData?.expiry || null },
+  ]);
+
+  console.log(`[BATCH] Created waiting game for batch ${batch.id} with Daily room: ${roomData?.url}`);
+  return waitingGame;
+}
+
+// Check if it's time to trigger assignment (18:00 in configured timezone)
+function isAssignmentTime() {
+  const now = new Date();
+  const options = { timeZone: ASSIGNMENT_TIMEZONE, hour: 'numeric', minute: 'numeric', hour12: false };
+  const timeStr = now.toLocaleTimeString('en-US', options);
+  const [hour, minute] = timeStr.split(':').map(Number);
+
+  return hour === ASSIGNMENT_HOUR && minute === ASSIGNMENT_MINUTE;
+}
+
+// Group players by groupName
+function groupByGroupName(players) {
+  const groups = {};
+  for (const player of players) {
+    const groupName = player.get("groupName") || "default";
+    if (!groups[groupName]) {
+      groups[groupName] = [];
+    }
+    groups[groupName].push(player);
+  }
+  return groups;
+}
+
+// Main assignment function - groups players by groupName and creates games
+async function assignPlayersToGames(ctx) {
+  console.log("[ASSIGNMENT] Running assignment algorithm...");
+
+  // Get all games and waiting players
+  const allGames = Array.from(ctx.scopesByKind("game").values());
+  const waitingPlayers = Array.from(ctx.scopesByKind("player").values())
+    .filter(p => {
+      const game = allGames.find(g => g.id === p.get("gameID"));
+      return p.get("introDone") &&
+             !p.get("ended") &&
+             game &&
+             game.get("isWaiting") === true;
+    });
+
+  console.log(`[ASSIGNMENT] Total players waiting: ${waitingPlayers.length}`);
+
+  if (waitingPlayers.length === 0) {
+    console.log("[ASSIGNMENT] No players to assign");
+    return;
+  }
+
+  // Get running batch
+  const batches = Array.from(ctx.scopesByKind("batch").values())
+    .filter(b => b.get("status") === "running");
+
+  if (batches.length === 0) {
+    console.log("[ASSIGNMENT] No running batches");
+    return;
+  }
+
+  const batch = batches[0];
+  const smallGroupMode = batch.get("smallGroupMode") || "skip";
+
+  // Get treatment from batch config for playerCount
+  const config = batch.get("config");
+  const playerCount = config?.treatments?.[0]?.factors?.playerCount || 4;
+
+  console.log(`[ASSIGNMENT] Small group mode: ${smallGroupMode}, playerCount: ${playerCount}`);
+
+  // Group players by groupName
+  const groups = groupByGroupName(waitingPlayers);
+  console.log(`[ASSIGNMENT] Found ${Object.keys(groups).length} groups:`, Object.keys(groups).map(k => `${k}(${groups[k].length})`));
+
+  // Process each group
+  const processedPlayers = new Set();
+
+  for (const [groupName, members] of Object.entries(groups)) {
+    // Skip already processed players
+    const unprocessed = members.filter(p => !processedPlayers.has(p.id));
+
+    if (unprocessed.length === 0) continue;
+
+    if (unprocessed.length >= playerCount) {
+      // Full group - assign normally
+      const toAssign = unprocessed.slice(0, playerCount);
+      await createAndAssignGame(ctx, batch, toAssign, groupName);
+      toAssign.forEach(p => processedPlayers.add(p.id));
+
+    } else if (smallGroupMode === "undersize") {
+      // Create game with fewer players
+      await createAndAssignGame(ctx, batch, unprocessed, groupName);
+      unprocessed.forEach(p => processedPlayers.add(p.id));
+
+    } else if (smallGroupMode === "oversize") {
+      // Pull extra players from other groups
+      const needed = playerCount - unprocessed.length;
+      const extras = findExtraPlayers(groups, needed, groupName, processedPlayers);
+      const toAssign = [...unprocessed, ...extras];
+
+      if (toAssign.length > 0) {
+        await createAndAssignGame(ctx, batch, toAssign, groupName);
+        toAssign.forEach(p => processedPlayers.add(p.id));
+      }
+    }
+    // "skip" mode: do nothing for incomplete groups
+  }
+
+  console.log(`[ASSIGNMENT] Assignment complete. Processed ${processedPlayers.size} players.`);
+}
+
+// Find extra players from other groups to fill a game
+function findExtraPlayers(groups, needed, excludeGroup, processedPlayers) {
+  const extras = [];
+
+  for (const [groupName, members] of Object.entries(groups)) {
+    if (groupName === excludeGroup) continue;
+
+    for (const player of members) {
+      if (!processedPlayers.has(player.id) && extras.length < needed) {
+        extras.push(player);
+      }
+    }
+
+    if (extras.length >= needed) break;
+  }
+
+  return extras;
+}
+
+// Create a real game and assign players to it
+async function createAndAssignGame(ctx, batch, players, groupName) {
+  console.log(`[ASSIGNMENT] Creating game for group "${groupName}" with ${players.length} players`);
+
+  // Get treatment from batch
+  const config = batch.get("config");
+  const treatment = config?.treatments?.[0];
+
+  // Create new game
+  const game = batch.addGame([
+    {
+      key: "treatment",
+      value: treatment?.factors || { playerCount: players.length },
+      immutable: true
+    },
+    { key: "batchID", value: batch.id },  // Set batchID for consistency
+    { key: "treatmentName", value: treatment?.name || "default" },
+    { key: "groupName", value: groupName },
+    { key: "isWaiting", value: false },
+  ]);
+
+  console.log(`[ASSIGNMENT] Created game ${game.id} for group "${groupName}"`);
+
+  // Assign players to game
+  for (const player of players) {
+    await game.assignPlayer(player);
+    console.log(`[ASSIGNMENT] Assigned player ${player.id} (${player.get("displayName")}) to game ${game.id}`);
+  }
+
+  // Start the game
+  game.set("start", true);
+  Empirica.flush();
+
+  console.log(`[ASSIGNMENT] Game ${game.id} started with ${players.length} players`);
+}
+
+// ============================================================================
+// BATCH EVENTS - Create waiting game when batch starts
+// ============================================================================
+
+Empirica.on("batch", async (ctx, { batch }) => {
+  console.log(`[BATCH] Batch ${batch.id} created with status: ${batch.get("status")}`);
+
+  const status = batch.get("status");
+  if (status === "created" || status === "running") {
+    await createWaitingGame(ctx, batch);
+  }
+});
+
+Empirica.on("batch", "status", async (ctx, { batch }) => {
+  const status = batch.get("status");
+  console.log(`[BATCH] Batch ${batch.id} status changed to: ${status}`);
+
+  if (status === "running") {
+    await createWaitingGame(ctx, batch);
+  }
+});
+
+// Listen for manual assignment trigger (all groups)
+Empirica.on("batch", "triggerAssignment", async (ctx, { batch }) => {
+  const trigger = batch.get("triggerAssignment");
+  if (trigger) {
+    console.log(`[BATCH] Manual assignment triggered for batch ${batch.id}`);
+    await assignPlayersToGames(ctx);
+    batch.set("triggerAssignment", false);
+    Empirica.flush();
+  }
+});
+
+// Listen for single group start trigger from group admin
+Empirica.on("game", "startGroup", async (ctx, { game }) => {
+  const startGroup = game.get("startGroup");
+  if (!startGroup || !game.get("isWaiting")) return;
+
+  const groupName = startGroup.groupName;
+  const requestingPlayerId = startGroup.playerId;
+
+  console.log(`[GAME] Start requested for group "${groupName}" by player ${requestingPlayerId}`);
+
+  // Verify requester is admin
+  const groupAdmins = game.get("groupAdmins") || {};
+  if (groupAdmins[groupName] !== requestingPlayerId) {
+    console.log(`[GAME] Player ${requestingPlayerId} is not admin of group "${groupName}", ignoring`);
+    game.set("startGroup", null);
+    Empirica.flush();
+    return;
+  }
+
+  // Get players in this group
+  const waitingPlayers = game.get("waitingPlayers") || {};
+  const groupMembers = Object.values(waitingPlayers).filter(p => p.groupName === groupName);
+
+  if (groupMembers.length === 0) {
+    console.log(`[GAME] No players in group "${groupName}"`);
+    game.set("startGroup", null);
+    Empirica.flush();
+    return;
+  }
+
+  console.log(`[GAME] Starting game for group "${groupName}" with ${groupMembers.length} players`);
+
+  // Get the batch
+  const batch = Array.from(ctx.scopesByKind("batch").values())
+    .find(b => b.id === game.get("batchID"));
+
+  if (!batch) {
+    console.log(`[GAME] Could not find batch for game`);
+    game.set("startGroup", null);
+    Empirica.flush();
+    return;
+  }
+
+  // Get actual player objects
+  const allPlayers = Array.from(ctx.scopesByKind("player").values());
+  const playersToAssign = groupMembers
+    .map(gm => allPlayers.find(p => p.id === gm.id))
+    .filter(p => p);
+
+  // Create and assign game for this group
+  await createAndAssignGame(ctx, batch, playersToAssign, groupName);
+
+  // Remove these players from waitingPlayers
+  for (const p of playersToAssign) {
+    delete waitingPlayers[p.id];
+  }
+  game.set("waitingPlayers", waitingPlayers);
+
+  // Remove admin for this group
+  delete groupAdmins[groupName];
+  game.set("groupAdmins", groupAdmins);
+
+  game.set("startGroup", null);
+  Empirica.flush();
+});
+
+// ============================================================================
+// PLAYER EVENTS - Assign to waiting game and handle groupName
+// ============================================================================
+
+Empirica.on("player", async (ctx, { player }) => {
+  // Start polling on first player connection
+  if (!pollingStarted) {
+    globalCtx = ctx;
+    pollingStarted = true;
+
+    // Poll every minute to check for 18:00 assignment time
+    setInterval(async () => {
+      if (isAssignmentTime()) {
+        console.log("[POLLING] Assignment time reached (18:00)!");
+        await assignPlayersToGames(globalCtx);
+      }
+    }, 60000); // Check every minute
+
+    console.log("[POLLING] Started polling for assignment time");
+  }
+
+  console.log(`[PLAYER] Player ${player.id} connected`);
+
+  // Skip if player already assigned to a game
+  if (player.get("gameID")) {
+    console.log(`[PLAYER] Player ${player.id} already has gameID: ${player.get("gameID")}`);
+    return;
+  }
+
+  // Get running batches
+  const batches = Array.from(ctx.scopesByKind("batch").values())
+    .filter(b => b.get("status") === "running");
+
+  if (batches.length === 0) {
+    console.log(`[PLAYER] No running batches found for player ${player.id}`);
+    return;
+  }
+
+  const batch = batches[0];
+  console.log(`[PLAYER] Using batch ${batch.id}`);
+
+  // Find or create waiting game
+  const allGames = Array.from(ctx.scopesByKind("game").values());
+  console.log(`[PLAYER] Total games in system: ${allGames.length}`);
+
+  // Debug: log all games and their properties
+  allGames.forEach(g => {
+    console.log(`[PLAYER] Game ${g.id}: batchID=${g.get("batchID")}, isWaiting=${g.get("isWaiting")}, hasEnded=${g.get("hasEnded")}, players=${g.players?.length || 0}`);
+  });
+
+  // First try to find waiting game by batchID
+  let waitingGame = allGames.find(g =>
+    g.get("batchID") === batch.id &&
+    g.get("isWaiting") === true &&
+    !g.get("hasEnded")
+  );
+
+  // Fallback: find ANY waiting game that isn't ended (for backwards compat with existing games)
+  if (!waitingGame) {
+    console.log(`[PLAYER] No waiting game found by batchID, trying fallback...`);
+    waitingGame = allGames.find(g =>
+      g.get("isWaiting") === true &&
+      !g.get("hasEnded")
+    );
+  }
+
+  console.log(`[PLAYER] Found waiting game: ${waitingGame ? waitingGame.id : 'NONE'}`);
+
+  if (!waitingGame) {
+    console.log(`[PLAYER] No waiting game found for batch ${batch.id}, creating one...`);
+    waitingGame = await createWaitingGame(ctx, batch);
+    console.log(`[PLAYER] Created waiting game: ${waitingGame ? waitingGame.id : 'FAILED'}`);
+  }
+
+  if (!waitingGame) {
+    console.log(`[PLAYER] Could not create waiting game for player ${player.id}`);
+    return;
+  }
+
+  // Assign player to waiting game
+  console.log(`[PLAYER] Assigning player ${player.id} to waiting game ${waitingGame.id}`);
+  await waitingGame.assignPlayer(player);
+
+  // Store player info on the waiting game for client-side visibility
+  // (usePlayers() doesn't work reliably in lobby context)
+  const waitingPlayers = waitingGame.get("waitingPlayers") || {};
+  const playerGroupName = player.get("groupName") || "default";
+  waitingPlayers[player.id] = {
+    id: player.id,
+    displayName: player.get("displayName") || "Anonymous",
+    groupName: playerGroupName,
+    joinedAt: Date.now(),
+  };
+  waitingGame.set("waitingPlayers", waitingPlayers);
+
+  // Track admin per group - first person in a group becomes admin
+  const groupAdmins = waitingGame.get("groupAdmins") || {};
+  if (!groupAdmins[playerGroupName]) {
+    groupAdmins[playerGroupName] = player.id;
+    waitingGame.set("groupAdmins", groupAdmins);
+    console.log(`[PLAYER] Player ${player.id} is now admin of group "${playerGroupName}"`);
+  }
+
+  Empirica.flush();
+  console.log(`[PLAYER] Updated waitingPlayers on game, now ${Object.keys(waitingPlayers).length} players`);
+
+  // Create meeting token for player if room exists
+  const roomName = waitingGame.get("dailyRoomName");
+  const roomExpiry = waitingGame.get("dailyRoomExpiry");
+
+  if (roomName && roomExpiry) {
+    const token = await createMeetingToken(roomName, player, roomExpiry);
+    if (token) {
+      player.set("dailyMeetingToken", token);
+      Empirica.flush();
+    }
+  }
+});
+
+// Listen for groupName changes and update waitingPlayers on the game
+Empirica.on("player", "groupName", async (ctx, { player }) => {
+  const newGroupName = player.get("groupName") || "default";
+  console.log(`[PLAYER] Player ${player.id} set groupName to: ${newGroupName}`);
+
+  // Update waitingPlayers on the game so client can see the change
+  const gameId = player.get("gameID");
+  if (gameId) {
+    const game = Array.from(ctx.scopesByKind("game").values())
+      .find(g => g.id === gameId);
+
+    if (game && game.get("isWaiting")) {
+      const waitingPlayers = game.get("waitingPlayers") || {};
+      const oldGroupName = waitingPlayers[player.id]?.groupName;
+
+      if (waitingPlayers[player.id]) {
+        waitingPlayers[player.id].groupName = newGroupName;
+        waitingPlayers[player.id].displayName = player.get("displayName") || "Anonymous";
+        game.set("waitingPlayers", waitingPlayers);
+      }
+
+      // Update group admins
+      const groupAdmins = game.get("groupAdmins") || {};
+
+      // If player was admin of old group, reassign admin to next person in that group
+      if (oldGroupName && groupAdmins[oldGroupName] === player.id) {
+        const nextAdmin = Object.values(waitingPlayers).find(
+          p => p.groupName === oldGroupName && p.id !== player.id
+        );
+        if (nextAdmin) {
+          groupAdmins[oldGroupName] = nextAdmin.id;
+          console.log(`[PLAYER] Reassigned admin of group "${oldGroupName}" to ${nextAdmin.id}`);
+        } else {
+          delete groupAdmins[oldGroupName];
+          console.log(`[PLAYER] Removed admin for empty group "${oldGroupName}"`);
+        }
+      }
+
+      // If new group has no admin, make this player admin
+      if (!groupAdmins[newGroupName]) {
+        groupAdmins[newGroupName] = player.id;
+        console.log(`[PLAYER] Player ${player.id} is now admin of group "${newGroupName}"`);
+      }
+
+      game.set("groupAdmins", groupAdmins);
+      Empirica.flush();
+      console.log(`[PLAYER] Updated waitingPlayers for player ${player.id} with groupName: ${newGroupName}`);
+    }
+  }
+});
+
+// Listen for displayName changes and update waitingPlayers on the game
+Empirica.on("player", "displayName", async (ctx, { player }) => {
+  const displayName = player.get("displayName");
+  console.log(`[PLAYER] Player ${player.id} set displayName to: ${displayName}`);
+
+  // Update waitingPlayers on the game so client can see the change
+  const gameId = player.get("gameID");
+  if (gameId) {
+    const game = Array.from(ctx.scopesByKind("game").values())
+      .find(g => g.id === gameId);
+
+    if (game && game.get("isWaiting")) {
+      const waitingPlayers = game.get("waitingPlayers") || {};
+      if (waitingPlayers[player.id]) {
+        waitingPlayers[player.id].displayName = displayName || "Anonymous";
+        game.set("waitingPlayers", waitingPlayers);
+        Empirica.flush();
+        console.log(`[PLAYER] Updated waitingPlayers for player ${player.id} with displayName: ${displayName}`);
+      }
+    }
+  }
+});
+
+// When player completes intro, mark them ready
+Empirica.on("player", "introDone", async (ctx, { player }) => {
+  if (!player.get("introDone")) return;
+  console.log(`[PLAYER] Player ${player.id} completed intro`);
+
+  // Create token if not already created (in case they completed intro before assignment)
+  if (!player.get("dailyMeetingToken")) {
+    const game = Array.from(ctx.scopesByKind("game").values())
+      .find(g => g.id === player.get("gameID"));
+
+    if (game && game.get("isWaiting") && game.get("dailyRoomName")) {
+      const token = await createMeetingToken(
+        game.get("dailyRoomName"),
+        player,
+        game.get("dailyRoomExpiry")
+      );
+      if (token) {
+        player.set("dailyMeetingToken", token);
+        Empirica.flush();
+      }
+    }
+  }
+});
+
+// ============================================================================
+// GAME EVENTS - Existing game start logic
+// ============================================================================
+
 Empirica.onRoundEnded(({ round }) => {
   const game = round.currentGame;
   const history = round.get("proposalHistory") || [];

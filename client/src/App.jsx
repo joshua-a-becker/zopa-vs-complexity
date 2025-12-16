@@ -41,52 +41,55 @@ function generateParticipantKey() {
   return result;
 }
 
+// GroupNameEntry component for when groupName is not in URL
+function GroupNameEntry({ onSubmit }) {
+  const [inputValue, setInputValue] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (inputValue.trim()) {
+      onSubmit(inputValue.trim());
+    }
+  };
+
+  return (
+    <div className="h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Enter Group Name</h1>
+        <p className="text-gray-600 mb-6">
+          Enter the name of your group to join the waiting room with your teammates.
+        </p>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="e.g., Team Alpha"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={!inputValue.trim()}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            Join Group
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const urlParams = new URLSearchParams(window.location.search);
 
-  // Generate random participantKey if missing and devKey is "oandi"
-  let playerKey = urlParams.get("participantKey") || "";
-  const devKey = urlParams.get("devKey") || "";
+  // ============================================================================
+  // ALL HOOKS MUST BE DECLARED FIRST (before any early returns)
+  // ============================================================================
 
-  // If studentId is present, generate participantKey from it
-  const studentId = urlParams.get("studentId");
-  if (!playerKey && studentId) {
-    playerKey = generateParticipantKey();
-    urlParams.set("participantKey", playerKey);
-    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-    window.history.replaceState({}, "", newUrl);
-  }
-
-  console.log(devKey)
-  if (!playerKey && devKey === "oandi") {
-    // Generate 15 digit random alphanumeric string
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    playerKey = Array.from({ length: 15 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-    console.log("Generated random participantKey:", playerKey);
-
-    // Add the generated participantKey to the URL
-    urlParams.set("participantKey", playerKey);
-    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-    window.history.replaceState({}, "", newUrl);
-  }
-
-  // If still no participantKey, show invalid URL page
-  if (!playerKey) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
-          <h1 className="text-3xl font-bold text-red-600 mb-4">Invalid URL</h1>
-          <p className="text-gray-700 mb-2">
-            We're sorry, you have reached this page via an invalid URL.  Please contact the study administrator for more information.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-
-  const { protocol, host } = window.location;
-  const url = `${protocol}//${host}/query`;
+  // GroupName from URL or state (for form entry)
+  const [groupName, setGroupName] = useState(urlParams.get("groupName") || "");
 
   // Daily.co call state management
   const [mediaStream, setMediaStream] = useState(null);
@@ -116,6 +119,56 @@ export default function App() {
   useEffect(() => {
     callStateRef.current = callState;
   }, [callState]);
+
+  // ============================================================================
+  // URL PARAM PROCESSING (no hooks here, just variable setup)
+  // ============================================================================
+
+  // Generate random participantKey if missing and devKey is "oandi"
+  let playerKey = urlParams.get("participantKey") || "";
+  const devKey = urlParams.get("devKey") || "";
+
+  // If studentId is present, generate participantKey from it
+  const studentId = urlParams.get("studentId");
+  if (!playerKey && studentId) {
+    playerKey = generateParticipantKey();
+    urlParams.set("participantKey", playerKey);
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.replaceState({}, "", newUrl);
+  }
+
+  console.log(devKey)
+  if (!playerKey && devKey === "oandi") {
+    // Generate 15 digit random alphanumeric string
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    playerKey = Array.from({ length: 15 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    console.log("Generated random participantKey:", playerKey);
+
+    // Add the generated participantKey to the URL
+    urlParams.set("participantKey", playerKey);
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.replaceState({}, "", newUrl);
+  }
+
+  // ============================================================================
+  // DERIVED VALUES (no early returns - all hooks must run)
+  // ============================================================================
+
+  const { protocol, host } = window.location;
+  const url = `${protocol}//${host}/query`;
+
+  // Handler for group name submission
+  const handleGroupNameSubmit = (name) => {
+    setGroupName(name);
+    // Update URL with groupName for persistence
+    urlParams.set("groupName", name);
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.replaceState({}, "", newUrl);
+  };
+
+  // Flags for conditional rendering (no early returns!)
+  const showInvalidURL = !playerKey;
+  const showGroupNameEntry = playerKey && !groupName;
 
   function introSteps({ game, player }) {
     
@@ -927,8 +980,33 @@ export default function App() {
     isVideoEnabled,
     setIsVideoEnabled,
     setIsVideoChatMounted,
-  }), [mediaStream, callState, registerCallData, refreshRemoteParticipant, isAudioEnabled, isVideoEnabled]);
+    groupName, // Include groupName for child components
+  }), [mediaStream, callState, registerCallData, refreshRemoteParticipant, isAudioEnabled, isVideoEnabled, groupName]);
 
+  // ============================================================================
+  // CONDITIONAL RENDERING (no early returns to preserve hook order)
+  // ============================================================================
+
+  // Invalid URL - no participantKey
+  if (showInvalidURL) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+          <h1 className="text-3xl font-bold text-red-600 mb-4">Invalid URL</h1>
+          <p className="text-gray-700 mb-2">
+            We're sorry, you have reached this page via an invalid URL. Please contact the study administrator for more information.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Need to enter group name
+  if (showGroupNameEntry) {
+    return <GroupNameEntry onSubmit={handleGroupNameSubmit} />;
+  }
+
+  // Main app
   return (
     <EmpiricaParticipant url={url} ns={playerKey} modeFunc={EmpiricaClassic}>
       <DailyCallContext.Provider value={dailyCallContextValue}>

@@ -15,11 +15,19 @@ export function DisplayNameEntry({ next }) {
   const urlParams = new URLSearchParams(window.location.search);
 
   // Extract all URL parameters except participantKey
+  // Note: This runs on every render but Empirica handles duplicates gracefully
   for (const [key, value] of urlParams.entries()) {
     if (key !== "participantKey") {
       player.set(key, value);
-      console.log("setting " + key + " : " + value)
+      console.log("[DisplayNameEntry] setting " + key + " : " + value)
     }
+  }
+
+  // Explicitly ensure groupName is set (critical for group filtering)
+  const groupNameFromUrl = urlParams.get("groupName");
+  if (groupNameFromUrl && player.get("groupName") !== groupNameFromUrl) {
+    player.set("groupName", groupNameFromUrl);
+    console.log("[DisplayNameEntry] Explicitly set groupName:", groupNameFromUrl);
   }
 
 

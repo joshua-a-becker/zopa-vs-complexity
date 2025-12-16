@@ -25,7 +25,9 @@ setLogLevel(argv["loglevel"] || "info");
   );
 
   ctx.register(ClassicLoader);
-  ctx.register(Classic());
+  ctx.register(Classic({
+    disableAssignment: true,  // Enable custom assignment logic
+  }));
   ctx.register(Lobby());
   ctx.register(Empirica);
   ctx.register(function (_) {

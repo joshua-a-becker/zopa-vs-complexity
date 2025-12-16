@@ -271,7 +271,8 @@ const RemoteVideoComponent = React.memo(({ stream, name, sessionId, onRequestRef
   );
 });
 
-export function VideoChat({ defaultHideSelf = false }) {
+// filterPlayerIds: optional Set of player IDs to show (if provided, only show these participants)
+export function VideoChat({ defaultHideSelf = false, filterPlayerIds = null }) {
   const localVideoRef = useRef();
   const player = usePlayer();
   const players = usePlayers();
@@ -590,7 +591,18 @@ export function VideoChat({ defaultHideSelf = false }) {
       </div>
 
       {/* Remote Videos - each gets equal size */}
-      {Object.entries(allDailyParticipants).map(([sessionId, participant]) => {
+      {/* Filter participants if filterPlayerIds is provided */}
+      {Object.entries(allDailyParticipants)
+        .filter(([sessionId, participant]) => {
+          // If no filter provided, show all
+          if (!filterPlayerIds) return true;
+          // Check if participant's user_id is in the filter set
+          const participantPlayerId = participant.user_id;
+          const shouldShow = filterPlayerIds.has(participantPlayerId);
+          console.log(`[VideoChat] Filtering participant ${participantPlayerId}: ${shouldShow ? 'SHOW' : 'HIDE'}`);
+          return shouldShow;
+        })
+        .map(([sessionId, participant]) => {
         const stream = remoteStreams[sessionId];
         const name = participantNames[sessionId] || participant.userData?.displayName || "Participant";
         const videoState = participantVideoStates[sessionId] || participant.tracks?.video?.state || "unknown";

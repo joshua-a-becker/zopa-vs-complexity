@@ -2,5 +2,5 @@ lobbies:
     - name: test fast
       desc: test fast
       kind: individual
-      duration: 5m0s
+      duration: 8h20m0s
       strategy: fail
