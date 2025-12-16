@@ -1,8 +1,21 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Users } from "lucide-react";
-import rolesData from "../../../server/src/roles.json";
+import { useGame } from "@empirica/core/player/classic/react";
 
 export function CustomLobby() {
+  const [tips, setTips] = useState("");
+
+  const game = useGame();
+  const rolesUrl = game.get("treatment").roleDataURL;
+
+  useEffect(() => {
+    if (rolesUrl) {
+      fetch(rolesUrl)
+        .then(res => res.json())
+        .then(data => setTips(data.tips || ""))
+        .catch(err => console.error("Failed to fetch tips:", err));
+    }
+  }, [rolesUrl]);
 
   return (
     <div className="min-h-screen w-screen bg-gray-100">
@@ -36,7 +49,7 @@ export function CustomLobby() {
           <div className="bg-white rounded-lg shadow-lg p-12 mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-6">While You Wait. . .</h2>
 
-          <div className="prose prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: rolesData.tips }} />
+          <div className="prose prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: tips }} />
           </div>
         </div>
       </div>

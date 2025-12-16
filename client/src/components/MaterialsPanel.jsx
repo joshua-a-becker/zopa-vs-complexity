@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Markdown from "react-markdown";
 import { usePlayer, useStage, useRound, useGame } from "@empirica/core/player/classic/react";
-import rolesData from "../../../server/src/roles.json";
 
 export function MaterialsPanel({
   roleName,
@@ -15,6 +14,7 @@ export function MaterialsPanel({
   const round = useRound();
   const game = useGame();
   const { playerCount } = game.get("treatment");
+  const tips = game.get("tips") || "";
   const [activeTab, setActiveTab] = useState("calculator");
   const [selectedOptions, setSelectedOptions] = useState({});
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
@@ -596,7 +596,7 @@ export function MaterialsPanel({
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 Tips on Negotiation
               </h3>
-              <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: rolesData.tips }} />
+              <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: tips }} />
             </div>
           </div>
         )}

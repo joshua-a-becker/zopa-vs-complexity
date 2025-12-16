@@ -1,11 +1,11 @@
 import React, { useState, useRef } from "react";
 import { usePlayer, useGame } from "@empirica/core/player/classic/react";
 import Markdown from "react-markdown";
-import rolesData from "../../../server/src/roles.json";
 
 export function ReadRoleContent({ profileComponent }) {
   const player = usePlayer();
   const game = useGame();
+  const tips = game.get("tips") || "";
   const roleName = player.get("roleName");
   const roleNarrative = player.get("roleNarrative");
   const roleScoresheet = player.get("roleScoresheet");
@@ -212,7 +212,7 @@ export function ReadRoleContent({ profileComponent }) {
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
               Tips on Negotiation
             </h3>
-            <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: rolesData.tips }} />
+            <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: tips }} />
           </div>
         </div>
       </div>
