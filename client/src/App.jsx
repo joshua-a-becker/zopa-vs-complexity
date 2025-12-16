@@ -48,6 +48,15 @@ export default function App() {
   let playerKey = urlParams.get("participantKey") || "";
   const devKey = urlParams.get("devKey") || "";
 
+  // If studentId is present, generate participantKey from it
+  const studentId = urlParams.get("studentId");
+  if (!playerKey && studentId) {
+    playerKey = generateParticipantKey();
+    urlParams.set("participantKey", playerKey);
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.replaceState({}, "", newUrl);
+  }
+
   console.log(devKey)
   if (!playerKey && devKey === "oandi") {
     // Generate 15 digit random alphanumeric string

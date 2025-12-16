@@ -9,6 +9,9 @@ echo "Updating Caddy reverse proxy..."
 
 # Create Caddyfile
 cat > /etc/caddy/Caddyfile << 'EOF'
+challenge.negotiation.education {
+    reverse_proxy localhost:3000
+}
 platform.negotiation.education {
     reverse_proxy localhost:3000
 }

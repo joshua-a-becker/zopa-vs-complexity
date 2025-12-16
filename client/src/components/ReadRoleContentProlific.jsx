@@ -83,9 +83,9 @@ export function ReadRoleContent({ profileComponent }) {
           <p>
             Your goal is to reach an agreement that maximizes your score based on your role's scoresheet, which is shown below.
           </p><br/>
-          {/* <p>
+          <p>
             Your bonus will be equal to the points you get!  1 point = $1 dollar.
-          </p> */}
+          </p>
         </div>
 
           {/* 1. Narrative Section */}

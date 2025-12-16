@@ -43,10 +43,10 @@ export function NegotiationOutcome({ next }) {
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
                 <p className="text-xl text-gray-700 mb-2">
-                  Your bonus is:
+                  Your score is:
                 </p>
                 <p className="text-5xl font-bold text-blue-600">
-                  ${bonus.toFixed(2)}
+                  {bonus.toFixed(2)} points
                 </p>
               </div>
             </>
@@ -72,14 +72,14 @@ export function NegotiationOutcome({ next }) {
           )}
 
           <p className="text-center text-gray-600 pt-4">
-            Thank you for participating in this study!
+            Please return to the classroom!
           </p>
         </div>
 
         <div className="mt-8 flex justify-center">
-          <Button handleClick={next} autoFocus>
+          {/* <Button handleClick={next} autoFocus>
             <span className="text-lg px-4">Continue</span>
-          </Button>
+          </Button> */}
         </div>
       </div>
     </div>

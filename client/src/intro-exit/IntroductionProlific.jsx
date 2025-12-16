@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "../components/Button";
+import { Button } from "../components/Button.jsx";
 
 export function Introduction({ next }) {
   return (
@@ -26,9 +26,9 @@ export function Introduction({ next }) {
             <p className="text-base leading-relaxed">
               You will have <span className="font-semibold">20 minutes</span> to try to reach a satisfactory agreement. Your goal is to get as many points as possible.  
             </p>
-            {/* <br/><p className="text-base leading-relaxed">
+            <br/><p className="text-base leading-relaxed">
               Points determine your bonus on Prolific. 1 point = $1 dollar.
-            </p> */}
+            </p>
           </div>
 
           <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-lg">
@@ -36,7 +36,7 @@ export function Introduction({ next }) {
           
 
           <p className="text-base leading-relaxed">
-            If you are not comfortable being on video, please close this page{/* and return the task on Prolific */}.
+            If you are not comfortable being on video, please close this page and return the task on Prolific.
           </p>
 
           </div>
