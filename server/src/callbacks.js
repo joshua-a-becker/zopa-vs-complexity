@@ -54,7 +54,7 @@ Empirica.onRoundEnded(({ round }) => {
 
   // Save whether agreement was reached to the round
   round.set("agreementReached", reachedAgreement);
-  Empirica.flush();
+  
 });
 
 Empirica.onGameStart(({ game }) => {
@@ -106,7 +106,7 @@ Empirica.onGameStart(({ game }) => {
 
       // Save the room URL to the game
       game.set("roomUrl", data.url);
-      Empirica.flush();
+      // Empirica.flush();
       console.log(`Room created for game: ${data.url}`);
 
       console.log("Creating meeting tokens for players");
@@ -140,7 +140,7 @@ Empirica.onGameStart(({ game }) => {
 
           if (tokenData.token) {
             player.set("dailyMeetingToken", tokenData.token);
-            Empirica.flush();
+            // Empirica.flush();
             console.log(`Created token for player ${displayName}`);
           } else {
             console.error(`Failed to create token for player ${displayName}:`, tokenData);
@@ -151,7 +151,7 @@ Empirica.onGameStart(({ game }) => {
       });
 
       await Promise.all(tokenPromises);
-      Empirica.flush();
+      // Empirica.flush();
       console.log(`Tokens generated for ${game.players.length} players`);
     } catch (error) {
       console.error("Failed to create Daily room or tokens:", error);
@@ -233,88 +233,8 @@ Empirica.onStageStart(({ stage }) => {
     initialTimestamps[player.id] = Date.now();
   });
   game.set("participantTimestamps", initialTimestamps);
-  Empirica.flush();
+  
 
   // Monitor Daily.co participant presence every 5 seconds
-  const monitorInterval = setInterval(async () => {
-
-    const currentGame = stage.round.currentGame;
-    const currentStage = currentGame.currentStage;
-
-    // Check if we're still on the stage that created this interval
-    if (!currentStage || currentStage.id !== stage.id) {
-      return; // This interval is for an old stage, don't run
-    }
-
-    const game = stage.round.currentGame;
-    const timestamps = game.get("participantTimestamps") || {};
-    const now = Date.now();
-
-    // Get Daily.co participants to update timestamps
-    const DAILY_API_KEY = "4a8717f69efe0168244b69d4d4aa0aad4faafbe31c94d69853d590eeeb916290";
-    const roomUrl = game.get("roomUrl");
-
-    if (roomUrl) {
-      try {
-        // Extract room name from URL (e.g., "https://company.daily.co/roomname" -> "roomname")
-        const roomName = roomUrl.split('/').pop();
-
-        // Fetch current participants from Daily.co presence API
-        const res = await fetch(`https://api.daily.co/v1/rooms/${roomName}/presence`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${DAILY_API_KEY}`,
-          }
-        });
-
-        const data = await res.json();
-
-
-        if (data && data.data) {
-          // Get list of player IDs currently in the call
-
-          const activePlayerIds = data.data.map(p => p.userId);
-
-          game.set("activeDailyCalls", data.data)
-
-          // Update timestamps for players who are in the Daily call
-          game.players.forEach(player => {
-            if (activePlayerIds.includes(player.id)) {
-              // LOOK HERE FOR MYSTERY
-              // console.log(player.id + " is active")
-              timestamps[player.id] = now;
-              // console.log(timestamps)
-            }
-          });
-
-          // Save updated timestamps
-          // console.log("Saved timestamps:", timestamps);
-          game.set("participantTimestamps", timestamps);
-          Empirica.flush();
-          // Object.entries(game.get("participantTimestamps")).forEach(([k,v]) => console.log(k + " : " + ((v-Date.now())/1000) ))
-        }
-      } catch (error) {
-        console.error("Error fetching Daily participants:", error);
-        // Continue with existing timestamps if API call fails
-      }
-    }
-
-    // Calculate threshold based on stage and time remaining
-    let threshold = 15000; // Default 30 seconds
-    const stageTask = stage.get("task");
-    const stageEndTime = stage.get("endAt");
-    const timeRemaining = stageEndTime ? stageEndTime - now : null;
-    
-    game.players.forEach(player => {
-      const lastSeen = timestamps[player.id];
-    
-      if (lastSeen && (now - lastSeen) > threshold) {
-        const displayName = player.get("displayName") || "Unknown";
-        
-        // do something here if a player has left
-        
-      }
-    });
-  }, 5000);
-
+  
 });
