@@ -1,21 +1,7 @@
 import React from "react";
 import { Button } from "../components/Button.jsx";
-import { useGame } from "@empirica/core/player/classic/react";
-
-function secToMinSec(x) {
-  const m = Math.floor(x / 60);
-  const s = x % 60;
-  
-    return s === 0 ? `${m} minutes` : `${m} minutes ${s} seconds`;;
-
-}
-
 
 export function Introduction({ next }) {
-
-  const game = useGame();
-
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full p-8 md:p-12">
@@ -34,11 +20,11 @@ export function Introduction({ next }) {
             </p>
             <br/>
             <p className="text-base leading-relaxed">
-            You will have <span className="font-semibold">{secToMinSec(game.get("treatment").readRoleTime)} to read and prepare</span>. After {secToMinSec(game.get("treatment").readRoleTime)}, you will be automatically placed into a <span className="font-semibold">video chat</span> with your negotiation group.
+            You will have <span className="font-semibold">5 minutes to read and prepare</span>. After 5 minutes, you will be automatically placed into a <span className="font-semibold">video chat</span> with your negotiation group.
           </p>
           <br/>
             <p className="text-base leading-relaxed">
-              You will have <span className="font-semibold">{secToMinSec(game.get("treatment").negotiateTime)}</span> to try to reach a satisfactory agreement. Your goal is to get as many points as possible.  
+              You will have <span className="font-semibold">20 minutes</span> to try to reach a satisfactory agreement. Your goal is to get as many points as possible.  
             </p>
             {/* <br/><p className="text-base leading-relaxed">
               Points determine your bonus on Prolific. 1 point = $1 dollar.
