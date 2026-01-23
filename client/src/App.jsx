@@ -10,6 +10,7 @@ import { DisplayNameEntry } from "./intro-exit/DisplayNameEntry.jsx";
 import { AutoPlayerIdForm } from "./intro-exit/AutoPlayerIdForm.jsx";
 import CustomConsent from './intro-exit/CustomConsent.jsx';
 import { Introduction } from './intro-exit/Introduction.jsx';
+import { Demo } from './intro-exit/Demo.jsx';
 import { NegotiationOutcome } from './intro-exit/NegotiationOutcome.jsx';
 import DailyIframe from "@daily-co/daily-js";
 
@@ -127,17 +128,18 @@ export default function App() {
 
     if (skipIntro == "T") {
       const randomAnimal = ["lion","tiger","bear","elephant","giraffe","zebra","monkey","panda","kangaroo","wolf"][Math.floor(Math.random()*10)];
-      
+
       const displayName = player.get("displayName") ?? randomAnimal;
 
       player.set("displayName", displayName);
 
-      return []
+      return [Demo]
     }
 
     introSteps.push(Introduction)
     introSteps.push(CustomConsent)
     introSteps.push(DisplayNameEntry)
+    introSteps.push(Demo)
 
     return introSteps;
   }

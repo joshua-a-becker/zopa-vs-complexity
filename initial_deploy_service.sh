@@ -28,11 +28,16 @@ EOF
 ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$IP_ADDRESS" 'sudo bash -s' < ./setup_service.sh
 
 
+# set caddyfile
+ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$IP_ADDRESS" 'sudo bash -s' < ./setup-caddy.sh
+
+# set pagefile
+ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$IP_ADDRESS" 'sudo bash -s' < ./create_pagefile.sh
+
+
 # download logs
 # scp -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$IP_ADDRESS:~/empirica.log" .
 
-# set caddyfile
-# ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$IP_ADDRESS" 'sudo bash -s' < ./setup-caddy.sh
 
 
 # check caddyfile
@@ -49,3 +54,5 @@ ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$IP_ADDRESS" 's
 
 
 # ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$IP_ADDRESS" "sudo journalctl -u empirica --no-pager; sudo journalctl -u empirica -f" > empirica.log
+
+# copy 

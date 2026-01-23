@@ -11,10 +11,6 @@ factors:
     - name: roleDatURL
       values:
         - value: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/server/src/roles_v1.json
-    - name: roleDataURL
-      values:
-        - value: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/server/src/roles_v1.json
-        - value: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/roles_v1.json
     - name: negotiateTime
       values:
         - value: 100000
@@ -29,6 +25,11 @@ factors:
         - value: 30000
         - value: 300
         - value: 600
+    - name: roleDataURL
+      values:
+        - value: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/server/src/roles_v1.json
+        - value: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/roles_v1.json
+        - value: https://raw.githubusercontent.com/SamQuinto/Describing-Search-in-Negotiations/refs/heads/main/scenario_5_party.json
 treatments:
     - name: trio_long
       desc: three person negotiation
@@ -43,3 +44,15 @@ treatments:
         playerCount: 3
         readRoleTime: 600
         roleDataURL: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/roles_v1.json
+    - name: 5-party
+      factors:
+        negotiateTime: 600
+        playerCount: 5
+        readRoleTime: 300
+        roleDataURL: https://raw.githubusercontent.com/SamQuinto/Describing-Search-in-Negotiations/refs/heads/main/scenario_5_party.json
+    - name: 2-party
+      factors:
+        negotiateTime: 600
+        playerCount: 2
+        readRoleTime: 300
+        roleDataURL: https://raw.githubusercontent.com/SamQuinto/Describing-Search-in-Negotiations/refs/heads/main/scenario_5_party.json
