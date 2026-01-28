@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { usePlayer } from "@empirica/core/player/classic/react";
-import { DemoMaterialsPanel } from "./DemoMaterialsPanel";
+import { DemoUI } from "./DemoUI";
 import {
   demoNarrative,
   demoTips,
@@ -9,299 +9,365 @@ import {
   demoScoresheet
 } from "./demoContent";
 
+/**
+ * Demo component with explicit state machine.
+ *
+ * States:
+ * - INTRO: Show initial modal explaining the demo
+ * - VIEW_NARRATIVE: User must click Narrative tab (tab blinks)
+ * - VIEW_SCORING: User must click Scoring tab (tab blinks)
+ * - MAKE_PROPOSAL_1: User creates their first proposal
+ * - VOTE_ON_OWN_1: User votes on their own proposal (will fail)
+ * - SHOW_FAILED_1: Show modal explaining proposal failed, prompt to modify
+ * - MAKE_PROPOSAL_2: User modifies and resubmits
+ * - VOTE_ON_OWN_2: User votes on their modified proposal (will also fail)
+ * - SHOW_COMPUTER_PROPOSAL: Show modal about computer's proposal
+ * - VOTE_ON_COMPUTER: User votes on computer's proposal (must accept)
+ * - FINALIZE: User finalizes the deal
+ * - COMPLETE: Demo complete, show completion modal
+ */
+
+const STATES = {
+  INTRO: "INTRO",
+  VIEW_NARRATIVE: "VIEW_NARRATIVE",
+  VIEW_SCORING: "VIEW_SCORING",
+  MAKE_PROPOSAL_1: "MAKE_PROPOSAL_1",
+  VOTE_ON_OWN_1: "VOTE_ON_OWN_1",
+  SHOW_FAILED_1: "SHOW_FAILED_1",
+  MAKE_PROPOSAL_2: "MAKE_PROPOSAL_2",
+  VOTE_ON_OWN_2: "VOTE_ON_OWN_2",
+  SHOW_COMPUTER_PROPOSAL: "SHOW_COMPUTER_PROPOSAL",
+  VOTE_ON_COMPUTER: "VOTE_ON_COMPUTER",
+  FINALIZE: "FINALIZE",
+  COMPLETE: "COMPLETE"
+};
+
+const MODALS = {
+  INTRO: {
+    emoji: "📋",
+    title: "Demo Negotiation",
+    message: (
+      <>
+        This is a demo. <span className="font-bold text-blue-600">Start by clicking the Narrative tab</span> to learn about your role in this negotiation.
+      </>
+    ),
+    buttonText: "OK"
+  },
+  NARRATIVE_VIEWED: {
+    emoji: "📖",
+    title: "Narrative View",
+    message: (
+      <>
+        This is the narrative view. It gives your background story. Next, <span className="font-bold text-blue-600">click the Scoring tab</span> to see how proposals are scored, then try making a proposal.
+      </>
+    ),
+    buttonText: "OK"
+  },
+  PROPOSAL_SUBMITTED: {
+    emoji: "✅",
+    emojiSize: "text-4xl",
+    title: "Proposal Submitted",
+    message: "Great! Now you have to vote on it, even though it's your own proposal.",
+    buttonText: "OK"
+  },
+  MODIFIED_PROPOSAL_SUBMITTED: {
+    emoji: "✅",
+    emojiSize: "text-4xl",
+    title: "Modified Proposal Submitted",
+    message: "Good! Now vote on your modified proposal.",
+    buttonText: "OK"
+  },
+  PROPOSAL_FAILED: {
+    emoji: "🔧",
+    title: "Try Modifying",
+    message: (
+      <>
+        Everyone has now voted—unfortunately, your proposal didn't pass. Click the <span className="font-bold text-blue-600">Modify</span> button below your failed proposal to adjust it and try again. You can also modify other people's proposals.
+      </>
+    ),
+    buttonText: "OK"
+  },
+  COMPUTER_PROPOSAL: {
+    emoji: "💡",
+    title: "New Proposal",
+    message: "Ok, looks like that proposal didn't pass either. But look, another player has made a proposal! This proposal would give you positive points. Please vote 'Accept' to continue the demo.",
+    buttonText: "OK"
+  },
+  PLEASE_VOTE_YES: {
+    emoji: "⚠️",
+    title: "Please Vote Yes",
+    message: "Normally you could vote no. For now, please vote yes to end the demo.",
+    buttonText: "OK"
+  },
+  PLEASE_FINALIZE: {
+    emoji: "⚠️",
+    title: "Please Vote Finalize",
+    message: "Normally you could keep discussing. For now, please finalize to end the demo.",
+    buttonText: "OK"
+  },
+  COMPLETE: {
+    emoji: "🎉",
+    title: "Demo Complete",
+    message: "Thank you for completing this demo! We'll now take you to the waiting page while we try to match you with other players.",
+    buttonText: "Continue"
+  }
+};
+
 export function Demo({ next }) {
   const player = usePlayer();
 
-  // Helper function to get modal content by type
-  const getModalContent = (type) => {
-    const modals = {
-      initial: {
-        emoji: "📋",
-        title: "Demo Negotiation",
-        message: (
-          <>
-            This is a demo. <span className="font-bold text-green-600">Start by making a proposal</span> for your negotiation partners, as you would in the live game.
-          </>
-        ),
-        buttonText: "OK"
-      },
-      proposalSubmitted: {
-        emoji: "✅",
-        emojiSize: "text-4xl",
-        title: "Proposal Submitted",
-        message: "Great! Now you have to vote on it, even though it's your own proposal.",
-        buttonText: "OK"
-      },
-      modifiedProposalSubmitted: {
-        emoji: "✅",
-        emojiSize: "text-4xl",
-        title: "Modified Proposal Submitted",
-        message: "Good! Now vote on your modified proposal.",
-        buttonText: "OK"
-      },
-      tryModifying: {
-        emoji: "🔧",
-        title: "Try Modifying",
-        message: (
-          <>
-            Everyone has now voted-unfortunately, your proposal didn't pass. Click the <span className="font-bold text-blue-600">Modify</span> button below your failed proposal to adjust it and try again. You can also modify other people's proposals.
-          </>
-        ),
-        buttonText: "OK"
-      },
-      newProposal: {
-        emoji: "💡",
-        title: "New Proposal",
-        message: "Ok, looks like that proposal didn't pass either. But look, another player has made a proposal! This proposal would give you positive points. Please vote 'Accept' to continue the demo.",
-        buttonText: "OK"
-      },
-      pleaseVoteYes: {
-        emoji: "⚠️",
-        title: "Please Vote Yes",
-        message: "Normally you could vote no. For now, please vote yes to end the demo.",
-        buttonText: "OK"
-      },
-      pleaseVoteFinalize: {
-        emoji: "⚠️",
-        title: "Please Vote Finalize",
-        message: "Normally you could vote no. For now, please vote yes to end the demo.",
-        buttonText: "OK"
-      },
-      demoComplete: {
-        emoji: "🎉",
-        title: "Demo Complete",
-        message: "Thank you for completing this demo! We'll now take you to the waiting page while we try to match you with other players.",
-        buttonText: "Continue"
-      }
-    };
-    return modals[type] || modals.initial;
+  // Single source of truth: the demo state
+  const [state, setState] = useState(() => {
+    return player.get("demo_state") || STATES.INTRO;
+  });
+
+  // Track proposals the user has made (just for display)
+  const [userProposals, setUserProposals] = useState(() => {
+    return player.get("demo_userProposals") || [];
+  });
+
+  // Modal visibility (controlled by state)
+  const [showModal, setShowModal] = useState(true);
+  const [currentModal, setCurrentModal] = useState("INTRO");
+
+  // Save state to player when it changes
+  const saveState = (newState) => {
+    setState(newState);
+    player.set("demo_state", newState);
   };
 
-  // Initialize state from player storage or defaults
-  const [demoState, setDemoState] = useState(() => {
-    return player.get("intro_demoState") || "initial";
-  });
-  const [showModal, setShowModal] = useState(() => {
-    return player.get("intro_showModal") !== undefined ? player.get("intro_showModal") : false;
-  });
-  const [currentModalType, setCurrentModalType] = useState(() => {
-    return player.get("intro_currentModalType") || "initial";
-  });
+  const saveProposals = (proposals) => {
+    setUserProposals(proposals);
+    player.set("demo_userProposals", proposals);
+  };
 
-  // Save state to player storage whenever it changes
-  useEffect(() => {
-    player.set("intro_demoState", demoState);
-  }, [demoState, player]);
-
-  useEffect(() => {
-    player.set("intro_showModal", showModal);
-  }, [showModal, player]);
-
-  useEffect(() => {
-    player.set("intro_currentModalType", currentModalType);
-  }, [currentModalType, player]);
-
-  // Get current modal content dynamically
-  const modalContent = getModalContent(currentModalType);
-
-  // Initialize player state for demo
-  useEffect(() => {
-    player.set("intro_playerCount", 3);
-    player.set("intro_roleName", "Demo Role");
-    if (!player.get("intro_proposalHistory")) {
-      player.set("intro_proposalHistory", []);
+  // Get what modal to show based on current state
+  const getModalForState = () => {
+    switch (currentModal) {
+      case "INTRO": return MODALS.INTRO;
+      case "NARRATIVE_VIEWED": return MODALS.NARRATIVE_VIEWED;
+      case "PROPOSAL_SUBMITTED": return MODALS.PROPOSAL_SUBMITTED;
+      case "MODIFIED_PROPOSAL_SUBMITTED": return MODALS.MODIFIED_PROPOSAL_SUBMITTED;
+      case "PROPOSAL_FAILED": return MODALS.PROPOSAL_FAILED;
+      case "COMPUTER_PROPOSAL": return MODALS.COMPUTER_PROPOSAL;
+      case "PLEASE_VOTE_YES": return MODALS.PLEASE_VOTE_YES;
+      case "PLEASE_FINALIZE": return MODALS.PLEASE_FINALIZE;
+      case "COMPLETE": return MODALS.COMPLETE;
+      default: return null;
     }
-  }, [player]);
+  };
 
-  // Show initial modal
-  useEffect(() => {
-    if (demoState === "initial" && !showModal) {
-      setCurrentModalType("initial");
+  // Handle tab change
+  const handleTabChange = (tab) => {
+    if (state === STATES.VIEW_NARRATIVE && tab === "narrative") {
+      // User clicked Narrative tab, move to VIEW_SCORING and show modal
+      saveState(STATES.VIEW_SCORING);
+      setCurrentModal("NARRATIVE_VIEWED");
       setShowModal(true);
+    } else if (state === STATES.VIEW_SCORING && tab === "calculator") {
+      // User clicked Scoring tab, move to MAKE_PROPOSAL_1
+      saveState(STATES.MAKE_PROPOSAL_1);
     }
-  }, [demoState, showModal]);
-
-  // Handle proposal submission
-  const handleProposalSubmit = (proposal) => {
-    console.log("handleProposalSubmit called, demoState:", demoState);
-    if (demoState !== "waitingForUserProposal" && demoState !== "waitingForUserProposal2") return;
-
-    // Add simulated computer player votes
-    const history = player.get("intro_proposalHistory") || [];
-    const updatedHistory = [...history];
-    const currentProposal = updatedHistory[updatedHistory.length - 1];
-
-    if (currentProposal) {
-      // Computer 1 accepts, Computer 2 rejects
-      currentProposal.initialVotes["computer_1"] = "accept";
-      currentProposal.initialVotes["computer_2"] = "reject";
-      player.set("intro_proposalHistory", updatedHistory);
-
-      // Show modal based on which proposal this is
-      if (demoState === "waitingForUserProposal") {
-        console.log("Transitioning to waitingForUserVote1");
-        setCurrentModalType("proposalSubmitted");
-        setShowModal(true);
-        setDemoState("waitingForUserVote1");
-      } else if (demoState === "waitingForUserProposal2") {
-        console.log("Transitioning to waitingForUserVote2");
-        setCurrentModalType("modifiedProposalSubmitted");
-        setShowModal(true);
-        setDemoState("waitingForUserVote2");
-      }
-    }
-  };
-
-  // Handle initial vote (on user's own proposal)
-  const handleVote = (proposalId, vote) => {
-    console.log("Demo.jsx handleVote called:", { demoState, proposalId, vote });
-    if (demoState === "waitingForUserVote1") {
-      // Record the user's vote
-      const history = player.get("intro_proposalHistory") || [];
-      const updatedHistory = [...history];
-      const proposal = updatedHistory.find(p => p.id === proposalId);
-      if (proposal) {
-        proposal.initialVotes[player.id] = vote;
-        player.set("intro_proposalHistory", updatedHistory);
-      }
-
-      // User voted on their first proposal - it fails
-      // Now prompt them to modify it
-      setCurrentModalType("tryModifying");
-      setShowModal(true);
-      setDemoState("promptModify");
-    } else if (demoState === "waitingForUserVote2") {
-      // User voted on their second (modified) proposal
-      // Add computer votes immediately (computer_1 accept, computer_2 reject) so proposal completes
-      console.log("waitingForUserVote2 block entered");
-      const history = player.get("intro_proposalHistory") || [];
-      const updatedHistory = [...history];
-      const userProposal = updatedHistory.find(p => p.id === proposalId);
-      console.log("userProposal found:", !!userProposal, proposalId);
-
-      if (userProposal) {
-        // Record the user's vote
-        userProposal.initialVotes[player.id] = vote;
-
-        // Add computer votes to complete voting on user's 2nd proposal
-        userProposal.initialVotes["computer_1"] = "accept";
-        userProposal.initialVotes["computer_2"] = "reject";
-        // Now proposal fails (2 accept, 1 reject... wait no, we need it to fail)
-        // Actually with 1 reject it fails per the rules
-
-        // Create computer proposal by flipping Kitchen_Storage from user's last proposal
-        const computerOptions = { ...userProposal.options };
-        // Flip Kitchen_Storage: if it's 0 (included), make it 1 (excluded); if 1, make it 0
-        computerOptions["Kitchen_Storage"] = computerOptions["Kitchen_Storage"] === 0 ? 1 : 0;
-
-        const computerProposal = {
-          id: `${Date.now()}-computer_1`,
-          submittedBy: "computer_1",
-          submittedByName: "Player A",
-          timestamp: Date.now(),
-          options: computerOptions,
-          initialVotes: {
-            "computer_1": "accept",
-            "computer_2": "accept"
-          },
-          finalVotes: {},
-          modalDismissed: {}
-        };
-
-        updatedHistory.push(computerProposal);
-        player.set("intro_proposalHistory", updatedHistory);
-
-        // Show modal
-        console.log("Setting newProposal modal and transitioning to waitingForComputerInitialVote");
-        setCurrentModalType("newProposal");
-        setShowModal(true);
-        setDemoState("waitingForComputerInitialVote");
-      }
-    } else if (demoState === "waitingForComputerInitialVote") {
-      // User voted on computer proposal (initial vote)
-      const history = player.get("intro_proposalHistory") || [];
-      const updatedHistory = [...history];
-      const proposal = updatedHistory.find(p => p.id === proposalId);
-
-      if (vote === "reject") {
-        // Don't record the vote - show error modal
-        setCurrentModalType("pleaseVoteYes");
-        setShowModal(true);
-        // Stay in same state
-      } else if (vote === "accept") {
-        // Record the user's vote
-        if (proposal) {
-          proposal.initialVotes[player.id] = vote;
-          player.set("intro_proposalHistory", updatedHistory);
-        }
-
-        // User accepted - all 3 voted accept, triggers finalize modal
-        setDemoState("waitingForComputerFinalVote");
-      }
-    }
-  };
-
-  // Handle finalize vote
-  const handleFinalizeVote = (proposalId, decision) => {
-    if (demoState === "waitingForComputerFinalVote") {
-      if (decision === "continue") {
-        // Don't record the vote - show error modal
-        setCurrentModalType("pleaseVoteFinalize");
-        setShowModal(true);
-        // Stay in same state
-      } else if (decision === "finalize") {
-        // User voted to finalize - record it
-        const history = player.get("intro_proposalHistory") || [];
-        const updatedHistory = [...history];
-        const proposal = updatedHistory.find(p => p.id === proposalId);
-
-        if (proposal) {
-          // Record user's finalize vote
-          proposal.finalVotes[player.id] = decision;
-
-          // Add computer finalize votes
-          proposal.finalVotes["computer_1"] = "finalize";
-          proposal.finalVotes["computer_2"] = "finalize";
-          player.set("intro_proposalHistory", updatedHistory);
-
-          // Show completion modal
-          setCurrentModalType("demoComplete");
-          setShowModal(true);
-          setDemoState("complete");
-        }
-      }
-    }
+    // For other states, tab change doesn't affect demo state
   };
 
   // Handle modal close
   const handleModalClose = () => {
     setShowModal(false);
 
-    // Transition states based on current state
-    if (demoState === "initial") {
-      setDemoState("waitingForUserProposal");
-    } else if (demoState === "promptModify") {
-      setDemoState("waitingForUserProposal2");
-    } else if (demoState === "complete") {
-      // Move to next step
+    // State transitions when closing modals
+    if (currentModal === "INTRO") {
+      saveState(STATES.VIEW_NARRATIVE);
+    } else if (currentModal === "NARRATIVE_VIEWED") {
+      // Stay in VIEW_SCORING, just close the modal
+    } else if (currentModal === "PROPOSAL_SUBMITTED") {
+      // Stay in VOTE_ON_OWN_1, just close the modal
+    } else if (currentModal === "PROPOSAL_FAILED") {
+      saveState(STATES.MAKE_PROPOSAL_2);
+    } else if (currentModal === "MODIFIED_PROPOSAL_SUBMITTED") {
+      // Stay in VOTE_ON_OWN_2, just close the modal
+    } else if (currentModal === "COMPUTER_PROPOSAL") {
+      saveState(STATES.VOTE_ON_COMPUTER);
+    } else if (currentModal === "COMPLETE") {
       next();
+    }
+    // For PLEASE_VOTE_YES and PLEASE_FINALIZE, just close
+  };
+
+  // Handle proposal submission
+  const handleProposalSubmit = (proposalOptions) => {
+    if (state === STATES.MAKE_PROPOSAL_1) {
+      const newProposal = {
+        id: `proposal-1-${Date.now()}`,
+        options: proposalOptions,
+        submittedBy: "user",
+        status: "pending" // Will become "failed" after vote
+      };
+      saveProposals([newProposal]);
+      saveState(STATES.VOTE_ON_OWN_1);
+      setCurrentModal("PROPOSAL_SUBMITTED");
+      setShowModal(true);
+    } else if (state === STATES.MAKE_PROPOSAL_2) {
+      const newProposal = {
+        id: `proposal-2-${Date.now()}`,
+        options: proposalOptions,
+        submittedBy: "user",
+        status: "pending"
+      };
+      // Mark first proposal as failed, add second
+      const updated = userProposals.map(p => ({ ...p, status: "failed" }));
+      updated.push(newProposal);
+      saveProposals(updated);
+      saveState(STATES.VOTE_ON_OWN_2);
+      setCurrentModal("MODIFIED_PROPOSAL_SUBMITTED");
+      setShowModal(true);
     }
   };
 
+  // Handle vote on proposal
+  const handleVote = (proposalId, vote) => {
+    if (state === STATES.VOTE_ON_OWN_1) {
+      // User voted on their first proposal - it fails regardless
+      const updated = userProposals.map(p =>
+        p.id === proposalId ? { ...p, status: "failed", userVote: vote } : p
+      );
+      saveProposals(updated);
+      saveState(STATES.SHOW_FAILED_1);
+      setCurrentModal("PROPOSAL_FAILED");
+      setShowModal(true);
+    } else if (state === STATES.VOTE_ON_OWN_2) {
+      // User voted on their second proposal - it also fails, then computer proposal appears
+      const updated = userProposals.map(p =>
+        p.id === proposalId ? { ...p, status: "failed", userVote: vote } : p
+      );
+      saveProposals(updated);
+      saveState(STATES.SHOW_COMPUTER_PROPOSAL);
+      setCurrentModal("COMPUTER_PROPOSAL");
+      setShowModal(true);
+    } else if (state === STATES.VOTE_ON_COMPUTER) {
+      if (vote === "reject") {
+        // Must accept - show warning
+        setCurrentModal("PLEASE_VOTE_YES");
+        setShowModal(true);
+      } else {
+        // Accepted - move to finalize
+        saveState(STATES.FINALIZE);
+      }
+    }
+  };
+
+  // Handle finalize vote
+  const handleFinalizeVote = (decision) => {
+    if (state === STATES.FINALIZE) {
+      if (decision === "continue") {
+        // Must finalize - show warning
+        setCurrentModal("PLEASE_FINALIZE");
+        setShowModal(true);
+      } else {
+        // Finalized - demo complete
+        saveState(STATES.COMPLETE);
+        setCurrentModal("COMPLETE");
+        setShowModal(true);
+      }
+    }
+  };
+
+  // Build the display data based on current state
+  const buildDisplayData = () => {
+    const data = {
+      proposals: [], // All proposals (for history)
+      currentProposal: null, // The proposal user needs to vote on
+      showFinalize: false, // Whether to show finalize modal
+      canSubmitProposal: false, // Whether user can submit new proposal
+      computerProposal: null // The computer's proposal (when applicable)
+    };
+
+    // Can submit proposal in MAKE_PROPOSAL_1 or MAKE_PROPOSAL_2
+    data.canSubmitProposal = state === STATES.MAKE_PROPOSAL_1 || state === STATES.MAKE_PROPOSAL_2;
+
+    // Add user proposals to history (with computed display data)
+    userProposals.forEach(p => {
+      const displayProposal = {
+        ...p,
+        submittedByName: "You",
+        isUserProposal: true
+      };
+
+      if (p.status === "pending") {
+        // This is the current proposal to vote on
+        data.currentProposal = {
+          ...displayProposal,
+          // Fake vote counts based on state
+          initialVotes: state === STATES.VOTE_ON_OWN_1 || state === STATES.VOTE_ON_OWN_2
+            ? { computer_1: "accept", computer_2: "reject" } // Computers already voted
+            : {}
+        };
+      } else {
+        // Add to history with vote results
+        data.proposals.push({
+          ...displayProposal,
+          initialVotes: {
+            user: p.userVote || "accept",
+            computer_1: "accept",
+            computer_2: "reject"
+          }
+        });
+      }
+    });
+
+    // In VOTE_ON_COMPUTER or FINALIZE, show computer's proposal
+    if (state === STATES.VOTE_ON_COMPUTER || state === STATES.FINALIZE) {
+      // Generate computer proposal based on user's last proposal
+      const lastUserProposal = userProposals[userProposals.length - 1];
+      const computerOptions = lastUserProposal
+        ? { ...lastUserProposal.options }
+        : {};
+
+      // Flip Kitchen_Storage to make it different
+      computerOptions["Kitchen_Storage"] = computerOptions["Kitchen_Storage"] === 0 ? 1 : 0;
+
+      data.computerProposal = {
+        id: "computer-proposal",
+        options: computerOptions,
+        submittedBy: "computer_1",
+        submittedByName: "Player A",
+        isUserProposal: false,
+        initialVotes: state === STATES.FINALIZE
+          ? { computer_1: "accept", computer_2: "accept", user: "accept" }
+          : { computer_1: "accept", computer_2: "accept" }
+      };
+
+      if (state === STATES.VOTE_ON_COMPUTER) {
+        data.currentProposal = data.computerProposal;
+      } else if (state === STATES.FINALIZE) {
+        data.showFinalize = true;
+        data.acceptedProposal = data.computerProposal;
+      }
+    }
+
+    return data;
+  };
+
+  const displayData = buildDisplayData();
+  const modalContent = getModalForState();
+
   return (
     <div className="h-screen flex">
-      {/* Left side: Demo Materials Panel (70% width) */}
+      {/* Left side: Demo UI (70% width) */}
       <div className="w-[70%]">
-        <DemoMaterialsPanel
+        <DemoUI
           roleName="Demo Role"
           roleNarrative={demoNarrative}
           roleScoresheet={demoScoresheet}
           roleBATNA={demoBATNA}
           roleRP={demoRP}
           tips={demoTips}
+          displayData={displayData}
+          demoState={state}
           onProposalSubmit={handleProposalSubmit}
           onVote={handleVote}
           onFinalizeVote={handleFinalizeVote}
+          onTabChange={handleTabChange}
         />
       </div>
 
@@ -316,7 +382,7 @@ export function Demo({ next }) {
       </div>
 
       {/* Demo Modal */}
-      {showModal && (
+      {showModal && modalContent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-2xl p-8 max-w-lg w-full mx-4">
             <div className={`${modalContent.emojiSize || "text-8xl"} mb-4 text-center`}>{modalContent.emoji}</div>

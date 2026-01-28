@@ -138,8 +138,8 @@ export default function App() {
 
     introSteps.push(Introduction)
     introSteps.push(CustomConsent)
-    introSteps.push(DisplayNameEntry)
     introSteps.push(Demo)
+    introSteps.push(DisplayNameEntry)
 
     return introSteps;
   }
