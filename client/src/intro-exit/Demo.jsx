@@ -290,11 +290,17 @@ export function Demo({ next }) {
       currentProposal: null, // The proposal user needs to vote on
       showFinalize: false, // Whether to show finalize modal
       canSubmitProposal: false, // Whether user can submit new proposal
-      computerProposal: null // The computer's proposal (when applicable)
+      computerProposal: null, // The computer's proposal (when applicable)
+      submitBlockedMessage: null // Message to show if submit is blocked
     };
 
     // Can submit proposal in MAKE_PROPOSAL_1 or MAKE_PROPOSAL_2
     data.canSubmitProposal = state === STATES.MAKE_PROPOSAL_1 || state === STATES.MAKE_PROPOSAL_2;
+
+    // Set blocked message for early states
+    if (state === STATES.INTRO || state === STATES.VIEW_NARRATIVE) {
+      data.submitBlockedMessage = "Please click the Narrative tab";
+    }
 
     // Add user proposals to history (with computed display data)
     userProposals.forEach(p => {

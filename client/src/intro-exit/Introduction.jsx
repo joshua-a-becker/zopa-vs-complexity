@@ -50,7 +50,7 @@ export function Introduction({ next }) {
           
 
           <p className="text-base leading-relaxed">
-            If you are not comfortable being on video, please close this page{/* and return the task on Prolific */}.
+            <b>If you are not comfortable being on video, please close this page{/* and return the task on Prolific */}.</b>
           </p>
 
           </div>

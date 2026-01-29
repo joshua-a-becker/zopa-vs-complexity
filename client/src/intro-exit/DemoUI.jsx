@@ -25,6 +25,7 @@ export function DemoUI({
   const [selectedOptions, setSelectedOptions] = useState({});
   const [showEmptyProposalError, setShowEmptyProposalError] = useState(false);
   const [hasSubmittedOnce, setHasSubmittedOnce] = useState(false);
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
 
   const playerCount = 3; // Hardcoded for demo
 
@@ -56,6 +57,17 @@ export function DemoUI({
 
   // Handle proposal submission
   const handleSubmitProposal = () => {
+    // Check if submission is blocked with a message
+    if (displayData.submitBlockedMessage) {
+      setShowBlockedModal(true);
+      return;
+    }
+
+    // Check if submission is not allowed (but no specific message)
+    if (!displayData.canSubmitProposal) {
+      return;
+    }
+
     setHasSubmittedOnce(true);
 
     // Check if at least one option is selected
@@ -297,16 +309,20 @@ export function DemoUI({
                     <div className="mt-6 flex flex-col gap-2 w-full">
                       <button
                         onClick={handleSubmitProposal}
-                        disabled={!displayData.canSubmitProposal}
+                        disabled={!displayData.canSubmitProposal && !displayData.submitBlockedMessage}
                         className={`px-4 py-2 rounded font-semibold transition-colors text-sm ${
-                          !displayData.canSubmitProposal
+                          displayData.submitBlockedMessage
+                            ? "bg-green-600 text-white hover:bg-green-700"
+                            : !displayData.canSubmitProposal
                             ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                             : !hasSubmittedOnce
                             ? "bg-green-600 text-white hover:bg-green-700 animate-pulse-button"
                             : "bg-green-600 text-white hover:bg-green-700"
                         }`}
                       >
-                        {!displayData.canSubmitProposal ? "Proposal Pending" : "Submit Proposal"}
+                        {!displayData.canSubmitProposal && !displayData.submitBlockedMessage
+                          ? "Proposal Pending"
+                          : "Submit Proposal"}
                       </button>
                       {showEmptyProposalError && (
                         <div className="text-red-600 text-sm font-semibold text-center p-2 bg-red-50 rounded">
@@ -526,6 +542,23 @@ export function DemoUI({
                   Keep Discussing
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Blocked Submission Modal */}
+        {showBlockedModal && displayData.submitBlockedMessage && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-2xl p-8 max-w-lg w-full mx-4">
+              <div className="text-6xl mb-4 text-center">⚠️</div>
+              <h2 className="text-2xl font-bold mb-4 text-center">Not Yet</h2>
+              <p className="text-lg text-gray-700 mb-6 text-center">{displayData.submitBlockedMessage}</p>
+              <button
+                onClick={() => setShowBlockedModal(false)}
+                className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 font-bold text-xl"
+              >
+                OK
+              </button>
             </div>
           </div>
         )}
