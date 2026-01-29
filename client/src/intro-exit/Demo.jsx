@@ -63,6 +63,12 @@ const MODALS = {
     ),
     buttonText: "OK"
   },
+  SCORING_VIEWED: {
+    emoji: "🧮",
+    title: "Scoring Calculator",
+    message: "Now, use the scoring calculator to submit a proposal to your fictional roommates.",
+    buttonText: "OK"
+  },
   PROPOSAL_SUBMITTED: {
     emoji: "✅",
     emojiSize: "text-4xl",
@@ -146,6 +152,7 @@ export function Demo({ next }) {
     switch (currentModal) {
       case "INTRO": return MODALS.INTRO;
       case "NARRATIVE_VIEWED": return MODALS.NARRATIVE_VIEWED;
+      case "SCORING_VIEWED": return MODALS.SCORING_VIEWED;
       case "PROPOSAL_SUBMITTED": return MODALS.PROPOSAL_SUBMITTED;
       case "MODIFIED_PROPOSAL_SUBMITTED": return MODALS.MODIFIED_PROPOSAL_SUBMITTED;
       case "PROPOSAL_FAILED": return MODALS.PROPOSAL_FAILED;
@@ -165,8 +172,9 @@ export function Demo({ next }) {
       setCurrentModal("NARRATIVE_VIEWED");
       setShowModal(true);
     } else if (state === STATES.VIEW_SCORING && tab === "calculator") {
-      // User clicked Scoring tab, move to MAKE_PROPOSAL_1
-      saveState(STATES.MAKE_PROPOSAL_1);
+      // User clicked Scoring tab, show modal before allowing proposal
+      setCurrentModal("SCORING_VIEWED");
+      setShowModal(true);
     }
     // For other states, tab change doesn't affect demo state
   };
@@ -180,6 +188,9 @@ export function Demo({ next }) {
       saveState(STATES.VIEW_NARRATIVE);
     } else if (currentModal === "NARRATIVE_VIEWED") {
       // Stay in VIEW_SCORING, just close the modal
+    } else if (currentModal === "SCORING_VIEWED") {
+      // User closed scoring modal, now they can make a proposal
+      saveState(STATES.MAKE_PROPOSAL_1);
     } else if (currentModal === "PROPOSAL_SUBMITTED") {
       // Stay in VOTE_ON_OWN_1, just close the modal
     } else if (currentModal === "PROPOSAL_FAILED") {
