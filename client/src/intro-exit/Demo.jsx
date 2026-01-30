@@ -136,6 +136,9 @@ export function Demo({ next }) {
   const [showModal, setShowModal] = useState(true);
   const [currentModal, setCurrentModal] = useState("INTRO");
 
+  // Negative points warning modal
+  const [showNegativePointsModal, setShowNegativePointsModal] = useState(false);
+
   // Save state to player when it changes
   const saveState = (newState) => {
     setState(newState);
@@ -145,6 +148,14 @@ export function Demo({ next }) {
   const saveProposals = (proposals) => {
     setUserProposals(proposals);
     player.set("demo_userProposals", proposals);
+  };
+
+  // Calculate points for a proposal
+  const calculateProposalPoints = (proposalOptions) => {
+    return Object.entries(demoScoresheet).reduce((sum, [category]) => {
+      const optionIdx = proposalOptions[category] ?? 1;
+      return sum + (demoScoresheet[category]?.[optionIdx]?.score || 0);
+    }, 0);
   };
 
   // Get what modal to show based on current state
@@ -237,6 +248,37 @@ export function Demo({ next }) {
 
   // Handle vote on proposal
   const handleVote = (proposalId, vote) => {
+    // If voting "accept", check if proposal has negative points
+    if (vote === "accept") {
+      let proposal = null;
+
+      // Find the proposal being voted on
+      if (state === STATES.VOTE_ON_OWN_1 || state === STATES.VOTE_ON_OWN_2) {
+        proposal = userProposals.find(p => p.id === proposalId);
+      } else if (state === STATES.VOTE_ON_COMPUTER) {
+        // Computer proposal (from displayData)
+        const computerOptions = {
+          "Pets_Allowed": 0,
+          "Overnight_Guests": 0,
+          "Kitchen_Storage": 1,
+          "Clean_Ourselves": 1,
+          "Late_Nights_OK": 0,
+          "Cooler_Winter_Temp": 1,
+          "Shared_Groceries": 1,
+          "Living_Room": 0
+        };
+        proposal = { options: computerOptions };
+      }
+
+      if (proposal) {
+        const proposalPoints = calculateProposalPoints(proposal.options);
+        if (proposalPoints < 0) {
+          setShowNegativePointsModal(true);
+          return;
+        }
+      }
+    }
+
     if (state === STATES.VOTE_ON_OWN_1) {
       // User voted on their first proposal - it fails regardless
       const updated = userProposals.map(p =>
@@ -334,14 +376,18 @@ export function Demo({ next }) {
 
     // In VOTE_ON_COMPUTER or FINALIZE, show computer's proposal
     if (state === STATES.VOTE_ON_COMPUTER || state === STATES.FINALIZE) {
-      // Generate computer proposal based on user's last proposal
-      const lastUserProposal = userProposals[userProposals.length - 1];
-      const computerOptions = lastUserProposal
-        ? { ...lastUserProposal.options }
-        : {};
-
-      // Flip Kitchen_Storage to make it different
-      computerOptions["Kitchen_Storage"] = computerOptions["Kitchen_Storage"] === 0 ? 1 : 0;
+      // Computer proposal using vector 11001001
+      // This corresponds to: Pets(1), Overnight(1), Kitchen(0), Clean(0), LateNights(1), CoolerTemp(0), SharedGroceries(0), LivingRoom(1)
+      const computerOptions = {
+        "Pets_Allowed": 0,           // Yes, pets allowed (+12)
+        "Overnight_Guests": 0,       // Anytime is fine (+10)
+        "Kitchen_Storage": 1,        // Some private shelves (0)
+        "Clean_Ourselves": 1,        // DIY cleaning rotation (0)
+        "Late_Nights_OK": 0,         // No strict noise curfew (0)
+        "Cooler_Winter_Temp": 1,     // Keep it cooler (0)
+        "Shared_Groceries": 1,       // Buy basics together (0)
+        "Living_Room": 0             // Cozy and lived-in (0)
+      };
 
       data.computerProposal = {
         id: "computer-proposal",
@@ -410,6 +456,29 @@ export function Demo({ next }) {
               className="w-full bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 font-bold text-xl"
             >
               {modalContent.buttonText}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Negative Points Warning Modal */}
+      {showNegativePointsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold text-red-600 mb-3">
+                Cannot Accept Deal
+              </h3>
+              <p className="text-lg text-gray-700">
+                You can't accept negative points.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowNegativePointsModal(false)}
+              className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+            >
+              OK
             </button>
           </div>
         </div>

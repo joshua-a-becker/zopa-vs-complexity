@@ -35,35 +35,35 @@ export const demoRP = 0;
 
 export const demoScoresheet = {
   "Pets_Allowed": [
-    { option: "Yes, pets allowed", score: 15, reason: "You have a cat you're bringing" },
-    { option: "No pets", score: 0, reason: "" }
+    { option: "Yes", score: 12, reason: "You have a cat you're bringing" },
+    { option: "No", score: 0, reason: "" }
   ],
   "Overnight_Guests": [
-    { option: "Anytime is fine", score: 12, reason: "Your partner visits often on weekends" },
-    { option: "Advance notice required", score: 0, reason: "" }
-  ],
-  "Clean_Ourselves": [
-    { option: "DIY cleaning rotation", score: 10, reason: "Saves money and you don't mind cleaning" },
-    { option: "Hire a cleaner", score: 0, reason: "" }
+    { option: "Yes", score: 10, reason: "Your partner visits often on weekends" },
+    { option: "No", score: 0, reason: "" }
   ],
   "Kitchen_Storage": [
-    { option: "All shelves shared", score: 8, reason: "Makes cooking together easier" },
-    { option: "Some private shelves", score: 0, reason: "" }
+    { option: "Yes", score: 8, reason: "Makes cooking together easier" },
+    { option: "No", score: 0, reason: "" }
+  ],
+  "Clean_Ourselves": [
+    { option: "Yes", score: 0, reason: "" },
+    { option: "No", score: 0, reason: "" }
   ],
   "Late_Nights_OK": [
-    { option: "No strict noise curfew", score: 7, reason: "You're a night owl who works late" },
-    { option: "10pm quiet hours", score: 0, reason: "" }
+    { option: "Yes", score: -5, reason: "You prefer quiet evenings" },
+    { option: "No", score: 0, reason: "" }
   ],
   "Cooler_Winter_Temp": [
-    { option: "Keep it cooler (65°F)", score: 5, reason: "You prefer to save money on heating" },
-    { option: "Keep it warmer (72°F)", score: 0, reason: "" }
+    { option: "Yes", score: -7, reason: "You prefer warmer temperatures" },
+    { option: "No", score: 0, reason: "" }
   ],
   "Shared_Groceries": [
-    { option: "Buy basics together", score: 4, reason: "More convenient and economical" },
-    { option: "Everyone buys own", score: 0, reason: "" }
+    { option: "Yes", score: -9, reason: "You prefer to buy your own food" },
+    { option: "No", score: 0, reason: "" }
   ],
-  "Living_Room_Style": [
-    { option: "Cozy and lived-in", score: 3, reason: "Want it to feel like home, not a showroom" },
-    { option: "Minimal and clean", score: 0, reason: "" }
+  "Living_Room": [
+    { option: "Yes", score: -11, reason: "You have strong preferences against this style" },
+    { option: "No", score: 0, reason: "" }
   ]
 };

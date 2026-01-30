@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "../components/Button.jsx";
 
 export default function CustomConsent({ next }) {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-6">
       <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full p-10 md:p-14 border border-gray-200">
