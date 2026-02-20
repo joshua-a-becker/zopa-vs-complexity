@@ -133,7 +133,7 @@ export default function App() {
 
       player.set("displayName", displayName);
 
-      return [Demo]
+      return []
     }
 
     introSteps.push(Introduction)
@@ -147,12 +147,13 @@ export default function App() {
   function exitSteps({ game, player }) {
     const endedReason = player?.get("ended");
     // Check if player failed to be assigned to a game
-    if (endedReason === "lobby timed out" || endedReason === "No games available") {
+    if (["lobby timed out", "No games available", "no more games", "game failed"].includes(endedReason)) {
       // Return different exit steps for players who didn't get into a game
       return [NoGameExitStep];
     }
 
     const exitSteps = []
+    console.log("Ended reason: " + endedReason)
 
     exitSteps.push(NegotiationOutcome)
 

@@ -1,9 +1,14 @@
 import React from "react";
-import { usePlayer } from "@empirica/core/player/classic/react";
+import { usePlayer, useGame } from "@empirica/core/player/classic/react";
 import { Button } from "../components/Button";
 
 export function NegotiationOutcome({ next }) {
   const player = usePlayer();
+
+  const game = useGame();
+
+  const yes_agreement_ending_message = game.get("treatment").yesAgreementEndingMessage || ""
+  const no_agreement_ending_message = game.get("treatment").noAgreementEndingMessage || ""
 
   // Get bonus and agreement status from player data (set in onRoundEnded callback)
   const bonus = player.get("bonus") || 0;
@@ -49,6 +54,10 @@ export function NegotiationOutcome({ next }) {
                   {bonus.toFixed(2)} points
                 </p>
               </div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-600">
+                <div dangerouslySetInnerHTML={{ __html: yes_agreement_ending_message }} />
+              </div>
+
             </>
           ) : (
             <>
@@ -68,12 +77,13 @@ export function NegotiationOutcome({ next }) {
                   You will receive the base payment only.
                 </p>
               </div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-600">
+                <div dangerouslySetInnerHTML={{ __html: no_agreement_ending_message }} />
+              </div>
+
             </>
           )}
 
-          <p className="text-center text-gray-600 pt-4">
-            Please return to the classroom!
-          </p>
         </div>
 
         <div className="mt-8 flex justify-center">

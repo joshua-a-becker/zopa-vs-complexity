@@ -4,3 +4,7 @@ lobbies:
       kind: individual
       duration: 5m0s
       strategy: fail
+    - name: 'rapid '
+      kind: shared
+      duration: 10s
+      strategy: fail
