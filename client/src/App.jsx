@@ -11,6 +11,8 @@ import { AutoPlayerIdForm } from "./intro-exit/AutoPlayerIdForm.jsx";
 import CustomConsent from './intro-exit/CustomConsent.jsx';
 import { Introduction } from './intro-exit/Introduction.jsx';
 import { Demo } from './intro-exit/Demo.jsx';
+import { Instructions } from './intro-exit/Instructions.jsx';
+import { AttentionCheck } from './intro-exit/AttentionCheck.jsx';
 import { NegotiationOutcome } from './intro-exit/NegotiationOutcome.jsx';
 import DailyIframe from "@daily-co/daily-js";
 
@@ -138,6 +140,8 @@ export default function App() {
 
     introSteps.push(Introduction)
     introSteps.push(CustomConsent)
+    introSteps.push(Instructions)
+    introSteps.push(AttentionCheck)
     introSteps.push(Demo)
     introSteps.push(DisplayNameEntry)
 
