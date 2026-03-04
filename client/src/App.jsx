@@ -10,6 +10,7 @@ import { DisplayNameEntry } from "./intro-exit/DisplayNameEntry.jsx";
 import { AutoPlayerIdForm } from "./intro-exit/AutoPlayerIdForm.jsx";
 import CustomConsent from './intro-exit/CustomConsent.jsx';
 import { Introduction } from './intro-exit/Introduction.jsx';
+import { TimeCommitment } from './intro-exit/TimeCommitment.jsx';
 import { Demo } from './intro-exit/Demo.jsx';
 import { Instructions } from './intro-exit/Instructions.jsx';
 import { AttentionCheck } from './intro-exit/AttentionCheck.jsx';
@@ -139,6 +140,7 @@ export default function App() {
     }
 
     introSteps.push(Introduction)
+    introSteps.push(TimeCommitment)
     introSteps.push(CustomConsent)
     introSteps.push(Instructions)
     introSteps.push(AttentionCheck)
