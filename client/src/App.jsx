@@ -15,6 +15,7 @@ import { Demo } from './intro-exit/Demo.jsx';
 import { Instructions } from './intro-exit/Instructions.jsx';
 import { AttentionCheck } from './intro-exit/AttentionCheck.jsx';
 import { NegotiationOutcome } from './intro-exit/NegotiationOutcome.jsx';
+import { ForceQuitExitStep } from './intro-exit/ForceQuitExitStep.jsx';
 import DailyIframe from "@daily-co/daily-js";
 
 // Create context for Daily.co call management (includes media stream)
@@ -160,6 +161,10 @@ export default function App() {
 
     const exitSteps = []
     console.log("Ended reason: " + endedReason)
+
+    if (game?.get("forceQuit") === true) {
+      exitSteps.push(ForceQuitExitStep);
+    }
 
     exitSteps.push(NegotiationOutcome)
 
