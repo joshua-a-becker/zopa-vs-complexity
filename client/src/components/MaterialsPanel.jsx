@@ -21,6 +21,9 @@ export function MaterialsPanel({
   const [showNegativePointsModal, setShowNegativePointsModal] = useState(false);
   const [showBlankProposalModal, setShowBlankProposalModal] = useState(false);
   const [showQuitModal, setShowQuitModal] = useState(false);
+  const [showQuitConfirmModal, setShowQuitConfirmModal] = useState(false);
+  const [showQuitCountdownModal, setShowQuitCountdownModal] = useState(false);
+  const [quitCountdown, setQuitCountdown] = useState(15);
 
   // Check if welcome modal has been shown before (stored in player state)
   const hasSeenWelcomeModal = player.get("hasSeenWelcomeModal") || false;
@@ -102,6 +105,22 @@ export function MaterialsPanel({
       }
     }
   }, [currentProposal?.finalVotes, playerCount, player]);
+
+  // Quit countdown timer
+  useEffect(() => {
+    if (!showQuitCountdownModal) {
+      setQuitCountdown(15);
+      return;
+    }
+    if (quitCountdown <= 0) {
+      game.set("forceQuitBy", player.id);
+      game.set("forceQuit", true);
+      setShowQuitCountdownModal(false);
+      return;
+    }
+    const timer = setTimeout(() => setQuitCountdown(prev => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [showQuitCountdownModal, quitCountdown]);
 
   // Flash the Proposal tab when there's a pending proposal
   useEffect(() => {
@@ -779,7 +798,7 @@ export function MaterialsPanel({
         </div>
       )}
 
-      {/* Quit Modal */}
+      {/* Quit Modal - Step 1 */}
       {showQuitModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4">
@@ -801,15 +820,68 @@ export function MaterialsPanel({
               </button>
               <button
                 onClick={() => {
-                  game.set("forceQuitBy", player.id);
-                  game.set("forceQuit", true);
                   setShowQuitModal(false);
+                  setShowQuitConfirmModal(true);
                 }}
                 className="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold"
               >
                 End Game for Everyone
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quit Confirm Modal - Step 2 */}
+      {showQuitConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold text-red-600 mb-3">
+                Are you sure?
+              </h3>
+              <p className="text-lg text-gray-700">
+                Ending the game now will end it for everybody.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setShowQuitConfirmModal(false)}
+                className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+              >
+                Return to Game
+              </button>
+              <button
+                onClick={() => {
+                  setShowQuitConfirmModal(false);
+                  setShowQuitCountdownModal(true);
+                }}
+                className="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold"
+              >
+                End Game for Everyone
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quit Countdown Modal - Step 3 */}
+      {showQuitCountdownModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">⏳</div>
+              <h3 className="text-2xl font-bold text-red-600 mb-3">
+                The game will end in {quitCountdown} second{quitCountdown !== 1 ? 's' : ''}
+              </h3>
+            </div>
+            <button
+              onClick={() => setShowQuitCountdownModal(false)}
+              className="w-full px-6 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold text-lg"
+            >
+              Cancel — Continue Game
+            </button>
           </div>
         </div>
       )}
