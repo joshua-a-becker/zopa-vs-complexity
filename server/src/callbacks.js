@@ -18,6 +18,13 @@ let pollingStarted = false;
 const ASSIGNMENT_TIMEZONE = "America/New_York";
 const ASSIGNMENT_HOUR = 18; // 6 PM
 const ASSIGNMENT_MINUTE = 0;
+const ENABLE_AUTO_ASSIGNMENT = false; // Set to true to enable 6 PM auto-start
+
+// Presence sweep tuning — must pair with client heartbeat period (1s) in
+// client/src/components/Heartbeat.jsx. A player is considered gone when
+// `Date.now() - lastSeen.ts > PRESENCE_STALE_MS`.
+const PRESENCE_STALE_MS = 5000;
+const PRESENCE_SWEEP_MS = 1000;
 
 // Helper function to create Daily.co room for waiting game
 async function createDailyRoom(roomName) {
@@ -59,6 +66,10 @@ async function createMeetingToken(roomName, player, expiry) {
     const displayName = player.get("displayName") || "Anonymous";
     const userName = `${displayName} - Player ${player.id}`;
 
+    // Always use a fresh expiry (8 hours from now) to avoid stale timestamps
+    const freshExpiry = Math.round(Date.now() / 1000) + 60 * 60 * 8;
+    const tokenExpiry = expiry > Math.round(Date.now() / 1000) ? expiry : freshExpiry;
+
     const res = await fetch("https://api.daily.co/v1/meeting-tokens", {
       method: "POST",
       headers: {
@@ -74,7 +85,7 @@ async function createMeetingToken(roomName, player, expiry) {
           permissions: {
             canAdmin: ["transcription"]
           },
-          exp: expiry,
+          exp: tokenExpiry,
         },
       }),
     });
@@ -91,6 +102,33 @@ async function createMeetingToken(roomName, player, expiry) {
     console.error(`[DAILY] Error creating token for player ${player.id}:`, err);
     return null;
   }
+}
+
+// Read the configured target game size. Prefer the treatment attached to an
+// unused template game in this batch, because games created on demand via
+// createAndAssignGame overwrite `treatment.playerCount` with the actual roster
+// size — so reading from any filled/played game gives the wrong number. Falls
+// back to batch.config if no template game is available yet.
+function getTargetPlayerCount(ctx, batch) {
+  const allGames = Array.from(ctx.scopesByKind("game").values());
+
+  const unusedTemplates = allGames.filter(g => {
+    if (g.get("isWaiting")) return false;
+    if (g.get("hasEnded")) return false;
+    if (g.get("start")) return false;
+    if (g.players && g.players.length > 0) return false;
+    return !!g.get("treatment");
+  });
+
+  // Prefer a template tagged with this batch, if any; otherwise accept any.
+  const template =
+    unusedTemplates.find(g => g.get("batchID") === batch.id) || unusedTemplates[0];
+  const pc = template?.get("treatment")?.playerCount;
+  if (typeof pc === "number" && pc > 0 && pc < 1000) {
+    return pc;
+  }
+
+  return batch.get("config")?.config?.treatments?.[0]?.treatment?.factors?.playerCount || 4;
 }
 
 // Helper function to create waiting game with Daily.co room
@@ -114,22 +152,49 @@ async function createWaitingGame(ctx, batch) {
 
   const roomData = await createDailyRoom(roomName);
 
-  // Create waiting game with large playerCount so it never auto-starts
-  const waitingGame = batch.addGame([
+  // Real per-game size, used by the lobby to preview assignment splits.
+  // The `treatment.playerCount: 1000` below is a placeholder so everyone
+  // fits the waiting game; actual games are created later with the real size.
+  const cfgPlayerCount = getTargetPlayerCount(ctx, batch);
+
+  // batch.addGame() returns a lightweight proxy without assignPlayer/id.
+  // We create it, then look up the real Game object from the context.
+  batch.addGame([
     {
       key: "treatment",
       value: { playerCount: 1000 },
       immutable: true
     },
-    { key: "batchID", value: batch.id },  // CRITICAL: Set batchID for lookup
+    { key: "batchID", value: batch.id },
     { key: "isWaiting", value: true },
     { key: "name", value: "Waiting Room" },
     { key: "roomUrl", value: roomData?.url || null },
     { key: "dailyRoomName", value: roomData?.roomName || null },
     { key: "dailyRoomExpiry", value: roomData?.expiry || null },
+    { key: "gamePlayerCount", value: cfgPlayerCount },
   ]);
 
-  console.log(`[BATCH] Created waiting game for batch ${batch.id} with Daily room: ${roomData?.url}`);
+  Empirica.flush();
+
+  // Poll for the real Game object to appear in the context
+  let waitingGame = null;
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const allGames = Array.from(ctx.scopesByKind("game").values());
+    waitingGame = allGames.find(g =>
+      g.get("batchID") === batch.id &&
+      g.get("isWaiting") === true &&
+      !g.get("hasEnded")
+    );
+    if (waitingGame) break;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  if (!waitingGame) {
+    console.error(`[BATCH] Failed to find newly created waiting game for batch ${batch.id} after 5s`);
+    return null;
+  }
+
+  console.log(`[BATCH] Created waiting game ${waitingGame.id} for batch ${batch.id} with Daily room: ${roomData?.url}`);
   return waitingGame;
 }
 
@@ -141,6 +206,66 @@ function isAssignmentTime() {
   const [hour, minute] = timeStr.split(':').map(Number);
 
   return hour === ASSIGNMENT_HOUR && minute === ASSIGNMENT_MINUTE;
+}
+
+// Sweep all waiting games and prune stale entries from each game's
+// `waitingPlayers`. A player is stale when their `lastSeen.ts` (set by the
+// client Heartbeat component) is older than PRESENCE_STALE_MS, or when
+// `lastSeen` is missing but they joined more than PRESENCE_STALE_MS ago.
+function sweepLobbyPresence(ctx) {
+  const now = Date.now();
+  const allGames = Array.from(ctx.scopesByKind("game").values());
+  const players = Array.from(ctx.scopesByKind("player").values());
+  const playerById = new Map(players.map(p => [p.id, p]));
+
+  const waitingGames = allGames.filter(
+    g => g.get("isWaiting") === true && !g.get("hasEnded")
+  );
+
+  for (const game of waitingGames) {
+    const waitingPlayers = { ...(game.get("waitingPlayers") || {}) };
+    const groupAdmins = { ...(game.get("groupAdmins") || {}) };
+    const removed = [];
+
+    for (const [playerId, info] of Object.entries(waitingPlayers)) {
+      const playerScope = playerById.get(playerId);
+      const lastSeen = playerScope?.get("lastSeen");
+      const lastTs = lastSeen?.ts ?? info.joinedAt ?? 0;
+      if (now - lastTs > PRESENCE_STALE_MS) {
+        removed.push({ playerId, groupName: info.groupName || "default" });
+        delete waitingPlayers[playerId];
+      }
+    }
+
+    if (removed.length === 0) continue;
+
+    for (const { playerId, groupName } of removed) {
+      reassignAdmin(waitingPlayers, groupAdmins, groupName, playerId);
+      console.log(`[PRESENCE] Pruned ${playerId} from waiting game ${game.id} (group "${groupName}")`);
+    }
+
+    game.set("waitingPlayers", waitingPlayers);
+    game.set("groupAdmins", groupAdmins);
+  }
+
+  if (waitingGames.length > 0) Empirica.flush();
+}
+
+// Reassign (or clear) the admin for a group after `removedPlayerId` has been
+// removed from `waitingPlayers`. Mutates `groupAdmins` in place. Safe to call
+// even when the removed player wasn't the admin.
+function reassignAdmin(waitingPlayers, groupAdmins, groupName, removedPlayerId) {
+  if (groupAdmins[groupName] !== removedPlayerId) return;
+  const next = Object.values(waitingPlayers).find(
+    p => p.groupName === groupName && p.id !== removedPlayerId
+  );
+  if (next) {
+    groupAdmins[groupName] = next.id;
+    console.log(`[ADMIN] Reassigned admin of group "${groupName}" to ${next.id}`);
+  } else {
+    delete groupAdmins[groupName];
+    console.log(`[ADMIN] Removed admin for empty group "${groupName}"`);
+  }
 }
 
 // Group players by groupName
@@ -190,9 +315,7 @@ async function assignPlayersToGames(ctx) {
   const batch = batches[0];
   const smallGroupMode = batch.get("smallGroupMode") || "skip";
 
-  // Get treatment from batch config for playerCount
-  const config = batch.get("config");
-  const playerCount = config?.treatments?.[0]?.factors?.playerCount || 4;
+  const playerCount = getTargetPlayerCount(ctx, batch);
 
   console.log(`[ASSIGNMENT] Small group mode: ${smallGroupMode}, playerCount: ${playerCount}`);
 
@@ -208,6 +331,12 @@ async function assignPlayersToGames(ctx) {
     const unprocessed = members.filter(p => !processedPlayers.has(p.id));
 
     if (unprocessed.length === 0) continue;
+
+    // Skip groups with less than 2 players (minimum requirement)
+    if (unprocessed.length < 2) {
+      console.log(`[ASSIGNMENT] Skipping group "${groupName}" - only ${unprocessed.length} player(s), need at least 2`);
+      continue;
+    }
 
     if (unprocessed.length >= playerCount) {
       // Full group - assign normally
@@ -262,25 +391,57 @@ async function createAndAssignGame(ctx, batch, players, groupName) {
 
   // Get treatment from batch
   const config = batch.get("config");
-  const treatment = config?.treatments?.[0];
+  const treatmentEntry = config?.config?.treatments?.[0];
+  const treatment = treatmentEntry?.treatment;
 
-  // Create new game
-  const game = batch.addGame([
+  // Snapshot existing game IDs so we can identify the newly created one
+  const existingGameIds = new Set(
+    Array.from(ctx.scopesByKind("game").values()).map(g => g.id)
+  );
+
+  // batch.addGame() returns a lightweight {get, set} proxy, NOT a full Game
+  // instance — it lacks assignPlayer, id, etc. We create the game, then look
+  // up the real Game object from the context.
+  batch.addGame([
     {
       key: "treatment",
-      value: treatment?.factors || { playerCount: players.length },
+      value: treatment?.factors ?
+        { ...treatment.factors, playerCount: players.length } :
+        { playerCount: players.length },
       immutable: true
     },
-    { key: "batchID", value: batch.id },  // Set batchID for consistency
+    { key: "batchID", value: batch.id },
     { key: "treatmentName", value: treatment?.name || "default" },
     { key: "groupName", value: groupName },
     { key: "isWaiting", value: false },
   ]);
 
-  console.log(`[ASSIGNMENT] Created game ${game.id} for group "${groupName}"`);
+  Empirica.flush();
+
+  // Poll for the real Game object to appear in the context
+  let game = null;
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const allGames = Array.from(ctx.scopesByKind("game").values());
+    game = allGames.find(g =>
+      !existingGameIds.has(g.id) &&
+      g.get("groupName") === groupName
+    );
+    if (game) break;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  if (!game) {
+    throw new Error(`[ASSIGNMENT] Failed to find newly created game for group "${groupName}" after 5s`);
+  }
+
+  console.log(`[ASSIGNMENT] Found real Game object: ${game.id}`);
 
   // Assign players to game
   for (const player of players) {
+    if (!player || !player.id) {
+      console.error(`[ASSIGNMENT] Invalid player object:`, player);
+      throw new Error(`Invalid player object - cannot assign to game`);
+    }
     await game.assignPlayer(player);
     console.log(`[ASSIGNMENT] Assigned player ${player.id} (${player.get("displayName")}) to game ${game.id}`);
   }
@@ -325,21 +486,47 @@ Empirica.on("batch", "triggerAssignment", async (ctx, { batch }) => {
   }
 });
 
-// Listen for single group start trigger from group admin
-Empirica.on("game", "startGroup", async (ctx, { game }) => {
-  const startGroup = game.get("startGroup");
-  if (!startGroup || !game.get("isWaiting")) return;
+// Listen for single group start trigger from group admin (using player attribute)
+Empirica.on("player", "requestStart", async (ctx, { player }) => {
+  const requestStart = player.get("requestStart");
+  console.log(`[PLAYER] requestStart listener triggered! Player ${player?.id}`, requestStart);
 
-  const groupName = startGroup.groupName;
-  const requestingPlayerId = startGroup.playerId;
+  if (!requestStart) {
+    console.log(`[PLAYER] requestStart is null/undefined, ignoring`);
+    return;
+  }
 
-  console.log(`[GAME] Start requested for group "${groupName}" by player ${requestingPlayerId}`);
+  const groupName = requestStart.groupName;
+  const requestingPlayerId = player.id;
+
+  console.log(`[PLAYER] Start requested for group "${groupName}" by player ${requestingPlayerId}`);
+
+  // Get the waiting game for this player
+  const gameId = player.get("gameID");
+  if (!gameId) {
+    console.log(`[PLAYER] Player ${requestingPlayerId} not in a game, ignoring`);
+    player.set("requestStart", null);
+    Empirica.flush();
+    return;
+  }
+
+  const game = Array.from(ctx.scopesByKind("game").values())
+    .find(g => g.id === gameId);
+
+  if (!game || !game.get("isWaiting")) {
+    console.log(`[PLAYER] Game ${gameId} not found or not waiting, ignoring`);
+    player.set("requestStart", null);
+    Empirica.flush();
+    return;
+  }
+
+  console.log(`[PLAYER] Found waiting game ${game.id}`);
 
   // Verify requester is admin
   const groupAdmins = game.get("groupAdmins") || {};
   if (groupAdmins[groupName] !== requestingPlayerId) {
-    console.log(`[GAME] Player ${requestingPlayerId} is not admin of group "${groupName}", ignoring`);
-    game.set("startGroup", null);
+    console.log(`[PLAYER] Player ${requestingPlayerId} is not admin of group "${groupName}", ignoring`);
+    player.set("requestStart", null);
     Empirica.flush();
     return;
   }
@@ -349,67 +536,230 @@ Empirica.on("game", "startGroup", async (ctx, { game }) => {
   const groupMembers = Object.values(waitingPlayers).filter(p => p.groupName === groupName);
 
   if (groupMembers.length === 0) {
-    console.log(`[GAME] No players in group "${groupName}"`);
-    game.set("startGroup", null);
+    console.log(`[PLAYER] No players in group "${groupName}"`);
+    player.set("requestStart", null);
     Empirica.flush();
     return;
   }
 
-  console.log(`[GAME] Starting game for group "${groupName}" with ${groupMembers.length} players`);
+  // Require minimum 2 players to start a game
+  if (groupMembers.length < 2) {
+    console.log(`[PLAYER] Cannot start with only ${groupMembers.length} player(s), need at least 2`);
+    player.set("requestStart", null);
+    Empirica.flush();
+    return;
+  }
+
+  console.log(`[PLAYER] Starting game for group "${groupName}" with ${groupMembers.length} players`);
 
   // Get the batch
   const batch = Array.from(ctx.scopesByKind("batch").values())
     .find(b => b.id === game.get("batchID"));
 
   if (!batch) {
-    console.log(`[GAME] Could not find batch for game`);
-    game.set("startGroup", null);
+    console.log(`[PLAYER] Could not find batch for game`);
+    player.set("requestStart", null);
     Empirica.flush();
     return;
   }
 
   // Get actual player objects
   const allPlayers = Array.from(ctx.scopesByKind("player").values());
-  const playersToAssign = groupMembers
-    .map(gm => allPlayers.find(p => p.id === gm.id))
+  console.log(`[PLAYER] Looking up ${groupMembers.length} players:`, groupMembers.map(gm => gm.id));
+  console.log(`[PLAYER] Available player IDs:`, allPlayers.map(p => p.id));
+
+  // Put the requesting admin at the front so the server's split matches the
+  // preview the admin saw in the modal (the client lists the admin first).
+  const orderedMembers = [
+    ...groupMembers.filter(gm => gm.id === requestingPlayerId),
+    ...groupMembers.filter(gm => gm.id !== requestingPlayerId),
+  ];
+
+  const playersToAssign = orderedMembers
+    .map(gm => {
+      const foundPlayer = allPlayers.find(p => p.id === gm.id);
+      if (!foundPlayer) {
+        console.error(`[PLAYER] Could not find player object for ID: ${gm.id}`);
+      }
+      return foundPlayer;
+    })
     .filter(p => p);
 
-  // Create and assign game for this group
-  await createAndAssignGame(ctx, batch, playersToAssign, groupName);
+  console.log(`[PLAYER] Found ${playersToAssign.length} player objects to assign`);
 
-  // Remove these players from waitingPlayers
-  for (const p of playersToAssign) {
-    delete waitingPlayers[p.id];
+  if (playersToAssign.length === 0) {
+    console.error(`[PLAYER] No valid player objects found! Cannot create game.`);
+    player.set("requestStart", null);
+    Empirica.flush();
+    return;
+  }
+
+  const playerCount = getTargetPlayerCount(ctx, batch);
+
+  // Mode chosen by the admin in the lobby modal. Default to "overfill"
+  // (Inclusive — nobody waits) if the payload is missing or unexpected.
+  const mode = requestStart.mode === "exact" ? "exact" : "overfill";
+  console.log(`[PLAYER] Distributing with playerCount=${playerCount}, mode=${mode}`);
+
+  const { games: chunks, leftovers } = chunkByMode(playersToAssign, playerCount, mode);
+
+  console.log(
+    `[PLAYER] ${playersToAssign.length} players → ${chunks.length} game(s) of sizes [${chunks.map(c => c.length).join(", ")}]` +
+    (leftovers.length > 0 ? `, ${leftovers.length} stay in lobby (${leftovers.map(p => p.id).join(", ")})` : "")
+  );
+
+  for (const chunkPlayers of chunks) {
+    await createAndAssignGame(ctx, batch, chunkPlayers, groupName);
+  }
+
+  // Remove assigned players from waitingPlayers; leftovers stay.
+  const assignedIds = new Set(chunks.flat().map(p => p.id));
+  for (const pid of assignedIds) {
+    delete waitingPlayers[pid];
   }
   game.set("waitingPlayers", waitingPlayers);
 
-  // Remove admin for this group
-  delete groupAdmins[groupName];
+  if (leftovers.length > 0) {
+    // Prefer the original requester as the new admin if they're among the
+    // leftovers; otherwise pick the first leftover.
+    const newAdmin = leftovers.find(p => p.id === requestingPlayerId) || leftovers[0];
+    groupAdmins[groupName] = newAdmin.id;
+    console.log(`[PLAYER] Admin of group "${groupName}" is now leftover ${newAdmin.id}`);
+  } else {
+    delete groupAdmins[groupName];
+  }
   game.set("groupAdmins", groupAdmins);
 
-  game.set("startGroup", null);
+  // Clear requestStart for every involved player (assigned and leftovers).
+  for (const p of playersToAssign) {
+    p.set("requestStart", null);
+  }
+
   Empirica.flush();
+  console.log(`[PLAYER] Game creation complete for group "${groupName}"`);
 });
+
+// Three assignment strategies for splitting a lobby group into games.
+// All three share the same greedy base: fill as many full groups of `P` as
+// possible. They differ only in how the trailing remainder R = N mod P is
+// handled. Each returns { games: Player[][], leftovers: Player[] }.
+
+// Exact: full groups only; anyone not in a full group stays in the lobby.
+function chunkExact(players, P) {
+  const n = players.length;
+  const fullGroups = Math.floor(n / P);
+  const games = [];
+  for (let i = 0; i < fullGroups; i++) {
+    games.push(players.slice(i * P, (i + 1) * P));
+  }
+  const leftovers = players.slice(fullGroups * P);
+  return { games, leftovers };
+}
+
+// Balanced: nobody waits, except a single unavoidable singleton when P === 2
+// and N is odd (because the hard cap of 2 makes rebalancing impossible).
+// R === 1 with P > 2: take one from the last full group so the tail is
+// [P-1, 2] instead of [P, 1].
+function chunkPartial(players, P) {
+  const n = players.length;
+  if (n === 0) return { games: [], leftovers: [] };
+  if (n === 1) return { games: [], leftovers: [players[0]] };
+  if (n <= P) return { games: [players], leftovers: [] };
+
+  const fullGroups = Math.floor(n / P);
+  const remainder = n % P;
+
+  if (remainder === 0) {
+    const games = [];
+    for (let i = 0; i < fullGroups; i++) {
+      games.push(players.slice(i * P, (i + 1) * P));
+    }
+    return { games, leftovers: [] };
+  }
+
+  if (remainder >= 2) {
+    const games = [];
+    for (let i = 0; i < fullGroups; i++) {
+      games.push(players.slice(i * P, (i + 1) * P));
+    }
+    games.push(players.slice(fullGroups * P));
+    return { games, leftovers: [] };
+  }
+
+  // remainder === 1
+  if (P === 2) {
+    const games = [];
+    for (let i = 0; i < fullGroups; i++) {
+      games.push(players.slice(i * P, (i + 1) * P));
+    }
+    return { games, leftovers: [players[fullGroups * P]] };
+  }
+
+  // P > 2, remainder === 1 → rebalance tail to [P-1, 2]
+  const games = [];
+  for (let i = 0; i < fullGroups - 1; i++) {
+    games.push(players.slice(i * P, (i + 1) * P));
+  }
+  const lastFullStart = (fullGroups - 1) * P;
+  games.push(players.slice(lastFullStart, lastFullStart + P - 1));
+  games.push(players.slice(lastFullStart + P - 1));
+  return { games, leftovers: [] };
+}
+
+// Inclusive: same as Balanced, except when Balanced would leave a singleton
+// (only possible when P === 2 and N is odd), append that person to the last
+// group, overfilling it by 1.
+function chunkOverfill(players, P) {
+  const partial = chunkPartial(players, P);
+  if (partial.leftovers.length === 0) return partial;
+  if (partial.games.length === 0) return partial; // N === 1 → still a leftover.
+  const games = partial.games.map(g => g.slice());
+  games[games.length - 1] = games[games.length - 1].concat(partial.leftovers);
+  return { games, leftovers: [] };
+}
+
+// Only "exact" and "overfill" are exposed as user-facing modes. The third
+// strategy (`chunkPartial`) is kept as an internal helper for `chunkOverfill`
+// because it handles the P>2 rebalance rule — but it's redundant with `exact`
+// when P===2 and redundant with `overfill` when P>2, so we don't offer it.
+function chunkByMode(players, P, mode) {
+  if (mode === "exact") return chunkExact(players, P);
+  return chunkOverfill(players, P);
+}
 
 // ============================================================================
 // PLAYER EVENTS - Assign to waiting game and handle groupName
 // ============================================================================
 
 Empirica.on("player", async (ctx, { player }) => {
-  // Start polling on first player connection
+  // Start polling on first player connection (only if auto-assignment is enabled)
   if (!pollingStarted) {
     globalCtx = ctx;
     pollingStarted = true;
 
-    // Poll every minute to check for 18:00 assignment time
-    setInterval(async () => {
-      if (isAssignmentTime()) {
-        console.log("[POLLING] Assignment time reached (18:00)!");
-        await assignPlayersToGames(globalCtx);
-      }
-    }, 60000); // Check every minute
+    if (ENABLE_AUTO_ASSIGNMENT) {
+      // Poll every minute to check for 18:00 assignment time
+      setInterval(async () => {
+        if (isAssignmentTime()) {
+          console.log("[POLLING] Assignment time reached (18:00)!");
+          await assignPlayersToGames(globalCtx);
+        }
+      }, 60000); // Check every minute
 
-    console.log("[POLLING] Started polling for assignment time");
+      console.log("[POLLING] Started polling for assignment time");
+    } else {
+      console.log("[POLLING] Auto-assignment disabled - using manual Start button only");
+    }
+
+    // Sweep waiting-game rosters against each player's `lastSeen` heartbeat.
+    setInterval(() => {
+      try {
+        sweepLobbyPresence(globalCtx);
+      } catch (err) {
+        console.error("[PRESENCE] Lobby sweep error:", err);
+      }
+    }, PRESENCE_SWEEP_MS);
+    console.log(`[PRESENCE] Started lobby presence sweep (every ${PRESENCE_SWEEP_MS}ms, stale >${PRESENCE_STALE_MS}ms)`);
   }
 
   console.log(`[PLAYER] Player ${player.id} connected`);
@@ -474,6 +824,15 @@ Empirica.on("player", async (ctx, { player }) => {
   console.log(`[PLAYER] Assigning player ${player.id} to waiting game ${waitingGame.id}`);
   await waitingGame.assignPlayer(player);
 
+  // Refresh gamePlayerCount in case template games have appeared since the
+  // waiting game was created (or the initial read fell back to the default).
+  const currentPC = waitingGame.get("gamePlayerCount");
+  const targetPC = getTargetPlayerCount(ctx, batch);
+  if (currentPC !== targetPC) {
+    waitingGame.set("gamePlayerCount", targetPC);
+    console.log(`[PLAYER] Updated gamePlayerCount on waiting game: ${currentPC} → ${targetPC}`);
+  }
+
   // Store player info on the waiting game for client-side visibility
   // (usePlayers() doesn't work reliably in lobby context)
   const waitingPlayers = waitingGame.get("waitingPlayers") || {};
@@ -534,18 +893,8 @@ Empirica.on("player", "groupName", async (ctx, { player }) => {
       // Update group admins
       const groupAdmins = game.get("groupAdmins") || {};
 
-      // If player was admin of old group, reassign admin to next person in that group
-      if (oldGroupName && groupAdmins[oldGroupName] === player.id) {
-        const nextAdmin = Object.values(waitingPlayers).find(
-          p => p.groupName === oldGroupName && p.id !== player.id
-        );
-        if (nextAdmin) {
-          groupAdmins[oldGroupName] = nextAdmin.id;
-          console.log(`[PLAYER] Reassigned admin of group "${oldGroupName}" to ${nextAdmin.id}`);
-        } else {
-          delete groupAdmins[oldGroupName];
-          console.log(`[PLAYER] Removed admin for empty group "${oldGroupName}"`);
-        }
+      if (oldGroupName) {
+        reassignAdmin(waitingPlayers, groupAdmins, oldGroupName, player.id);
       }
 
       // If new group has no admin, make this player admin
@@ -664,8 +1013,15 @@ Empirica.onRoundEnded(({ round }) => {
 
 Empirica.onGameStart(({ game }) => {
 
+  const treatment = game.get("treatment");
+  const roleDataURL = treatment?.roleDataURL;
+  console.log(`[GAME START] Game ${game.id} treatment:`, JSON.stringify(treatment));
 
-  const roleDataURL = game.get("treatment").roleDataURL;
+  if (!roleDataURL) {
+    console.error(`[GAME START] Game ${game.id} has no roleDataURL in treatment — cannot fetch roles`);
+    return;
+  }
+
   const rolesData = JSON.parse(execSync(`curl -s "${roleDataURL}"`).toString());
   const roles = rolesData.roles;
 
@@ -904,22 +1260,23 @@ Empirica.onStageStart(({ stage }) => {
       }
     }
 
-    // Calculate threshold based on stage and time remaining
-    let threshold = 15000; // Default 30 seconds
-    const stageTask = stage.get("task");
-    const stageEndTime = stage.get("endAt");
-    const timeRemaining = stageEndTime ? stageEndTime - now : null;
-    
+    // Staleness check against each player's self-heartbeat (`lastSeen`,
+    // written by client/src/components/Heartbeat.jsx). `participantTimestamps`
+    // above is kept as a parallel Daily-side cross-check.
     game.players.forEach(player => {
-      const lastSeen = timestamps[player.id];
-    
-      if (lastSeen && (now - lastSeen) > threshold) {
+      if (player.get("leftAt")) return; // Already marked; don't re-fire.
+
+      const lastSeen = player.get("lastSeen");
+      const lastTs = lastSeen?.ts;
+      if (!lastTs) return; // Never heartbeated yet — wait for first tick.
+
+      if (now - lastTs > PRESENCE_STALE_MS) {
+        player.set("leftAt", now);
         const displayName = player.get("displayName") || "Unknown";
-        
-        // do something here if a player has left
-        
+        console.log(`[PRESENCE] Player ${player.id} (${displayName}) marked as left (last seen ${Math.round((now - lastTs)/1000)}s ago)`);
       }
     });
+    Empirica.flush();
   }, 5000);
 
 });

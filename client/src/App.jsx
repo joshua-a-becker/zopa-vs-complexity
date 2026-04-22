@@ -97,6 +97,7 @@ export default function App() {
   const [callJoinData, setCallJoinData] = useState(null);
   const [hasJoinedCall, setHasJoinedCall] = useState(false);
   const participantTracksRef = useRef({});
+  const joinedRoomUrlRef = useRef(null);
 
   const [callState, setCallState] = useState({
     remoteStreams: {},
@@ -137,12 +138,10 @@ export default function App() {
     window.history.replaceState({}, "", newUrl);
   }
 
-  console.log(devKey)
   if (!playerKey && devKey === "oandi") {
     // Generate 15 digit random alphanumeric string
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     playerKey = Array.from({ length: 15 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-    console.log("Generated random participantKey:", playerKey);
 
     // Add the generated participantKey to the URL
     urlParams.set("participantKey", playerKey);
@@ -180,10 +179,17 @@ export default function App() {
 
     if (skipIntro == "T") {
       const randomAnimal = ["lion","tiger","bear","elephant","giraffe","zebra","monkey","panda","kangaroo","wolf"][Math.floor(Math.random()*10)];
-      
+
       const displayName = player.get("displayName") ?? randomAnimal;
 
       player.set("displayName", displayName);
+
+      // CRITICAL: Mark intro as done so player appears in assignment
+      player.set("introDone", true);
+
+      // Set groupName from URL for group assignment
+      const groupNameFromUrl = urlParams.get("groupName") || "default";
+      player.set("groupName", groupNameFromUrl);
 
       return []
     }
@@ -213,11 +219,10 @@ export default function App() {
 
 
   // Daily.co call initialization and joining
-  // IMPORTANT: This effect joins the call ONCE and only once per App instance
-  // hasJoinedCall is never reset to false - the call persists across VideoChat mount/unmount
-  // This ensures the call stays connected as users navigate between stages
+  // IMPORTANT: This effect joins the call once per room URL
+  // hasJoinedCall is reset to false on room transitions (see room transition effect below)
+  // The call persists across VideoChat mount/unmount within the same room
   useEffect(() => {
-    console.log("UPDATED")
     // Wait for all required data before joining
     if (!mediaStream || !callJoinData || hasJoinedCall) {
       return;
@@ -330,21 +335,7 @@ export default function App() {
             if (audioTrackChanged) reasons.push('audio track changed');
             if (videoStateImproved) reasons.push('video state improved');
             if (audioStateImproved) reasons.push('audio state improved');
-            console.log(`[Daily] Updating stream for ${p.userData?.displayName || p.session_id} - ${reasons.join(', ')}`);
-          } else {
-            console.log(`[Daily] Creating FIRST stream for ${p.userData?.displayName || p.session_id}`);
           }
-
-          console.log(`[Daily] Upserting remote stream for ${p.userData?.displayName || p.session_id}:`, {
-            sessionId: p.session_id,
-            trackCount: tracks.length,
-            videoState: v?.state,
-            audioState: a?.state,
-            videoTrackId: v?.track?.id,
-            audioTrackId: a?.track?.id,
-            videoReadyState: v?.track?.readyState,
-            audioReadyState: a?.track?.readyState,
-          });
 
           return {
             ...prev,
@@ -380,11 +371,6 @@ export default function App() {
         // Bootstrap remote participants from current state (handles joining second)
         Object.entries(participants).forEach(([id, p]) => {
           if (id !== "local") {
-            console.log(`[Daily] Bootstrapping remote participant ${p.userData?.displayName || id}:`, {
-              sessionId: id,
-              videoState: p?.tracks?.video?.state,
-              audioState: p?.tracks?.audio?.state,
-            });
             upsertRemoteStream(p);
           }
         });
@@ -788,6 +774,7 @@ export default function App() {
             .then(() => {
               console.log("Join promise resolved successfully");
               setHasJoinedCall(true);
+              joinedRoomUrlRef.current = callJoinData.roomUrl;
             })
             .catch((error) => {
               console.error("Join promise rejected:", error);
@@ -832,6 +819,46 @@ export default function App() {
     };
 
   }, [mediaStream, callJoinData, hasJoinedCall]);
+
+  // Handle room transitions (e.g., waiting room → game room)
+  useEffect(() => {
+    if (!callJoinData?.roomUrl || !hasJoinedCall || !joinedRoomUrlRef.current) return;
+    if (joinedRoomUrlRef.current === callJoinData.roomUrl) return;
+
+    console.log("Room transition:", joinedRoomUrlRef.current, "→", callJoinData.roomUrl);
+
+    const transitionRoom = async () => {
+      const callObject = callObjectRef.current;
+      if (callObject) {
+        try {
+          if (callStateRef.current.isRecording) await callObject.stopRecording();
+          if (callStateRef.current.isTranscribing) await callObject.stopTranscription();
+          await callObject.leave();
+          callObject.destroy();
+        } catch (err) {
+          console.error("Error leaving old room:", err);
+        }
+      }
+
+      callObjectRef.current = null;
+      participantTracksRef.current = {};
+
+      setCallState({
+        remoteStreams: {},
+        participantNames: {},
+        participantRepStatus: {},
+        participantVideoStates: {},
+        participantAudioStates: {},
+        isRecording: false,
+        isTranscribing: false,
+        localVideoTrack: null,
+      });
+
+      setHasJoinedCall(false);
+    };
+
+    transitionRoom();
+  }, [callJoinData, hasJoinedCall]);
 
   // Control Daily.co audio/video tracks based on toggle state and VideoChat mount state
   useEffect(() => {

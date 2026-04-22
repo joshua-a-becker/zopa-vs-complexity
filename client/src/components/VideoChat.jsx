@@ -8,9 +8,9 @@ const LocalVideoComponent = React.memo(({ localVideoRef, displayName, isHidden, 
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center py-1">
-      <div className="flex flex-col items-center max-h-full relative">
+      <div className="flex flex-col items-center justify-center w-full h-full relative">
         {/* Video container with controls */}
-        <div className="relative max-w-full max-h-[75%]">
+        <div className="relative w-full max-w-[640px] max-h-[75%] aspect-video mx-auto">
           {/* Video element - ALWAYS rendered for Daily.co stream continuity */}
           <video
             ref={localVideoRef}
@@ -128,20 +128,8 @@ const RemoteVideoComponent = React.memo(({ stream, name, sessionId, onRequestRef
     const videoTrack = stream ? stream.getVideoTracks()[0] : null;
     const videoReadyState = videoTrack ? videoTrack.readyState : null;
 
-    console.log(`[RemoteVideo ${name}] Stream state:`, {
-      hasStream: !!stream,
-      hasVideoRef: !!ref.current,
-      streamActive: stream ? stream.active : null,
-      videoTracks: stream ? stream.getVideoTracks().length : 0,
-      audioTracks: stream ? stream.getAudioTracks().length : 0,
-      videoTrackEnabled: videoTrack ? videoTrack.enabled : null,
-      videoTrackReadyState: videoReadyState,
-      retryCount: retryCountRef.current,
-    });
-
     // Detect bad state: has stream but video track readyState is null
     if (stream && videoTrack && videoReadyState === null && retryCountRef.current < maxRetries) {
-      console.warn(`[RemoteVideo ${name}] Detected null readyState, requesting refresh (attempt ${retryCountRef.current + 1}/${maxRetries})`);
       retryCountRef.current += 1;
 
       // Wait a bit before requesting refresh to avoid rapid retries
@@ -160,12 +148,7 @@ const RemoteVideoComponent = React.memo(({ stream, name, sessionId, onRequestRef
     }
 
     if (ref.current && stream && ref.current.srcObject !== stream) {
-      console.log(`[RemoteVideo ${name}] Setting srcObject to stream`);
       ref.current.srcObject = stream;
-    } else if (!stream) {
-      console.warn(`[RemoteVideo ${name}] No stream available!`);
-    } else if (!ref.current) {
-      console.warn(`[RemoteVideo ${name}] Video ref not available!`);
     }
   }, [stream, name, sessionId, onRequestRefresh]);
 
@@ -175,15 +158,15 @@ const RemoteVideoComponent = React.memo(({ stream, name, sessionId, onRequestRef
 
 
   return (
-    <div className="flex flex-col h-full items-center justify-center py-1">
-      <div className="flex flex-col items-center max-h-full">
+    <div className="w-full h-full flex flex-col items-center justify-center py-1">
+      <div className="flex flex-col items-center justify-center w-full h-full">
         {/* Video container with overlays */}
-        <div className="relative max-w-full max-h-[75%]">
+        <div className="relative w-full max-w-[640px] max-h-[75%] aspect-video mx-auto">
           <video
             ref={ref}
             autoPlay
             playsInline
-            className="max-w-full max-h-full w-auto h-auto border border-blue-500 rounded object-cover"
+            className="w-full h-full border border-blue-500 rounded object-cover"
           />
 
           {/* Camera Off Overlay */}
@@ -369,8 +352,6 @@ export function VideoChat({ defaultHideSelf = false, filterPlayerIds = null }) {
     const existingHistory = player?.get("audioHistory") || [];
     const newHistory = [...existingHistory, [newValue ? "on" : "off", Date.now()]];
     player?.set("audioHistory", newHistory);
-
-    console.log("Audio toggled:", newValue ? "ON" : "OFF");
   };
 
   const toggleVideo = () => {
@@ -384,13 +365,10 @@ export function VideoChat({ defaultHideSelf = false, filterPlayerIds = null }) {
     const existingHistory = player?.get("videoHistory") || [];
     const newHistory = [...existingHistory, [newValue ? "on" : "off", Date.now()]];
     player?.set("videoHistory", newHistory);
-
-    console.log("Video toggled:", newValue ? "ON" : "OFF");
   };
 
   // Signal mount/unmount to App.jsx and restore saved audio/video states
   useEffect(() => {
-    console.log("VideoChat: Mounted - restoring audio/video state");
     setIsVideoChatMounted(true);
 
     // Read saved states from player, default to true if not set (first time)
@@ -414,10 +392,7 @@ export function VideoChat({ defaultHideSelf = false, filterPlayerIds = null }) {
     setIsAudioEnabled(audioEnabled);
     setIsVideoEnabled(videoEnabled);
 
-    console.log("VideoChat: Restored states - audio:", audioEnabled, "video:", videoEnabled);
-
     return () => {
-      console.log("VideoChat: Unmounting - disabling audio/video");
       setIsVideoChatMounted(false);
     };
   }, [setIsVideoChatMounted, setIsAudioEnabled, setIsVideoEnabled, player]);
@@ -444,27 +419,15 @@ export function VideoChat({ defaultHideSelf = false, filterPlayerIds = null }) {
 
   // Set local video track when available
   useEffect(() => {
-    console.log("Local video track effect:", {
-      hasTrack: !!localVideoTrack,
-      hasMediaStream: !!mediaStream,
-      hasRef: !!localVideoRef.current,
-      trackEnabled: localVideoTrack?.enabled,
-      trackReadyState: localVideoTrack?.readyState,
-      isVideoEnabled,
-    });
-
     // Use localVideoTrack from Daily.co if available, otherwise use mediaStream directly
     if (localVideoRef.current) {
       if (localVideoTrack) {
-        console.log("localVideoTrack")
         localVideoRef.current.srcObject = new MediaStream([localVideoTrack]);
       } else if (mediaStream) {
         // Fallback: use the original mediaStream video track
-        console.log("fallback on original stream")
         const videoTrack = mediaStream.getVideoTracks()[0];
         if (videoTrack) {
           localVideoRef.current.srcObject = new MediaStream([videoTrack]);
-          console.log("Using mediaStream video track as fallback");
         }
       }
     }
@@ -550,6 +513,22 @@ export function VideoChat({ defaultHideSelf = false, filterPlayerIds = null }) {
 
   window.player=player;
 
+  // Calculate optimal grid layout
+  const calculateGridLayout = (totalParticipants) => {
+    if (totalParticipants === 0) return { cols: 1, rows: 1 };
+    if (totalParticipants === 1) return { cols: 1, rows: 1 };
+    if (totalParticipants === 2) return { cols: 2, rows: 1 };
+    if (totalParticipants <= 4) return { cols: 2, rows: 2 };
+    if (totalParticipants <= 6) return { cols: 3, rows: 2 };
+    if (totalParticipants <= 9) return { cols: 3, rows: 3 };
+    if (totalParticipants <= 12) return { cols: 4, rows: 3 };
+    if (totalParticipants <= 16) return { cols: 4, rows: 4 };
+    // For larger groups, stick with 4 columns
+    const cols = 4;
+    const rows = Math.ceil(totalParticipants / cols);
+    return { cols, rows };
+  };
+
   // Show loading state while room is being created, token is being generated, or media stream is being set up
   if (!roomUrl || !meetingToken) {
     return (
@@ -573,11 +552,41 @@ export function VideoChat({ defaultHideSelf = false, filterPlayerIds = null }) {
     );
   }
 
-  
+
+  // Filter remote participants
+  const filteredParticipants = Object.entries(allDailyParticipants)
+    .filter(([sessionId, participant]) => {
+      // If no filter provided, show all
+      if (!filterPlayerIds) return true;
+      // Check if participant's user_id is in the filter set
+      const participantPlayerId = participant.user_id;
+      return filterPlayerIds.has(participantPlayerId);
+    });
+
+  // Calculate grid layout (local + remote participants)
+  const totalParticipants = 1 + filteredParticipants.length;
+  const { cols } = calculateGridLayout(totalParticipants);
+
+  // Double the columns into half-columns so a partial last row can be
+  // centered with a half-column offset. Each tile spans 2 half-columns.
+  const partial = totalParticipants % cols;
+  const firstPartialIndex = partial > 0 ? totalParticipants - partial : -1;
+  const partialOffset = partial > 0 ? cols - partial : 0;
+  const tileStyle = (index) =>
+    index === firstPartialIndex
+      ? { gridColumn: `${partialOffset + 1} / span 2` }
+      : { gridColumn: 'span 2' };
+
   return (
-    <div className="flex flex-col gap-2 h-full w-full overflow-hidden">
-      {/* Local Video - equal size with others */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+    <div
+      className="grid gap-2 h-full w-full overflow-hidden p-2"
+      style={{
+        gridTemplateColumns: `repeat(${cols * 2}, 1fr)`,
+        gridAutoRows: '1fr',
+      }}
+    >
+      {/* Local Video */}
+      <div className="min-h-0 overflow-hidden" style={tileStyle(0)}>
         <LocalVideoComponent
           localVideoRef={localVideoRef}
           displayName={localDisplayName}
@@ -590,26 +599,15 @@ export function VideoChat({ defaultHideSelf = false, filterPlayerIds = null }) {
         />
       </div>
 
-      {/* Remote Videos - each gets equal size */}
-      {/* Filter participants if filterPlayerIds is provided */}
-      {Object.entries(allDailyParticipants)
-        .filter(([sessionId, participant]) => {
-          // If no filter provided, show all
-          if (!filterPlayerIds) return true;
-          // Check if participant's user_id is in the filter set
-          const participantPlayerId = participant.user_id;
-          const shouldShow = filterPlayerIds.has(participantPlayerId);
-          console.log(`[VideoChat] Filtering participant ${participantPlayerId}: ${shouldShow ? 'SHOW' : 'HIDE'}`);
-          return shouldShow;
-        })
-        .map(([sessionId, participant]) => {
+      {/* Remote Videos */}
+      {filteredParticipants.map(([sessionId, participant], idx) => {
         const stream = remoteStreams[sessionId];
         const name = participantNames[sessionId] || participant.userData?.displayName || "Participant";
         const videoState = participantVideoStates[sessionId] || participant.tracks?.video?.state || "unknown";
         const audioState = participantAudioStates[sessionId] || participant.tracks?.audio?.state || "unknown";
 
         return (
-          <div key={sessionId} className="flex-1 min-h-0 overflow-hidden">
+          <div key={sessionId} className="min-h-0 overflow-hidden" style={tileStyle(idx + 1)}>
             <RemoteVideoComponent
               stream={stream}
               name={name}
