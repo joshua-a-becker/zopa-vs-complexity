@@ -1,6 +1,7 @@
 import { ClassicListenersCollector } from "@empirica/core/admin/classic";
 import fetch from "node-fetch";
 import { execSync } from "child_process";
+import { readFileSync } from "fs";
 
 // import rolesData from "./roles.json" assert { type: "json" };
 // const roles = rolesData.roles;
@@ -61,7 +62,9 @@ Empirica.onGameStart(({ game }) => {
 
 
   const roleDataURL = game.get("treatment").roleDataURL;
-  const rolesData = JSON.parse(execSync(`curl -s "${roleDataURL}"`).toString());
+  const rolesData = roleDataURL.startsWith("http")
+    ? JSON.parse(execSync(`curl -s "${roleDataURL}"`).toString())
+    : JSON.parse(readFileSync(roleDataURL, "utf8"));
   const roles = rolesData.roles;
 
   // Store tips in game state for client access

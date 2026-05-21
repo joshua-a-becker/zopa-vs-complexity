@@ -2,124 +2,644 @@
   "roles": [
     {
       "role_name": "Party A",
-      "narrative": "You and two college roommates made a pact at graduation to take a trip together.  Here it is 5 years later, and that trip still hasn't happened!  Although you've stayed in touch, you can feel yourselves growing apart.  This vacation is your chance to reconnect and strengthen your bond.  However, you have a sense that you all want something a little different.\n\nPersonally, you've got a strong adventurous streak, but you're on a tight budget, so you want to stay active without spending much. At the same time, you prefer a relaxed schedule, since a good vacation for you means unwinding, de-stressing, and taking a break from life. Your top goal is to recharge your batteries and reconnect with nature.  Maybe finally get some use out of those hiking boots collecting dust in your closet!\n\nYou realize that your friends may have a different opinion: some may not care about saving money and may want to travel at a faster pace. You might need to make compromises to find a plan everyone enjoys.\n\nBelow are your preferences for each possible vacation detail. Higher points mean greater satisfaction. \n\nThe three of you are a unit, so this trip is all-or-nobody.  If the three of you can't agree on a plan, you'd rather spend the week visiting your parents back home, which costs almost nothing and still feels like a proper break.  Visiting your parents is worth zero points, so you will only agree to this vacation if you can find a deal that gives you a positive score.\n\n(The total points you earn convert to your bonus on Prolific, so don't accept negative points!)",
-      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to visit your parents, which is worth 0 points.",
+      "narrative": "Back in college, you lived in a big house with 4 other people, a tight social group that lived and died together. You made a pact at graduation to take a trip together once your lives had gotten settled. Now five years have passed, and that trip still hasn't happened! Of course you’re all busy, but another challenge is finding a plan that feels exciting to everyone.\n\nAlthough you’ve stayed in touch and visit regularly, you can feel yourselves drifting apart, since you ended up in different cities after graduating and have since formed new social circles. You worry that it’s now or never: if you don’t take this trip soon, you don’t know when you’ll ever find the time. This trip is your chance to reconnect on a deep level, but will only happen if you can find a suitable plan.\n\n**The plan so far:**\n\nBroadly speaking, you share a lot of interests. This is why you’re such great friends. All of you love exploring, and none of you has really traveled outside the USA. You all like cities with nightlife, but you also want the option to dip into nature when you feel like it. That mix is what you’ve been looking for. The solution? Barcelona. You’ve been talking for years about a visit to Barcelona, a culture-rich city that stays up late, with a mountain range on one side and the coast and long beaches on the other. It’s the kind of place that sparked the pact in the first place.\n\n**Topics under discussion:**\n\nHowever, the devil is in the details. Although you have a lot in common, you also are very different. You became roommates first by random lottery, and then became friends later. For example, you’ve always liked to start your day slow: a coffee, a little quiet, easing into the morning. Some of your friends are the opposite and want to jump into action early.\n\nBut life is all about tradeoffs, right? You have to give a little to get a little, and you are confident that you can find a plan that works for everyone.\n\n*As you prepare for the negotiation, you reflect on your general preferences for each topic under discussion and the two issues associated with each one, as summarized below.*\n\n*Topic 1: Travel Pace.*\n- [1] Slow mornings: Relaxation is your favorite part of a trip. You prefer slow mornings because you like easing into the day without a clock ruining your mood.\n- [2] Multiple afternoon activities: And so, by the afternoon, you want breathing room. Too many activities turns the day into a checklist.\n\n*Topic 2: Who We Connect With.*\n- [3] Plans to meet new people: Meeting new people sounds fun. The best part is that those shared moments with new people turn into the kind of stories that always come up later when the group’s reminiscing.\n- [4] Other college friends join: However, meeting your other college friends sounds like a chore. You didn’t really like them that much, and you’d honestly rather spend time with strangers than with them.\n\n*Topic 3: Togetherness.*\n- [5] Shared rooms: Sharing rooms just feels right to you. You like the late-night chats and the small moments, and waking up in the same place is how the weekend actually feels like time together.\n- [6] Some solo activities: You also don’t want solo activities explicitly planned. The whole purpose of this trip is to spend more time together.\n\n*Topic 4: Trip Scope.*\n- [7] Visits to nearby towns: Ideally, you’d love to see some of the nearby towns. Visiting somewhere like Tarragona, or seeing the villages surrounding the mountain range feels much more exciting than only staying in the city.\n- [8] Hotel arrangements in the city: That’s why you’d prefer being closer to the mountains rather than the city. It’s calmer, and it’s closer to the natural park, and to the other towns you could visit.\n\n*Topic 5: Travel Experience.*\n- [9] Long nature excursion: You’re flexible on a long nature excursion. If the group is excited you can go along, and if not, that’s fine too.\n- [10] More historical and cultural tours: It’s the same for the history tours. You don’t hate having more of them, but they’re not something you need to make this trip feel special.\n\n**Your Prolific Bonus ($):**\n\n- Your preferences are also captured in a points table shown below.\n- Higher points mean you prefer that option more.\n- If your group reaches an agreement, the **total points** from the chosen options determine the **bonus** payment you receive from Prolific.\n- However, this must be an **official agreement** that everyone votes to accept in the system, which means it must have a **positive score for everyone**. Agreements made verbally will not count.\n- If a player is **disconnected** or missing, then unfortunately this is outside of our control and your group cannot reach agreement. In that case, the **best option** is usually to press the **Quit** button and receive the base payment.\n- **IMPORTANT:** Be careful not to quit if your group is complete, because doing so will affect your earnings and may disqualify you from the task.\n\n**Tips to Maximizing your Points**\n\n- Because it has been five years since you all lived together, your memories of each other’s travel preferences may be outdated, so do not expect agreement to be easily reached.\n- Even after making several proposals during the negotiation, you may still not reach an agreement that yields a positive score for everyone. So don't wait until the last minute to make proposals, make as many as needed.\n- Listen carefully to what matters to the others while still advocating for what matters most to you as you make your official proposals.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to visit your parents, which is worth 0 points. If agreement is not reached, this is effectively what your outcome is worth.",
       "RP": 0,
       "scoresheet": {
-        "Budget_Hotel": [
-          { "option": "Include", "score": 1.10, "reason": "Saves a lot of money" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Slow_Mornings": [
+          {
+            "option": "Include",
+            "score": 1.35,
+            "reason": "You like relaxing travel plans."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Hiking": [
-          { "option": "Include", "score": 1.05, "reason": "Adventurous, active experience" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Multiple_Afternoon_Activities": [
+          {
+            "option": "Include",
+            "score": -1.22,
+            "reason": "Can feel overwhelming and not relaxing."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Sleep_Early_at_Night": [
-          { "option": "Include", "score": 0.77, "reason": "Saves a little money; More relaxation" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Plans_to_Meet_New_People": [
+          {
+            "option": "Include",
+            "score": 0.77,
+            "reason": "Fun, and makes stories the group will remember."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Packed_Lunches": [
-          { "option": "Include", "score": 0.48, "reason": "Saves a little money" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Other_College_Friends_Join": [
+          {
+            "option": "Include",
+            "score": -0.33,
+            "reason": "Feels like a chore."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Michelin_Star_Dinner": [
-          { "option": "Include", "score": -0.75, "reason": "Quite costly" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Shared_Rooms": [
+          {
+            "option": "Include",
+            "score": 2.11,
+            "reason": "The late-night chats and small moments matter."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Multiple_Day_Activities": [
-          { "option": "Include", "score": -0.87, "reason": "Costly and feels rushed and unrelaxed" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Some_Solo_Activities": [
+          {
+            "option": "Include",
+            "score": -0.06,
+            "reason": "For you, the trip is about spending time together."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Short_Layover": [
-          { "option": "Include", "score": -0.91, "reason": "Very stressful and risks missing flight" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Visits_to_Nearby_Towns": [
+          {
+            "option": "Include",
+            "score": 0.27,
+            "reason": "Places like Tarragona and mountain villages sound exciting."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Premium_Flight": [
-          { "option": "Include", "score": -0.95, "reason": "Extremely costly" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Hotel_Arrangements_in_the_City": [
+          {
+            "option": "Include",
+            "score": -1.69,
+            "reason": "Being near the mountains keeps nearby towns and nature views close."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Long_Nature_Excursion": [
+          {
+            "option": "Include",
+            "score": 0.0,
+            "reason": "Flexible on this."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "More_Historical_and_Cultural_Tours": [
+          {
+            "option": "Include",
+            "score": 0.0,
+            "reason": "Flexible on this."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ]
       }
     },
     {
       "role_name": "Party B",
-      "narrative": "You and two college roommates made a pact at graduation to take a trip together.  Here it is 5 years later, and that trip still hasn't happened!  Although you've stayed in touch, you can feel yourselves growing apart.  This vacation is your chance to reconnect and strengthen your bond.  However, you have a sense that you all want something a little different.\n\nYou've always been an adventurer and have managed to save up quite a bit of money, and you're looking to put it to good use.  Your top goal is to stay active and have memorable experiences, and maybe grab a few pics for your Insta. You want a high velocity trip with as much content as possible, since a good vacation for you means getting many quality experiences.  You can relax at home!\n\nYou realize that your friends may have a different opinion: some may care about saving money or may want a more relaxed schedule. You might need to make compromises to find a plan everyone enjoys.\n\nBelow are your preferences for each possible vacation detail. Higher points mean greater satisfaction. \n\nIf the three of you can't agree on a plan... well, your partner has been hinting at a romantic getaway for months, and you'd be happy to finally make that happen instead.  You'll only agree to this trip if it's worth positive points—faced with negative points, you'd rather go on that romantic getaway.\n\n(The total points you earn convert to your bonus on Prolific, so don't accept negative points!)",
-      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to have a romantic getaway, which is worth 0 points.",
+      "narrative": "Back in college, you lived in a big house with 4 other people, a tight social group that lived and died together. You made a pact at graduation to take a trip together once your lives had gotten settled. Now five years have passed, and that trip still hasn't happened! Of course you’re all busy, but another challenge is finding a plan that feels exciting to everyone.\n\nAlthough you’ve stayed in touch and visit regularly, you can feel yourselves drifting apart, since you ended up in different cities after graduating and have since formed new social circles. You worry that it’s now or never: if you don’t take this trip soon, you don’t know when you’ll ever find the time. This trip is your chance to reconnect on a deep level, but will only happen if you can find a suitable plan.\n\n**The plan so far:**\n\nBroadly speaking, you share a lot of interests. This is why you’re such great friends. All of you love exploring, and none of you has really traveled outside the USA. You all like cities with nightlife, but you also want the option to dip into nature when you feel like it. That mix is what you’ve been looking for. The solution? Barcelona. You’ve been talking for years about a visit to Barcelona, a culture-rich city that stays up late, with a mountain range on one side and the coast and long beaches on the other. It’s the kind of place that sparked the pact in the first place.\n\n**Topics under discussion:**\n\nHowever, the devil is in the details. Although you have a lot in common, you also are very different. You became roommates first by random lottery, and then became friends later. For example, you’ve always liked to start your day slow: a coffee, a little quiet, easing into the morning. Some of your friends are the opposite and want to jump into action early.\n\nBut life is all about tradeoffs, right? You have to give a little to get a little, and you are confident that you can find a plan that works for everyone.\n\n*As you prepare for the negotiation, you reflect on your general preferences for each topic under discussion and the two issues associated with each one, as summarized below.*\n\n*Topic 1: Travel Pace.*\n- [1] Slow mornings: Relaxation is your favorite part of a trip. You prefer slow mornings because you like easing into the day without a clock ruining your mood.\n- [2] Multiple afternoon activities: And so, by the afternoon, you want breathing room. Too many activities turns the day into a checklist.\n\n*Topic 2: Who We Connect With.*\n- [3] Plans to meet new people: You can go either way on meeting new people. But if you don’t meet them, you’ll still be able to have a great weekend.\n- [4] Other college friends join: You’re just as flexible on whether other college friends join. If you decide to include them, you can roll with it, and if not, you’re also happy keeping it small.\n\n*Topic 3: Togetherness.*\n- [5] Shared rooms: You’d rather have your own room. Having private space lets you recharge, so you can show up better for the group during the day.\n- [6] Some solo activities: At the same time, you’d appreciate having some solo activities built in. Even a bit of time doing your own thing helps you reset and come back to the group feeling fresh.\n\n*Topic 4: Trip Scope.*\n- [7] Visits to nearby towns: You’d rather not leave the city for nearby towns. There’s just so much to see within Barcelona itself, and going outside feels taxing and not that exciting.\n- [8] Hotel arrangements in the city: That’s why you want a hotel in or near the city. It lets you see more of the city, and anchors the group away from checking out nearby towns.\n\n*Topic 5: Travel Experience.*\n- [9] Long nature excursion: Given more time to fit into the schedule, you want to spend it on a longer nature excursion. Short hikes don’t do the Collserola mountain range, with its views over the Mediterranean coastline, justice.\n- [10] More historical and cultural tours: And so, you just don’t want to spend more time touring the city. History is not your thing, adventure is.\n\n**Your Prolific Bonus ($):**\n\n- Your preferences are also captured in a points table shown below.\n- Higher points mean you prefer that option more.\n- If your group reaches an agreement, the **total points** from the chosen options determine the **bonus** payment you receive from Prolific.\n- However, this must be an **official agreement** that everyone votes to accept in the system, which means it must have a **positive score for everyone**. Agreements made verbally will not count.\n- If a player is **disconnected** or missing, then unfortunately this is outside of our control and your group cannot reach agreement. In that case, the **best option** is usually to press the **Quit** button and receive the base payment.\n- **IMPORTANT:** Be careful not to quit if your group is complete, because doing so will affect your earnings and may disqualify you from the task.\n\n**Tips to Maximizing your Points**\n\n- Because it has been five years since you all lived together, your memories of each other’s travel preferences may be outdated, so do not expect agreement to be easily reached.\n- Even after making several proposals during the negotiation, you may still not reach an agreement that yields a positive score for everyone. So don't wait until the last minute to make proposals, make as many as needed.\n- Listen carefully to what matters to the others while still advocating for what matters most to you as you make your official proposals.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to visit your parents, which is worth 0 points. If agreement is not reached, this is effectively what your outcome is worth.",
       "RP": 0,
       "scoresheet": {
-        "Budget_Hotel": [
-          { "option": "Include", "score": -0.47, "reason": "Reduces trip quality" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Slow_Mornings": [
+          {
+            "option": "Include",
+            "score": 0.71,
+            "reason": "You like relaxing travel plans."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Hiking": [
-          { "option": "Include", "score": 1.15, "reason": "Adventurous, active experience" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Multiple_Afternoon_Activities": [
+          {
+            "option": "Include",
+            "score": -2.25,
+            "reason": "Can feel overwhelming and not relaxing."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Sleep_Early_at_Night": [
-          { "option": "Include", "score": -0.15, "reason": "Wants to do several late night activities" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Plans_to_Meet_New_People": [
+          {
+            "option": "Include",
+            "score": 0.0,
+            "reason": "Flexible on this."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Packed_Lunches": [
-          { "option": "Include", "score": -1.07, "reason": "Wants to eat restaurant-quality food" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Other_College_Friends_Join": [
+          {
+            "option": "Include",
+            "score": 0.0,
+            "reason": "Flexible on this."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Michelin_Star_Dinner": [
-          { "option": "Include", "score": 0.84, "reason": "Greatly improves trip experience" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Shared_Rooms": [
+          {
+            "option": "Include",
+            "score": -1.85,
+            "reason": "Private space helps you recharge."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Multiple_Day_Activities": [
-          { "option": "Include", "score": 0.10, "reason": "Increases variety of experiences" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Some_Solo_Activities": [
+          {
+            "option": "Include",
+            "score": 1.47,
+            "reason": "Solo time helps you reset and come back fresh."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Short_Layover": [
-          { "option": "Include", "score": 1.39, "reason": "Frees up more activity time in destination" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Visits_to_Nearby_Towns": [
+          {
+            "option": "Include",
+            "score": -0.02,
+            "reason": "Leaving the city feels taxing."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Premium_Flight": [
-          { "option": "Include", "score": 0.00, "reason": "Provides added comfort but not significantly" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Hotel_Arrangements_in_the_City": [
+          {
+            "option": "Include",
+            "score": 1.93,
+            "reason": "More time in the city, less likely the group will spend time outside."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Long_Nature_Excursion": [
+          {
+            "option": "Include",
+            "score": 0.22,
+            "reason": "You want more time for nature, adventure, and coastline views."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "More_Historical_and_Cultural_Tours": [
+          {
+            "option": "Include",
+            "score": -2.17,
+            "reason": "History isn’t your thing. You’re after adventure."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ]
       }
     },
     {
       "role_name": "Party C",
-      "narrative": "You and two college roommates made a pact at graduation to take a trip together.  Here it is 5 years later, and that trip still hasn't happened!  Although you've stayed in touch, you can feel yourselves growing apart.  This vacation is your chance to reconnect and strengthen your bond.  However, you have a sense that you all want something a little different.\n\nPersonally, you're on a pretty tight budget, and you've never been all that adventurous.  As a result, you seek city activities and indoor comforts without spending much. For you, a good vacation means getting many quality experiences at maximum value, even if it isn't stress-free.  You are okay with a rushed pace--the more you can cram in, the better.  Your top goal is to explore a new place—the hidden cafés, the quirky bookshops, the neighborhoods the tourists miss.      \n\nYou know your friends have a different perspective: they may not care about saving money and may want to travel at a relaxed pace. You might need to make compromises to find a plan everyone enjoys.      \n\nBelow are your preferences for each possible vacation detail. Higher points mean greater satisfaction.       \n\nIf the three of you can't agree on a plan… well, there's a free music festival in town that same week, and your apartment desperately needs attention.  Frankly, you could do with some time at home unwinding!  You'll only agree to this trip if it's worth positive points—faced with negative points, you'd rather be at home enjoying a productive staycation.\n\n(The total points you earn convert to your bonus on Prolific, so don't accept negative points!)",
-      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to catch up on life with a staycation, worth 0 points.",
+      "narrative": "Back in college, you lived in a big house with 4 other people, a tight social group that lived and died together. You made a pact at graduation to take a trip together once your lives had gotten settled. Now five years have passed, and that trip still hasn't happened! Of course you’re all busy, but another challenge is finding a plan that feels exciting to everyone.\n\nAlthough you’ve stayed in touch and visit regularly, you can feel yourselves drifting apart, since you ended up in different cities after graduating and have since formed new social circles. You worry that it’s now or never: if you don’t take this trip soon, you don’t know when you’ll ever find the time. This trip is your chance to reconnect on a deep level, but will only happen if you can find a suitable plan.\n\n**The plan so far:**\n\nBroadly speaking, you share a lot of interests. This is why you’re such great friends. All of you love exploring, and none of you has really traveled outside the USA. You all like cities with nightlife, but you also want the option to dip into nature when you feel like it. That mix is what you’ve been looking for. The solution? Barcelona. You’ve been talking for years about a visit to Barcelona, a culture-rich city that stays up late, with a mountain range on one side and the coast and long beaches on the other. It’s the kind of place that sparked the pact in the first place.\n\n**Topics under discussion:**\n\nHowever, the devil is in the details. Although you have a lot in common, you also are very different. You became roommates first by random lottery, and then became friends later. For example, you like fast and efficient travel. Slow mornings feel like you are giving away the best hours. Some of your friends prefer the opposite and want a slower start.\n\nBut life is all about tradeoffs, right? You have to give a little to get a little, and you are confident that you can find a plan that works for everyone.\n\n*As you prepare for the negotiation, you reflect on your general preferences for each topic under discussion and the two issues associated with each one, as summarized below.*\n\n*Topic 1: Travel Pace.*\n- [1] Slow mornings: You like fast and efficient travel. Slow mornings feel like you are giving away the best hours.\n- [2] Multiple afternoon activities: Packing in a couple of activities in the afternoon makes just the day feel much more satisfying.\n\n*Topic 2: Who We Connect With.*\n- [3] Plans to meet new people: Meeting new people sounds like a distraction from the point of the trip. You don’t want the weekend to revolve around socializing with strangers.\n- [4] Other college friends join: If we’re spending time with anyone outside the group, you’d rather hang with old college friends. It’s familiar, low-pressure, and it can be genuinely fun to relive old stories for a bit.\n\n*Topic 3: Togetherness.*\n- [5] Shared rooms: Sharing rooms just feels right to you. You like the late-night chats and the small moments, and waking up in the same place is how the weekend actually feels like time together.\n- [6] Some solo activities: You also don’t want solo activities explicitly planned. The whole purpose of this trip is to spend more time together.\n\n*Topic 4: Trip Scope.*\n- [7] Visits to nearby towns: You don’t have strong feelings about visiting nearby towns and you’re equally happy staying in the city and seeing more of it. If something is easy and the group wants it, then you’re in.\n- [8] Hotel arrangements in the city: Hotel location is also not a big lever for you. Staying in the city or in the outskirts by the mountains both work.\n\n*Topic 5: Travel Experience.*\n- [9] Long nature excursion: Given more time to fit into the schedule, you want to spend it on a longer nature excursion. Short hikes don’t do the Collserola mountain range, with its views over the Mediterranean coastline, justice.\n- [10] More historical and cultural tours: And so, you just don’t want to spend more time touring the city. History is not your thing, adventure is.\n\n**Your Prolific Bonus ($):**\n\n- Your preferences are also captured in a points table shown below.\n- Higher points mean you prefer that option more.\n- If your group reaches an agreement, the **total points** from the chosen options determine the **bonus** payment you receive from Prolific.\n- However, this must be an **official agreement** that everyone votes to accept in the system, which means it must have a **positive score for everyone**. Agreements made verbally will not count.\n- If a player is **disconnected** or missing, then unfortunately this is outside of our control and your group cannot reach agreement. In that case, the **best option** is usually to press the **Quit** button and receive the base payment.\n- **IMPORTANT:** Be careful not to quit if your group is complete, because doing so will affect your earnings and may disqualify you from the task.\n\n**Tips to Maximizing your Points**\n\n- Because it has been five years since you all lived together, your memories of each other’s travel preferences may be outdated, so do not expect agreement to be easily reached.\n- Even after making several proposals during the negotiation, you may still not reach an agreement that yields a positive score for everyone. So don't wait until the last minute to make proposals, make as many as needed.\n- Listen carefully to what matters to the others while still advocating for what matters most to you as you make your official proposals.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to visit your parents, which is worth 0 points. If agreement is not reached, this is effectively what your outcome is worth.",
       "RP": 0,
       "scoresheet": {
-        "Budget_Hotel": [
-          { "option": "Include", "score": 0.11, "reason": "Saves money but a little far from activities" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Slow_Mornings": [
+          {
+            "option": "Include",
+            "score": -1.37,
+            "reason": "Slow mornings waste the best hours."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Hiking": [
-          { "option": "Include", "score": -1.60, "reason": "Opposite of city and indoor comforts" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Multiple_Afternoon_Activities": [
+          {
+            "option": "Include",
+            "score": 0.05,
+            "reason": "Doing as much as possible feels satisfying."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Sleep_Early_at_Night": [
-          { "option": "Include", "score": 0.04, "reason": "Saves a little money; reduces activities" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Plans_to_Meet_New_People": [
+          {
+            "option": "Include",
+            "score": -1.5,
+            "reason": "Defeats the purpose of the trip."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Packed_Lunches": [
-          { "option": "Include", "score": 0.94, "reason": "Saves a little money" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Other_College_Friends_Join": [
+          {
+            "option": "Include",
+            "score": 0.72,
+            "reason": "Familiar faces, and it’s fun to relive old stories."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Michelin_Star_Dinner": [
-          { "option": "Include", "score": -1.27, "reason": "Quite costly for you" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Shared_Rooms": [
+          {
+            "option": "Include",
+            "score": 1.65,
+            "reason": "The late-night chats and small moments matter."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Multiple_Day_Activities": [
-          { "option": "Include", "score": 0.94, "reason": "Increases variety of experiences" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Some_Solo_Activities": [
+          {
+            "option": "Include",
+            "score": -1.6,
+            "reason": "For you, the trip is about spending time together."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Short_Layover": [
-          { "option": "Include", "score": 1.40, "reason": "Frees up more activity time in destination" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Visits_to_Nearby_Towns": [
+          {
+            "option": "Include",
+            "score": 0.0,
+            "reason": "Flexible on this."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ],
-        "Premium_Flight": [
-          { "option": "Include", "score": -1.97, "reason": "Extremely costly" },
-          { "option": "Exclude", "score": 0, "reason": "" }
+        "Hotel_Arrangements_in_the_City": [
+          {
+            "option": "Include",
+            "score": 0.0,
+            "reason": "Flexible on this."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Long_Nature_Excursion": [
+          {
+            "option": "Include",
+            "score": 0.93,
+            "reason": "You want more time for nature, adventure, and coastline views."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "More_Historical_and_Cultural_Tours": [
+          {
+            "option": "Include",
+            "score": -1.4,
+            "reason": "History isn’t your thing. You’re after adventure."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ]
+      }
+    },
+    {
+      "role_name": "Party D",
+      "narrative": "Back in college, you lived in a big house with 4 other people, a tight social group that lived and died together. You made a pact at graduation to take a trip together once your lives had gotten settled. Now five years have passed, and that trip still hasn't happened! Of course you’re all busy, but another challenge is finding a plan that feels exciting to everyone.\n\nAlthough you’ve stayed in touch and visit regularly, you can feel yourselves drifting apart, since you ended up in different cities after graduating and have since formed new social circles. You worry that it’s now or never: if you don’t take this trip soon, you don’t know when you’ll ever find the time. This trip is your chance to reconnect on a deep level, but will only happen if you can find a suitable plan.\n\n**The plan so far:**\n\nBroadly speaking, you share a lot of interests. This is why you’re such great friends. All of you love exploring, and none of you has really traveled outside the USA. You all like cities with nightlife, but you also want the option to dip into nature when you feel like it. That mix is what you’ve been looking for. The solution? Barcelona. You’ve been talking for years about a visit to Barcelona, a culture-rich city that stays up late, with a mountain range on one side and the coast and long beaches on the other. It’s the kind of place that sparked the pact in the first place.\n\n**Topics under discussion:**\n\nHowever, the devil is in the details. Although you have a lot in common, you also are very different. You became roommates first by random lottery, and then became friends later. For example, you like fast and efficient travel. Slow mornings feel like you are giving away the best hours. Some of your friends prefer the opposite and want a slower start.\n\nBut life is all about tradeoffs, right? You have to give a little to get a little, and you are confident that you can find a plan that works for everyone.\n\n*As you prepare for the negotiation, you reflect on your general preferences for each topic under discussion and the two issues associated with each one, as summarized below.*\n\n*Topic 1: Travel Pace.*\n- [1] Slow mornings: You like fast and efficient travel. Slow mornings feel like you are giving away the best hours.\n- [2] Multiple afternoon activities: Packing in a couple of activities in the afternoon makes just the day feel much more satisfying.\n\n*Topic 2: Who We Connect With.*\n- [3] Plans to meet new people: Meeting new people sounds fun. The best part is that those shared moments with new people turn into the kind of stories that always come up later when the group’s reminiscing.\n- [4] Other college friends join: However, meeting your other college friends sounds like a chore. You didn’t really like them that much, and you’d honestly rather spend time with strangers than with them.\n\n*Topic 3: Togetherness.*\n- [5] Shared rooms: When it comes to rooms, shared or separate both work for you, as long as everyone feels good about the setup and is excited for the day’s plans.\n- [6] Some solo activities: Similarly, solo activities are optional for you. You’re fine with some independence if it fits, and fine keeping everything shared if it doesn't.\n\n*Topic 4: Trip Scope.*\n- [7] Visits to nearby towns: You’d rather not leave the city for nearby towns. There’s just so much to see within Barcelona itself, and going outside feels taxing and not that exciting.\n- [8] Hotel arrangements in the city: That’s why you want a hotel in or near the city. It lets you see more of the city, and anchors the group away from checking out nearby towns.\n\n*Topic 5: Travel Experience.*\n- [9] Long nature excursion: A longer nature excursion isn’t appealing to you. You’d rather avoid committing a big block of time to something outdoors-heavy.\n- [10] More historical and cultural tours: Instead, you’d enjoy doing more historical and cultural tours. There are so many guided walks, landmarks, and cultural sites to visit, but only so little time.\n\n**Your Prolific Bonus ($):**\n\n- Your preferences are also captured in a points table shown below.\n- Higher points mean you prefer that option more.\n- If your group reaches an agreement, the **total points** from the chosen options determine the **bonus** payment you receive from Prolific.\n- However, this must be an **official agreement** that everyone votes to accept in the system, which means it must have a **positive score for everyone**. Agreements made verbally will not count.\n- If a player is **disconnected** or missing, then unfortunately this is outside of our control and your group cannot reach agreement. In that case, the **best option** is usually to press the **Quit** button and receive the base payment.\n- **IMPORTANT:** Be careful not to quit if your group is complete, because doing so will affect your earnings and may disqualify you from the task.\n\n**Tips to Maximizing your Points**\n\n- Because it has been five years since you all lived together, your memories of each other’s travel preferences may be outdated, so do not expect agreement to be easily reached.\n- Even after making several proposals during the negotiation, you may still not reach an agreement that yields a positive score for everyone. So don't wait until the last minute to make proposals, make as many as needed.\n- Listen carefully to what matters to the others while still advocating for what matters most to you as you make your official proposals.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to visit your parents, which is worth 0 points. If agreement is not reached, this is effectively what your outcome is worth.",
+      "RP": 0,
+      "scoresheet": {
+        "Slow_Mornings": [
+          {
+            "option": "Include",
+            "score": -2.19,
+            "reason": "Slow mornings waste the best hours."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Multiple_Afternoon_Activities": [
+          {
+            "option": "Include",
+            "score": 0.7,
+            "reason": "Doing as much as possible feels satisfying."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Plans_to_Meet_New_People": [
+          {
+            "option": "Include",
+            "score": 0.08,
+            "reason": "Fun, and makes stories the group will remember."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Other_College_Friends_Join": [
+          {
+            "option": "Include",
+            "score": -1.57,
+            "reason": "Feels like a chore."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Shared_Rooms": [
+          {
+            "option": "Include",
+            "score": 0.0,
+            "reason": "Flexible on this."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Some_Solo_Activities": [
+          {
+            "option": "Include",
+            "score": 0.0,
+            "reason": "Flexible on this."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Visits_to_Nearby_Towns": [
+          {
+            "option": "Include",
+            "score": -0.05,
+            "reason": "Leaving the city feels taxing."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Hotel_Arrangements_in_the_City": [
+          {
+            "option": "Include",
+            "score": 1.79,
+            "reason": "More time in the city, less likely the group will spend time outside."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Long_Nature_Excursion": [
+          {
+            "option": "Include",
+            "score": -0.54,
+            "reason": "Nature, views, and adventure doesn’t appeal; culture does."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "More_Historical_and_Cultural_Tours": [
+          {
+            "option": "Include",
+            "score": 1.93,
+            "reason": "You enjoy historical and cultural experiences."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ]
+      }
+    },
+    {
+      "role_name": "Party E",
+      "narrative": "Back in college, you lived in a big house with 4 other people, a tight social group that lived and died together. You made a pact at graduation to take a trip together once your lives had gotten settled. Now five years have passed, and that trip still hasn't happened! Of course you’re all busy, but another challenge is finding a plan that feels exciting to everyone.\n\nAlthough you’ve stayed in touch and visit regularly, you can feel yourselves drifting apart, since you ended up in different cities after graduating and have since formed new social circles. You worry that it’s now or never: if you don’t take this trip soon, you don’t know when you’ll ever find the time. This trip is your chance to reconnect on a deep level, but will only happen if you can find a suitable plan.\n\n**The plan so far:**\n\nBroadly speaking, you share a lot of interests. This is why you’re such great friends. All of you love exploring, and none of you has really traveled outside the USA. You all like cities with nightlife, but you also want the option to dip into nature when you feel like it. That mix is what you’ve been looking for. The solution? Barcelona. You’ve been talking for years about a visit to Barcelona, a culture-rich city that stays up late, with a mountain range on one side and the coast and long beaches on the other. It’s the kind of place that sparked the pact in the first place.\n\n**Topics under discussion:**\n\nHowever, the devil is in the details. Although you have a lot in common, you also are very different. You became roommates first by random lottery, and then became friends later. For example, some of your friends like pulling strangers into the group whenever you all go out. You’re just not into that, and you’d rather stick with each other.\n\nBut life is all about tradeoffs, right? You have to give a little to get a little, and you are confident that you can find a plan that works for everyone.\n\n*As you prepare for the negotiation, you reflect on your general preferences for each topic under discussion and the two issues associated with each one, as summarized below.*\n\n*Topic 1: Travel Pace.*\n- [1] Slow mornings: Morning tempo will not make or break the weekend for you. You can adapt either way.\n- [2] Multiple afternoon activities: You're also generally flexible with how intense the rest of the day are, as long as there's an agreed plan.\n\n*Topic 2: Who We Connect With.*\n- [3] Plans to meet new people: Meeting new people sounds like a distraction from the point of the trip. You don’t want the weekend to revolve around socializing with strangers.\n- [4] Other college friends join: If we’re spending time with anyone outside the group, you’d rather hang with old college friends. It’s familiar, low-pressure, and it can be genuinely fun to relive old stories for a bit.\n\n*Topic 3: Togetherness.*\n- [5] Shared rooms: You’d rather have your own room. Having private space lets you recharge, so you can show up better for the group during the day.\n- [6] Some solo activities: At the same time, you’d appreciate having some solo activities built in. Even a bit of time doing your own thing helps you reset and come back feeling fresh.\n\n*Topic 4: Trip Scope.*\n- [7] Visits to nearby towns: Ideally, you’d love to see some of the nearby towns. Visiting somewhere like Tarragona, or seeing the villages surrounding the mountain range feels much more exciting than only staying in the city.\n- [8] Hotel arrangements in the city: That’s why you’d prefer being closer to the mountains rather than the city. It’s calmer, and it’s closer to the natural park, and to the other towns you could visit.\n\n*Topic 5: Travel Experience.*\n- [9] Long nature excursion: A longer nature excursion isn’t appealing to you. You’d rather avoid committing a big block of time to something outdoors-heavy.\n- [10] More historical and cultural tours: Instead, you’d enjoy doing more historical and cultural tours. There are so many guided walks, landmarks, and cultural sites to visit, but only so little time.\n\n**Your Prolific Bonus ($):**\n\n- Your preferences are also captured in a points table shown below.\n- Higher points mean you prefer that option more.\n- If your group reaches an agreement, the **total points** from the chosen options determine the **bonus** payment you receive from Prolific.\n- However, this must be an **official agreement** that everyone votes to accept in the system, which means it must have a **positive score for everyone**. Agreements made verbally will not count.\n- If a player is **disconnected** or missing, then unfortunately this is outside of our control and your group cannot reach agreement. In that case, the **best option** is usually to press the **Quit** button and receive the base payment.\n- **IMPORTANT:** Be careful not to quit if your group is complete, because doing so will affect your earnings and may disqualify you from the task.\n\n**Tips to Maximizing your Points**\n\n- Because it has been five years since you all lived together, your memories of each other’s travel preferences may be outdated, so do not expect agreement to be easily reached.\n- Even after making several proposals during the negotiation, you may still not reach an agreement that yields a positive score for everyone. So don't wait until the last minute to make proposals, make as many as needed.\n- Listen carefully to what matters to the others while still advocating for what matters most to you as you make your official proposals.",
+      "BATNA": "Your best alternative to negotiated agreement ('BATNA') is to visit your parents, which is worth 0 points. If agreement is not reached, this is effectively what your outcome is worth.",
+      "RP": 0,
+      "scoresheet": {
+        "Slow_Mornings": [
+          {
+            "option": "Include",
+            "score": 0.0,
+            "reason": "Flexible on this."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Multiple_Afternoon_Activities": [
+          {
+            "option": "Include",
+            "score": 0.0,
+            "reason": "Flexible on this."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Plans_to_Meet_New_People": [
+          {
+            "option": "Include",
+            "score": -1.15,
+            "reason": "Defeats the purpose of the trip."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Other_College_Friends_Join": [
+          {
+            "option": "Include",
+            "score": 2.25,
+            "reason": "Familiar faces, and it’s fun to relive old stories."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Shared_Rooms": [
+          {
+            "option": "Include",
+            "score": -0.41,
+            "reason": "Private space helps you recharge."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Some_Solo_Activities": [
+          {
+            "option": "Include",
+            "score": 1.56,
+            "reason": "Solo time helps you reset and come back fresh."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Visits_to_Nearby_Towns": [
+          {
+            "option": "Include",
+            "score": 1.64,
+            "reason": "Places like Tarragona and mountain villages sound exciting."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Hotel_Arrangements_in_the_City": [
+          {
+            "option": "Include",
+            "score": -0.89,
+            "reason": "Being near the mountains keeps nearby towns and nature views close."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "Long_Nature_Excursion": [
+          {
+            "option": "Include",
+            "score": -0.23,
+            "reason": "Nature, views, and adventure doesn’t appeal; culture does."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
+        ],
+        "More_Historical_and_Cultural_Tours": [
+          {
+            "option": "Include",
+            "score": 1.55,
+            "reason": "You enjoy historical and cultural experiences."
+          },
+          {
+            "option": "Exclude",
+            "score": 0,
+            "reason": ""
+          }
         ]
       }
     }
   ],
-  "tips": "<p class=\"text-gray-700 mb-4\">Negotiation is a skill that can be learned and improved with practice. At its core, negotiation is about making choices under conditions of <strong>interdependence</strong>: two or more parties want something, and each party's success depends, at least in part, on the decisions of the others. While the art of negotiation can seem daunting, there are several fundamental concepts that provide a foundation for effective bargaining. Understanding these concepts can help negotiators achieve better outcomes and avoid common pitfalls.</p><p>One of the most important ideas in negotiation is the concept of <strong>BATNA</strong> and <strong>reservation price</strong>. BATNA stands for \"Best Alternative to a Negotiated Agreement.\" It is essentially your fallback option—the \"thing\" you will pursue if the current negotiation fails. Your BATNA is not just abstract; it is the concrete alternative that protects you from agreeing to a deal that leaves you worse off than your options outside the negotiation. Closely related is the <strong>reservation price</strong>, which is the value of your BATNA quantified. It represents the minimum acceptable deal you are willing to accept.</p><p>The number one rule of negotiation is simple: <strong>never accept a deal worse than your BATNA</strong>! Knowing your BATNA and reservation price gives you a clear boundary and helps prevent you from making poor concessions under pressure.</p><p class=\"text-gray-700 mb-4\">Another fundamental concept is the possibility of <strong>integrative negotiation</strong>, which is when you create value or \"expand the pie\" within a deal rather than simply dividing a fixed amount of pie. The key insight is that what matters a lot to you may matter less to someone else. By identifying these differences in priorities, negotiators can make strategic tradeoffs: conceding on issues that are low priority to gain on issues that are high priority. This approach transforms negotiation from a zero-sum battle into an opportunity for mutual gain, where both parties can walk away better off than if they had simply split the difference.</p>"
+  "tips": "<p class=\"text-gray-700 mb-4\">Negotiation is a skill you can get better at with practice. At its core, it is about making choices when people want different things, with each person’s decision affecting what the others get out of the deal. The good news is that a few basic ideas go a long way.</p><p class=\"text-gray-700 mb-4\">One of the most important ideas is knowing your <strong>best alternative</strong> to negotiating an agreement, or your <strong>BATNA</strong>. This is your realistic fallback plan outside the negotiation. Knowing what that alternative is <strong>actually worth</strong> helps protect you from accepting an agreement that leaves you worse off than walking away. A simple rule follows from this: <strong>never accept a deal worse than your BATNA</strong>.</p><p class=\"text-gray-700 mb-4\">Another key idea is that some negotiations can be <strong>win-win</strong>. This happens when people value different issues differently. If something matters a lot to you but not as much to the other person, you may be able to <strong>trade it for something you care about more</strong>. In practice, this means focusing less on “splitting the difference” and more on <strong>learning what the other person really wants</strong>, so you can make smart tradeoffs that leave both of you better off.</p><p class=\"text-gray-700 mb-4\">A final tip is that <strong>win-win outcomes become easier to achieve when everyone knows what matters most to each party</strong> . So try to be clear about what you care about, and how these interests translate to what you want across each issue under negotiation. At the same time, <strong>listen closely to what the other person cares about.</strong> Knowing this is what will make such smart, win-win tradeoffs possible.</p>"
 }
