@@ -254,7 +254,6 @@ export function DemoUI({
                   {/* Left side: Scoresheet rows */}
                   <div className="flex-[9] space-y-2">
                     {Object.entries(roleScoresheet)
-                      .sort(([, optionsA], [, optionsB]) => optionsB[0].score - optionsA[0].score)
                       .map(([category, options]) => {
                         const includeOption = options[0];
                         const isChecked = selectedOptions[category] === 0;

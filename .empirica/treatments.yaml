@@ -39,38 +39,26 @@ factors:
         - value: Batch full ending message <b>goes</b> here
     - name: roleDataURL
       values:
-        - value: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/server/src/roles_v1.json
-        - value: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/roles_v1.json
-        - value: https://raw.githubusercontent.com/SamQuinto/Describing-Search-in-Negotiations/refs/heads/main/scenario_5_party.json
-        - value: /root/zopa-vs-complexity/roles_v1.json
+        - value: https://raw.githubusercontent.com/SamQuinto/Describing-Search-in-Negotiations/refs/heads/main/shared_office_3p_easy.json
+        - value: https://raw.githubusercontent.com/SamQuinto/Describing-Search-in-Negotiations/refs/heads/main/shared_office_3p_hard.json
 treatments:
-    - name: 5-party
+    - name: 3-party-easy
       factors:
         batchFullEndingMessage: Batch full ending message <b>goes</b> here
         negotiateTime: 600
         noAgreementEndingMessage: no agreement ending message <b>goes</b> here
         noGameEndingMessage: No game assigned endign message <b>goes</b> here
-        playerCount: 5
+        playerCount: 3
         readRoleTime: 300
-        roleDataURL: https://raw.githubusercontent.com/SamQuinto/Describing-Search-in-Negotiations/refs/heads/main/scenario_5_party.json
+        roleDataURL: https://raw.githubusercontent.com/SamQuinto/Describing-Search-in-Negotiations/refs/heads/main/shared_office_3p_easy.json
         yesAgreementEndingMessage: yes agreement ending message <b>goes</b> here
-    - name: 2-party
+    - name: 3-party-hard
       factors:
         batchFullEndingMessage: Batch full ending message <b>goes</b> here
         negotiateTime: 600
         noAgreementEndingMessage: no agreement ending message <b>goes</b> here
         noGameEndingMessage: No game assigned endign message <b>goes</b> here
-        playerCount: 2
+        playerCount: 3
         readRoleTime: 300
-        roleDataURL: https://raw.githubusercontent.com/SamQuinto/Describing-Search-in-Negotiations/refs/heads/main/scenario_5_party.json
-        yesAgreementEndingMessage: yes agreement ending message <b>goes</b> here
-    - name: test
-      factors:
-        batchFullEndingMessage: Batch full ending message <b>goes</b> here
-        negotiateTime: 600
-        noAgreementEndingMessage: no agreement ending message <b>goes</b> here
-        noGameEndingMessage: No game assigned endign message <b>goes</b> here
-        playerCount: 2
-        readRoleTime: 300
-        roleDataURL: /root/zopa-vs-complexity/roles_v1.json
+        roleDataURL: https://raw.githubusercontent.com/SamQuinto/Describing-Search-in-Negotiations/refs/heads/main/shared_office_3p_hard.json
         yesAgreementEndingMessage: yes agreement ending message <b>goes</b> here
