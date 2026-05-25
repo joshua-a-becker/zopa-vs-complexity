@@ -14,6 +14,8 @@ You're excited about this living situation, but you have specific preferences fo
 
 Below is your personal scoresheet showing how much each house rule matters to you. Higher scores mean that option is more important to you. Your goal is to negotiate an agreement that gives you the highest total score possible.
 
+Each reason begins with a broader issue category, such as Personal Life at Home, Shared Kitchen Use, Household Chores and Comfort, or Quiet and Common Space. These categories are there to help you understand the broader interest behind each preference.
+
 **Important:** If you can't reach an agreement with your roommates, you'll need to find a different living situation. This alternative (your BATNA) is worth 0 points. So you should only agree to a roommate arrangement that gives you positive points overall.
 `;
 
@@ -24,7 +26,7 @@ export const demoTips = `
 
 <p><strong>Look for trade-offs:</strong> If something matters a lot to you but less to others, that's an opportunity for a win-win deal. Offer to give on issues you care less about.</p>
 
-<p><strong>Remember your BATNA:</strong> Your Best Alternative To Negotiated Agreement is finding different roommates. Don't accept a deal that gives you negative points—that's worse than your alternative!</p>
+<p><strong>Remember your BATNA:</strong> Your Best Alternative To Negotiated Agreement is finding different roommates. Don't accept a deal that gives you negative points. That's worse than your alternative!</p>
 
 <p><strong>Communicate clearly:</strong> Explain why certain things matter to you. Understanding each other's reasoning can help find creative solutions that work for everyone.</p>
 `;
@@ -35,35 +37,106 @@ export const demoRP = 0;
 
 export const demoScoresheet = {
   "Pets_Allowed": [
-    { option: "Yes", score: 12, reason: "You have a cat you're bringing" },
-    { option: "No", score: 0, reason: "" }
+    {
+      option: "Yes",
+      score: 12,
+      reason: "PERSONAL LIFE AT HOME: You have a cat you're bringing, so the apartment needs to work for your everyday life."
+    },
+    {
+      option: "No",
+      score: 0,
+      reason: ""
+    }
   ],
+
   "Overnight_Guests": [
-    { option: "Yes", score: 10, reason: "Your partner visits often on weekends" },
-    { option: "No", score: 0, reason: "" }
+    {
+      option: "Yes",
+      score: 10,
+      reason: "PERSONAL LIFE AT HOME: Your partner visits often on weekends, so overnight guests matter to you."
+    },
+    {
+      option: "No",
+      score: 0,
+      reason: ""
+    }
   ],
+
   "Kitchen_Storage": [
-    { option: "Yes", score: 8, reason: "Makes cooking together easier" },
-    { option: "No", score: 0, reason: "" }
+    {
+      option: "Yes",
+      score: 8,
+      reason: "SHARED KITCHEN USE: More kitchen storage makes it easier to cook and use the kitchen together."
+    },
+    {
+      option: "No",
+      score: 0,
+      reason: ""
+    }
   ],
-  "Clean_Ourselves": [
-    { option: "Yes", score: 0, reason: "" },
-    { option: "No", score: 0, reason: "" }
-  ],
-  "Late_Nights_OK": [
-    { option: "Yes", score: -5, reason: "You prefer quiet evenings" },
-    { option: "No", score: 0, reason: "" }
-  ],
-  "Cooler_Winter_Temp": [
-    { option: "Yes", score: -7, reason: "You prefer warmer temperatures" },
-    { option: "No", score: 0, reason: "" }
-  ],
+
   "Shared_Groceries": [
-    { option: "Yes", score: -9, reason: "You prefer to buy your own food" },
-    { option: "No", score: 0, reason: "" }
+    {
+      option: "Yes",
+      score: -9,
+      reason: "SHARED KITCHEN USE: You prefer to buy your own food and keep groceries separate."
+    },
+    {
+      option: "No",
+      score: 0,
+      reason: ""
+    }
   ],
+
+  "Clean_Ourselves": [
+    {
+      option: "Yes",
+      score: 0,
+      reason: "HOUSEHOLD CHORES AND COMFORT: You are flexible on this."
+    },
+    {
+      option: "No",
+      score: 0,
+      reason: ""
+    }
+  ],
+
+  "Cooler_Winter_Temp": [
+    {
+      option: "Yes",
+      score: -7,
+      reason: "HOUSEHOLD CHORES AND COMFORT: You prefer warmer temperatures and don't want the apartment kept too cold in winter."
+    },
+    {
+      option: "No",
+      score: 0,
+      reason: ""
+    }
+  ],
+
+  "Late_Nights_OK": [
+    {
+      option: "Yes",
+      score: -5,
+      reason: "QUIET AND COMMON SPACE: You prefer quiet evenings and don't want late nights to disrupt the apartment."
+    },
+    {
+      option: "No",
+      score: 0,
+      reason: ""
+    }
+  ],
+
   "Living_Room": [
-    { option: "Yes", score: -11, reason: "You have strong preferences against this style" },
-    { option: "No", score: 0, reason: "" }
+    {
+      option: "Yes",
+      score: -11,
+      reason: "QUIET AND COMMON SPACE: You have strong preferences against this living room setup."
+    },
+    {
+      option: "No",
+      score: 0,
+      reason: ""
+    }
   ]
 };

@@ -1,0 +1,833 @@
+import React, { useState, useEffect } from "react";
+import Markdown from "react-markdown";
+import { usePlayer, useStage, useRound, useGame } from "@empirica/core/player/classic/react";
+
+/**
+ * DemoMaterialsPanel — clone of MaterialsPanel for the Interactive Demo stage.
+ *
+ * Differences from MaterialsPanel:
+ * - No Quit button or quit modals
+ * - No Welcome modal
+ * - Fires optional callbacks so InteractiveDemo can layer guardrails:
+ *     onTabChange(tabName)
+ *     onProposalSubmit(newProposal)
+ *     onVote(proposalId, vote)
+ *     onFinalizeVote(proposalId, decision)
+ * - Accepts `submitBlockedMessage` prop — if set, disables Submit and shows the message
+ * - Accepts `highlightTab` prop — tab name to pulse/blink (guides user to click it)
+ */
+export function DemoMaterialsPanel({
+  roleName,
+  roleNarrative,
+  roleScoresheet,
+  roleBATNA,
+  roleRP,
+  // Guardrail hooks (all optional)
+  onTabChange,
+  onProposalSubmit,
+  onVote,
+  onFinalizeVote,
+  submitBlockedMessage,
+  highlightTab,
+  // Validation hooks — called BEFORE writing to round state.
+  // Return an error string to block and show a modal; return null to allow.
+  validateProposal,     // validateProposal(options) => string | null
+  validateVote,         // validateVote(proposalId, vote) => string | null
+  validateFinalizeVote, // validateFinalizeVote(proposalId, decision) => string | null
+}) {
+  const player = usePlayer();
+  const stage = useStage();
+  const round = useRound();
+  const game = useGame();
+  const { playerCount } = game.get("treatment");
+  const tips = game.get("tips") || "";
+  const [activeTab, setActiveTab] = useState("calculator");
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+  const [showNegativePointsModal, setShowNegativePointsModal] = useState(false);
+  const [showBlankProposalModal, setShowBlankProposalModal] = useState(false);
+  const [showSubmitBlockedModal, setShowSubmitBlockedModal] = useState(false);
+  const [validationError, setValidationError] = useState(null);
+
+  // Flash state for pending-proposal tab indicator and highlight tab
+  const [flashProposalTab, setFlashProposalTab] = useState(false);
+  const [flashHighlightTab, setFlashHighlightTab] = useState(false);
+
+  // Get proposal history from round state (single source of truth)
+  const history = round.get("demoProposalHistory") || [];
+  const currentProposal = history.length > 0 ? history[history.length - 1] : null;
+
+  // Compute proposal state from vote counts (derived state, no useEffect needed)
+  let proposalState = "none"; // "none" | "collecting-initial" | "collecting-final" | "complete"
+
+  if (currentProposal) {
+    const initialVoteCount = Object.keys(currentProposal.initialVotes).length;
+
+    if (initialVoteCount < playerCount) {
+      proposalState = "collecting-initial";
+    } else {
+      const rejectCount = Object.values(currentProposal.initialVotes).filter(v => v === "reject").length;
+
+      if (rejectCount >= 1) {
+        proposalState = "complete"; // Failed at initial stage
+      } else {
+        // All accepted, check final votes
+        const finalVoteCount = Object.keys(currentProposal.finalVotes).length;
+
+        if (finalVoteCount < playerCount) {
+          proposalState = "collecting-final";
+        } else {
+          proposalState = "complete"; // Either finalized or failed at ratification
+        }
+      }
+    }
+  }
+
+  // Determine what to show
+  const pendingProposal = proposalState === "collecting-initial" ? currentProposal : null;
+
+  // Determine if we should show the finalize modal (persist even after voting completes)
+  let acceptedPendingProposal = null;
+  if (currentProposal) {
+    const allInitialAccept = Object.keys(currentProposal.initialVotes).length === playerCount &&
+                            Object.values(currentProposal.initialVotes).every(v => v === "accept");
+
+    if (allInitialAccept) {
+      const finalVoteCount = Object.keys(currentProposal.finalVotes).length;
+      const allFinalize = finalVoteCount === playerCount &&
+                         Object.values(currentProposal.finalVotes).every(v => v === "finalize");
+      const hasPlayerDismissed = currentProposal.modalDismissed?.[player.id];
+
+      // Show modal if:
+      // - Still collecting final votes, OR
+      // - Voting complete but not unanimous finalize AND player hasn't dismissed
+      if (finalVoteCount < playerCount || (!allFinalize && !hasPlayerDismissed)) {
+        acceptedPendingProposal = currentProposal;
+      }
+    }
+  }
+
+  const allHistoryProposals = proposalState === "none" || proposalState === "complete" ? history : history.slice(0, -1);
+
+  // Auto-show finalize modal when acceptedPendingProposal exists and player hasn't voted
+  useEffect(() => {
+    if (acceptedPendingProposal && !acceptedPendingProposal.finalVotes[player.id] && !showFinalizeModal) {
+      setShowFinalizeModal(true);
+    }
+  }, [acceptedPendingProposal?.id, player.id, showFinalizeModal]);
+
+  // Check if everyone voted to finalize and submit for this player
+  useEffect(() => {
+    if (currentProposal) {
+      const finalVoteCount = Object.keys(currentProposal.finalVotes).length;
+      if (finalVoteCount === playerCount) {
+        const allFinalize = Object.values(currentProposal.finalVotes).every(v => v === "finalize");
+        if (allFinalize) {
+          player.stage.set("submit", true);
+        }
+      }
+    }
+  }, [currentProposal?.finalVotes, playerCount, player]);
+
+  // Flash the Proposal tab when there's a pending proposal
+  useEffect(() => {
+    if (pendingProposal && activeTab !== "proposal") {
+      const interval = setInterval(() => {
+        setFlashProposalTab(prev => !prev);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setFlashProposalTab(false);
+    }
+  }, [pendingProposal, activeTab]);
+
+  // Flash the highlighted tab (guided demo step)
+  useEffect(() => {
+    if (highlightTab && activeTab !== highlightTab) {
+      const interval = setInterval(() => {
+        setFlashHighlightTab(prev => !prev);
+      }, 700);
+      return () => clearInterval(interval);
+    } else {
+      setFlashHighlightTab(false);
+    }
+  }, [highlightTab, activeTab]);
+
+  // Handle tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    window.scrollTo(0, 0);
+    if (onTabChange) onTabChange(tab);
+  };
+
+  // Calculate current total points
+  const calculateTotalPoints = () => {
+    return Object.entries(roleScoresheet).reduce((sum, [category]) => {
+      const optionIdx = selectedOptions[category] ?? 1;
+      return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+    }, 0);
+  };
+
+  // Handle proposal submission
+  const handleSubmitProposal = () => {
+    // If submission is blocked by parent, show the blocked message modal
+    if (submitBlockedMessage) {
+      setShowSubmitBlockedModal(true);
+      return;
+    }
+
+    // Check if at least one item is selected
+    const hasAtLeastOneItem = Object.values(selectedOptions).some(optionIdx => optionIdx === 0);
+    if (!hasAtLeastOneItem) {
+      setShowBlankProposalModal(true);
+      return;
+    }
+
+    // Parent validation (e.g. require all items checked in final_propose)
+    if (validateProposal) {
+      const err = validateProposal({ ...selectedOptions });
+      if (err) { setValidationError(err); return; }
+    }
+
+    const now = Date.now();
+    const newProposal = {
+      id: `${now}-${player.id}`,
+      submittedBy: player.id,
+      submittedByName: player.get("displayName") || player.id,
+      timestamp: now,
+      options: { ...selectedOptions },
+      initialVotes: {},
+      finalVotes: {},
+      modalDismissed: {}
+    };
+    round.set("demoProposalHistory", [...history, newProposal]);
+
+    const existing = player.get("heartbeat") || [];
+    player.set("heartbeat", [...existing, ["proposal", now, newProposal.id]]);
+
+    // Notify parent
+    if (onProposalSubmit) onProposalSubmit(newProposal);
+
+    // Switch to Proposal tab
+    handleTabChange("proposal");
+  };
+
+  // Handle vote on proposal (initial votes)
+  const handleVote = (proposalId, vote) => {
+    // If voting "accept", check if proposal has negative points for this player
+    if (vote === "accept") {
+      const proposal = history.find(p => p.id === proposalId);
+      if (proposal) {
+        const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
+          const optionIdx = proposal.options[category] ?? 1;
+          return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+        }, 0);
+        if (proposalPoints < 0) {
+          setShowNegativePointsModal(true);
+          return;
+        }
+      }
+    }
+
+    // Parent validation (e.g. force NO during demo vote phase)
+    if (validateVote) {
+      const err = validateVote(proposalId, vote);
+      if (err) { setValidationError(err); return; }
+    }
+
+    const updatedHistory = [...history];
+    const proposal = updatedHistory.find(p => p.id === proposalId);
+    if (!proposal) return;
+
+    proposal.initialVotes[player.id] = vote;
+    round.set("demoProposalHistory", updatedHistory);
+
+    if (onVote) onVote(proposalId, vote);
+  };
+
+  // Handle modifying a rejected proposal
+  const handleModifyProposal = (proposalOptions) => {
+    setSelectedOptions(proposalOptions);
+    handleTabChange("calculator");
+  };
+
+  // Handle finalize decision (finalize or continue)
+  const handleFinalizeVote = (proposalId, decision) => {
+    // Parent validation (e.g. force "continue" during demo finalize phase)
+    if (validateFinalizeVote) {
+      const err = validateFinalizeVote(proposalId, decision);
+      if (err) { setValidationError(err); return; }
+    }
+
+    const updatedHistory = [...history];
+    const proposal = updatedHistory.find(p => p.id === proposalId);
+    if (!proposal) return;
+
+    proposal.finalVotes[player.id] = decision;
+    round.set("demoProposalHistory", updatedHistory);
+
+    if (onFinalizeVote) onFinalizeVote(proposalId, decision);
+  };
+
+  // Handle dismissing the finalize modal
+  const handleDismissModal = (proposalId) => {
+    const updatedHistory = [...history];
+    const proposal = updatedHistory.find(p => p.id === proposalId);
+    if (!proposal) return;
+
+    if (!proposal.modalDismissed) proposal.modalDismissed = {};
+    proposal.modalDismissed[player.id] = true;
+
+    round.set("demoProposalHistory", updatedHistory);
+    setShowFinalizeModal(false);
+  };
+
+  // Helper: tab button classes, merging pending-proposal flash, highlight flash
+  const tabClass = (tab) => {
+    const isActive = activeTab === tab;
+    const isPendingTab = tab === "proposal" && pendingProposal && !isActive;
+    const isHighlighted = tab === highlightTab && !isActive && flashHighlightTab;
+
+    if (isActive) {
+      return "px-4 py-2 rounded font-medium transition-all border bg-white text-blue-600 border-blue-400 shadow";
+    }
+    if (isPendingTab && flashProposalTab) {
+      return "px-4 py-2 rounded font-medium transition-all border bg-red-100 text-red-700 border-red-400 shadow-md";
+    }
+    if (isHighlighted) {
+      return "px-4 py-2 rounded font-medium transition-all border bg-yellow-100 text-yellow-800 border-yellow-400 shadow-md animate-pulse";
+    }
+    return "px-4 py-2 rounded font-medium transition-all border bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400";
+  };
+
+  return (
+    <div className="w-full bg-gray-300 p-6 flex flex-col relative min-h-screen">
+      {/* Bottom fade overlay */}
+      <div className="fixed left-0 bottom-0 w-[70%] h-12 bg-gradient-to-t from-gray-300 to-transparent pointer-events-none z-10"></div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-2">
+        <button onClick={() => handleTabChange("narrative")} className={tabClass("narrative")}>
+          Narrative
+        </button>
+        <button onClick={() => handleTabChange("calculator")} className={tabClass("calculator")}>
+          Scoring
+        </button>
+        <button onClick={() => handleTabChange("proposal")} className={tabClass("proposal")}>
+          Proposal
+          {pendingProposal && (
+            <span className="ml-2 inline-flex items-center justify-center w-2 h-2 bg-red-500 rounded-full"></span>
+          )}
+        </button>
+        <button onClick={() => handleTabChange("tips")} className={tabClass("tips")}>
+          Tips
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1">
+        {activeTab === "narrative" && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Your Role
+              </h3>
+              <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed">
+                <Markdown>{roleNarrative}</Markdown>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "calculator" && (
+          <div className="space-y-4">
+            {/* BATNA Card */}
+            {(roleBATNA || roleRP !== undefined) && (
+              <div className="bg-white rounded-lg shadow-sm p-4">
+                <h4 className="text-base font-bold text-gray-900 mb-2">
+                  What if I don't reach agreement?
+                </h4>
+                {roleBATNA && (
+                  <p className="text-sm text-gray-700 mb-1">{roleBATNA}</p>
+                )}
+                {roleRP !== undefined && (
+                  <p className="text-sm text-gray-700">
+                    If you don't reach agreement, you will earn <span className="font-bold">{roleRP} points</span>.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Main Scoring Area */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+
+              {/* Table Header */}
+              <div className="flex items-center px-4 py-2 mb-1">
+                <span className="w-8"></span>
+                <span className="text-xs font-bold text-gray-700 uppercase flex-shrink-0 w-[140px]">
+                  Feature
+                </span>
+                <span className="text-xs font-bold text-gray-700 uppercase flex-shrink-0 w-[80px] text-center">
+                  Points
+                </span>
+                <span className="text-xs font-bold text-gray-700 uppercase flex-1 ml-4">
+                  Reason
+                </span>
+              </div>
+
+              {/* Main content area with rows and total points side by side */}
+              <div className="flex gap-6">
+                {/* Left side: Scoresheet rows */}
+                <div className="flex-[9] space-y-2">
+                  {Object.entries(roleScoresheet)
+                    .sort(([, optionsA], [, optionsB]) => optionsB[0].score - optionsA[0].score)
+                    .map(([category, options]) => {
+                    const includeOption = options[0];
+                    const isChecked = selectedOptions[category] === 0;
+
+                    return (
+                      <div key={category} className="flex items-center bg-white rounded px-4 py-2.5 border border-blue-300">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            setSelectedOptions(prev => {
+                              if (e.target.checked) {
+                                return { ...prev, [category]: 0 };
+                              } else {
+                                return { ...prev, [category]: 1 };
+                              }
+                            });
+                          }}
+                          className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer mr-3"
+                        />
+                        <span className="text-sm font-semibold text-gray-800 flex-shrink-0 w-[140px]">
+                          {category.replace(/_/g, " ")}
+                        </span>
+                        <span className={`text-base font-bold flex-shrink-0 w-[80px] text-center ${
+                          isChecked
+                            ? (includeOption.score >= 0 ? 'text-blue-600' : 'text-red-600')
+                            : 'text-gray-400'
+                        }`}>
+                          {includeOption.score >= 0 ? '+' : ''}{includeOption.score} pts
+                        </span>
+                        <span className="text-sm text-gray-600 flex-1 ml-4">
+                          {includeOption.reason}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Right side: Total Points */}
+                <div className="flex-[4] flex flex-col items-center justify-start">
+                  <div className="text-center bg-white rounded-lg p-6 shadow-md w-full">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Points</h3>
+                    <div className="text-5xl font-bold mb-4">
+                      <span className="text-blue-600">
+                        {calculateTotalPoints().toFixed(2)}
+                      </span>
+                    </div>
+                    {roleRP !== undefined && (
+                      <div className={`text-sm font-semibold ${
+                        calculateTotalPoints() >= roleRP ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {calculateTotalPoints() >= roleRP ? '✓ Beats your BATNA!' : '✗ Below your BATNA'}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 flex flex-col gap-2 w-full">
+                    <button
+                      onClick={handleSubmitProposal}
+                      disabled={pendingProposal !== null}
+                      className={`px-4 py-2 rounded font-semibold transition-colors text-sm ${
+                        pendingProposal !== null
+                          ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                          : "bg-green-600 text-white hover:bg-green-700"
+                      }`}
+                    >
+                      {pendingProposal !== null ? "Proposal Pending" : "Submit Proposal"}
+                    </button>
+                    <button
+                      onClick={() => setSelectedOptions({})}
+                      className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium"
+                    >
+                      Reset All
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "proposal" && (
+          <div className="space-y-4">
+            {/* Pending Proposal */}
+            {pendingProposal ? (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Current Proposal
+                  </h3>
+                  {pendingProposal.submittedBy === player.id ? (
+                    <span className="px-4 py-2 bg-blue-100 text-blue-700 font-bold text-lg rounded">
+                      YOUR PROPOSAL
+                    </span>
+                  ) : (
+                    <span className="px-4 py-2 bg-amber-100 text-amber-700 font-bold text-lg rounded">
+                      SUBMITTED BY: {pendingProposal.submittedByName}
+                    </span>
+                  )}
+                </div>
+
+                {(() => {
+                  const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                    const optionIdx = pendingProposal.options[category] ?? 1;
+                    return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+                  }, 0);
+
+                  return (
+                    <div className="mb-6">
+                      <div className="text-center mb-4">
+                        <p className="text-sm text-gray-600 mb-1">Value to you:</p>
+                        <p className="text-4xl font-bold text-blue-600">
+                          {proposalPoints.toFixed(2)} points
+                        </p>
+                        {roleRP !== undefined && (
+                          <p className={`text-sm font-semibold mt-1 ${
+                            proposalPoints >= roleRP ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {proposalPoints >= roleRP ? '✓ Beats your BATNA' : '✗ Below your BATNA'}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Show proposal details */}
+                      <div className="bg-blue-50 rounded p-4 mb-4">
+                        <h4 className="text-sm font-bold text-gray-700 mb-2">Proposal Details:</h4>
+                        <div className="space-y-1">
+                          {Object.entries(roleScoresheet).map(([category]) => {
+                            const optionIdx = pendingProposal.options[category] ?? 1;
+                            const isIncluded = optionIdx === 0;
+                            return (
+                              <div key={category} className="flex items-center text-sm">
+                                <span className={`w-4 h-4 mr-2 rounded ${isIncluded ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                                <span className="text-gray-700">{category.replace(/_/g, " ")}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Vote buttons or status */}
+                      {pendingProposal.initialVotes[player.id] ? (
+                        <div className="text-center p-4 bg-gray-100 rounded">
+                          <p className="text-sm text-gray-600">
+                            You voted: <span className="font-bold">
+                              {pendingProposal.initialVotes[player.id] === "accept" ? "✓ Accept" : "✗ Reject"}
+                            </span>
+                          </p>
+                          <p className="text-base font-semibold text-gray-700 mt-2">
+                            Waiting for other players... ({Object.keys(pendingProposal.initialVotes).length}/{playerCount} voted)
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => handleVote(pendingProposal.id, "accept")}
+                            className="flex-1 px-4 py-3 bg-green-600 text-white rounded hover:bg-green-700 transition-colors font-semibold"
+                          >
+                            ✓ Accept
+                          </button>
+                          <button
+                            onClick={() => handleVote(pendingProposal.id, "reject")}
+                            className="flex-1 px-4 py-3 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-semibold"
+                          >
+                            ✗ Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <p className="text-gray-500">No pending proposal. Submit a proposal from the Scoring tab.</p>
+              </div>
+            )}
+
+            {/* Proposal History */}
+            {allHistoryProposals.length > 0 && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  Proposal History
+                </h3>
+                <div className="space-y-3">
+                  {[...allHistoryProposals].reverse().map((proposal) => {
+                    const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                      const optionIdx = proposal.options[category] ?? 1;
+                      return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+                    }, 0);
+
+                    const yesVotes = Object.values(proposal.initialVotes).filter(v => v === "accept").length;
+                    const acceptancePercentage = (yesVotes / playerCount) * 100;
+
+                    let voteColor;
+                    if (acceptancePercentage === 0) {
+                      voteColor = "text-red-400 opacity-95";
+                    } else if (acceptancePercentage < 50) {
+                      voteColor = "text-orange-500 opacity-95";
+                    } else if (acceptancePercentage === 50) {
+                      voteColor = "text-yellow-600";
+                    } else if (acceptancePercentage < 100) {
+                      voteColor = "text-lime-600";
+                    } else {
+                      voteColor = "text-green-600";
+                    }
+
+                    return (
+                      <div key={proposal.id} className="bg-gray-50 rounded p-4 border border-gray-200">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          {/* Proposal items list */}
+                          <div className="flex-1">
+                            <h5 className="text-xs font-bold text-gray-600 uppercase mb-2">Proposal Items:</h5>
+                            <div className="space-y-1">
+                              {Object.entries(roleScoresheet).map(([category]) => {
+                                const optionIdx = proposal.options[category] ?? 1;
+                                const isIncluded = optionIdx === 0;
+                                return (
+                                  <div key={category} className="flex items-center text-xs">
+                                    <span className={`w-3 h-3 mr-2 rounded ${isIncluded ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                                    <span className="text-gray-700">{category.replace(/_/g, " ")}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Right column: Submitter badge + Vote count and points */}
+                          <div className="flex flex-col items-end gap-3">
+                            {proposal.submittedBy === player.id ? (
+                              <span className="px-3 py-1 bg-blue-100 text-blue-700 font-bold text-sm rounded">
+                                YOUR PROPOSAL
+                              </span>
+                            ) : (
+                              <span className="px-3 py-1 bg-amber-100 text-amber-700 font-bold text-sm rounded">
+                                SUBMITTED BY: {proposal.submittedByName}
+                              </span>
+                            )}
+
+                            <div className="text-center bg-white rounded p-3 border border-gray-300 min-w-[120px]">
+                              <p className={`text-3xl font-bold ${voteColor} mb-1`}>
+                                {yesVotes}/{playerCount}
+                              </p>
+                              <p className="text-xs text-gray-500 uppercase font-semibold mb-2">
+                                Accepted
+                              </p>
+                              <p className="text-lg font-bold text-gray-700">
+                                {proposalPoints.toFixed(2)} pts
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                          onClick={() => handleModifyProposal(proposal.options)}
+                        >
+                          Modify
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "tips" && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Tips on Negotiation
+              </h3>
+              <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: tips }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Finalize Modal */}
+      {showFinalizeModal && acceptedPendingProposal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4">
+            {(() => {
+              const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
+                const optionIdx = acceptedPendingProposal.options[category] ?? 1;
+                return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
+              }, 0);
+
+              const finalVoteCount = Object.keys(acceptedPendingProposal.finalVotes).length;
+              const hasVoted = !!acceptedPendingProposal.finalVotes?.[player.id];
+              const allVoted = finalVoteCount === playerCount;
+              const allFinalize = allVoted && Object.values(acceptedPendingProposal.finalVotes).every(v => v === "finalize");
+
+              if (hasVoted) {
+                return (
+                  <div>
+                    <div className="text-center mb-6">
+                      <div className="text-6xl mb-4">⏳</div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                        Waiting for other votes...
+                      </h3>
+                      <p className="text-lg text-gray-600 mb-4">
+                        {allVoted && !allFinalize ? (
+                          <span>Outcome: <span className="font-bold text-blue-700">Continue</span></span>
+                        ) : (
+                          <span>You voted: <span className="font-bold text-green-700">
+                            {acceptedPendingProposal.finalVotes[player.id] === "finalize" ? "Finalize" : "Continue"}
+                          </span></span>
+                        )}
+                      </p>
+                      <div className="text-center p-4 bg-gray-100 rounded">
+                        <p className="text-4xl font-bold text-blue-600 mb-2">
+                          {finalVoteCount}/{playerCount}
+                        </p>
+                        <p className="text-sm text-gray-600">players have voted</p>
+                      </div>
+                    </div>
+                    {allVoted && !allFinalize && (
+                      <button
+                        onClick={() => handleDismissModal(acceptedPendingProposal.id)}
+                        className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+                      >
+                        Close
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <div>
+                  <div className="text-center mb-6">
+                    <h3 className="text-3xl font-bold text-green-700 mb-3">
+                      🎉 Congratulations!
+                    </h3>
+                    <p className="text-lg text-gray-700 mb-2">
+                      Everyone has accepted this proposal.
+                    </p>
+                    <p className="text-md text-gray-600">
+                      Would you like to finalize this deal, or keep discussing?
+                    </p>
+                  </div>
+
+                  <div className="text-center mb-6 p-4 bg-green-50 rounded">
+                    <p className="text-sm text-gray-600 mb-1">Your score with this proposal:</p>
+                    <p className="text-4xl font-bold text-green-600">
+                      {proposalPoints.toFixed(2)} points
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={() => handleFinalizeVote(acceptedPendingProposal.id, "finalize")}
+                      className="w-full px-6 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold text-lg"
+                    >
+                      Finalize Deal
+                    </button>
+                    <button
+                      onClick={() => handleFinalizeVote(acceptedPendingProposal.id, "continue")}
+                      className="w-full px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold text-lg"
+                    >
+                      Keep Discussing
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Negative Points Warning Modal */}
+      {showNegativePointsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold text-red-600 mb-3">Cannot Accept Deal</h3>
+              <p className="text-lg text-gray-700">You can't accept negative points.</p>
+            </div>
+            <button
+              onClick={() => setShowNegativePointsModal(false)}
+              className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Blank Proposal Warning Modal */}
+      {showBlankProposalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold text-red-600 mb-3">Cannot Submit Blank Proposal</h3>
+              <p className="text-lg text-gray-700">You must select at least one item.</p>
+            </div>
+            <button
+              onClick={() => setShowBlankProposalModal(false)}
+              className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Submit Blocked Modal (shown when parent sets submitBlockedMessage) */}
+      {showSubmitBlockedModal && submitBlockedMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">🚫</div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-3">Not Yet</h3>
+              <p className="text-lg text-gray-700">{submitBlockedMessage}</p>
+            </div>
+            <button
+              onClick={() => setShowSubmitBlockedModal(false)}
+              className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Validation Error Modal (shown by validateVote / validateFinalizeVote / validateProposal) */}
+      {validationError && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-3">Hold on!</h3>
+              <p className="text-lg text-gray-700">{validationError}</p>
+            </div>
+            <button
+              onClick={() => setValidationError(null)}
+              className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

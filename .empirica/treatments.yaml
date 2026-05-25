@@ -34,6 +34,9 @@ factors:
     - name: noGameEndingMessage
       values:
         - value: No game assigned endign message <b>goes</b> here
+    - name: batchFullEndingMessage
+      values:
+        - value: Batch full ending message <b>goes</b> here
     - name: roleDataURL
       values:
         - value: https://raw.githubusercontent.com/joshua-a-becker/zopa-vs-complexity/refs/heads/main/server/src/roles_v1.json
@@ -43,6 +46,7 @@ factors:
 treatments:
     - name: 5-party
       factors:
+        batchFullEndingMessage: Batch full ending message <b>goes</b> here
         negotiateTime: 600
         noAgreementEndingMessage: no agreement ending message <b>goes</b> here
         noGameEndingMessage: No game assigned endign message <b>goes</b> here
@@ -52,6 +56,7 @@ treatments:
         yesAgreementEndingMessage: yes agreement ending message <b>goes</b> here
     - name: 2-party
       factors:
+        batchFullEndingMessage: Batch full ending message <b>goes</b> here
         negotiateTime: 600
         noAgreementEndingMessage: no agreement ending message <b>goes</b> here
         noGameEndingMessage: No game assigned endign message <b>goes</b> here
@@ -61,6 +66,7 @@ treatments:
         yesAgreementEndingMessage: yes agreement ending message <b>goes</b> here
     - name: test
       factors:
+        batchFullEndingMessage: Batch full ending message <b>goes</b> here
         negotiateTime: 600
         noAgreementEndingMessage: no agreement ending message <b>goes</b> here
         noGameEndingMessage: No game assigned endign message <b>goes</b> here

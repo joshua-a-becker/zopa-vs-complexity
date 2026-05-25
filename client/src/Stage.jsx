@@ -6,6 +6,7 @@ import {
 } from "@empirica/core/player/classic/react";
 import { Loading } from "@empirica/core/player/react";
 import React, { useEffect } from "react";
+import { InteractiveDemo } from "./components/InteractiveDemo";
 import { ReadRole } from "./components/ReadRole";
 import { ReadyToNegotiate } from "./components/ReadyToNegotiate";
 import { VideoNegotiate } from "./components/VideoNegotiate";
@@ -49,6 +50,10 @@ export function Stage({ profileComponent }) {
   const stageName = stage.get("name");
 
   // Render component based on stage name
+  if (stageName === "Interactive Demo") {
+    return <InteractiveDemo profileComponent={profileComponent} />;
+  }
+
   if (stageName === "Read Negotiation Role") {
     return <ReadRole profileComponent={profileComponent} />;
   }

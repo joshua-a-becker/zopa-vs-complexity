@@ -1,4 +1,5 @@
 import { NoGameExitStep } from "./intro-exit/NoGameExitStep.jsx";
+import { GameTerminatedExitStep } from "./intro-exit/GameTerminatedExitStep.jsx";
 import Finished from "./intro-exit/Finished.jsx";
 import { EmpiricaClassic } from "@empirica/core/player/classic";
 import { EmpiricaContext } from "@empirica/core/player/classic/react";
@@ -16,6 +17,7 @@ import { Instructions } from './intro-exit/Instructions.jsx';
 import { AttentionCheck } from './intro-exit/AttentionCheck.jsx';
 import { NegotiationOutcome } from './intro-exit/NegotiationOutcome.jsx';
 import { ForceQuitExitStep } from './intro-exit/ForceQuitExitStep.jsx';
+import { BatchFullExitStep } from './intro-exit/BatchFullExitStep.jsx';
 import DailyIframe from "@daily-co/daily-js";
 
 // Create context for Daily.co call management (includes media stream)
@@ -153,14 +155,24 @@ export default function App() {
 
   function exitSteps({ game, player }) {
     const endedReason = player?.get("ended");
+    console.log("Ended reason: " + endedReason)
     // Check if player failed to be assigned to a game
-    if (["lobby timed out", "No games available", "no more games", "game failed"].includes(endedReason)) {
+    if (endedReason === "game terminated") {
+      return [GameTerminatedExitStep];
+    }
+
+    if (endedReason === "no more games") {
+      // Batch hit capacity — all slots filled
+      return [BatchFullExitStep];
+    }
+
+    if (["lobby timed out", "No games available", "game failed"].includes(endedReason)) {
       // Return different exit steps for players who didn't get into a game
       return [NoGameExitStep];
     }
 
     const exitSteps = []
-    console.log("Ended reason: " + endedReason)
+
 
     if (game?.get("forceQuit") === true) {
       exitSteps.push(ForceQuitExitStep);

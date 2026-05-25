@@ -197,7 +197,11 @@ Empirica.onGameStart(({ game }) => {
     name: "Negotiation Game",
   });
 
-  // add demo stage here
+  // add interactive demo here
+  // round.addStage({
+  //   name: "Interactive Demo",
+  //   duration: 1200, // 20 minutes
+  // });
 
   round.addStage({
     name: "Read Negotiation Role",
@@ -220,7 +224,7 @@ Empirica.onGameStart(({ game }) => {
 
 // Handle stage start for video stages
 Empirica.onStageStart(({ stage }) => {
-  
+
   console.log("stage starting")
 
   // this code block keeps track of whether players have left the game
@@ -232,8 +236,20 @@ Empirica.onStageStart(({ stage }) => {
     initialTimestamps[player.id] = Date.now();
   });
   game.set("participantTimestamps", initialTimestamps);
-  
+
+  // ── Interactive Demo stage: initialize shared demo state ──────────────────
+  if (stage.get("name") === "Interactive Demo") {
+    // Shuffle player order for focal sequence
+    const playerIds = game.players.map(p => p.id);
+    for (let i = playerIds.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [playerIds[i], playerIds[j]] = [playerIds[j], playerIds[i]];
+    }
+    stage.round.set("demo_focal_order", playerIds);
+    stage.round.set("demoProposalHistory", []); // separate key — never touches the real proposalHistory
+    console.log("Interactive Demo initialized, focal order:", playerIds);
+  }
 
   // Monitor Daily.co participant presence every 5 seconds
-  
+
 });
