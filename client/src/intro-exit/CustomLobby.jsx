@@ -9,12 +9,14 @@ export function CustomLobby() {
   const rolesUrl = game.get("treatment").roleDataURL;
 
   useEffect(() => {
-    if (rolesUrl) {
-      fetch(rolesUrl)
-        .then(res => res.json())
-        .then(data => setTips(data.tips || ""))
-        .catch(err => console.error("Failed to fetch tips:", err));
-    }
+    if (!rolesUrl) return;
+    const url = rolesUrl.startsWith("http")
+      ? rolesUrl
+      : `/@fs${rolesUrl}`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => setTips(data.tips || ""))
+      .catch(err => console.error("Failed to fetch tips:", err));
   }, [rolesUrl]);
 
   return (
