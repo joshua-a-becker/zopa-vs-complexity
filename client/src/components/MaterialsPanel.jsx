@@ -160,17 +160,21 @@ export function MaterialsPanel({
       return;
     }
 
+    const now = Date.now();
     const newProposal = {
-      id: `${Date.now()}-${player.id}`,
+      id: `${now}-${player.id}`,
       submittedBy: player.id,
       submittedByName: player.get("displayName") || player.id,
-      timestamp: Date.now(),
+      timestamp: now,
       options: { ...selectedOptions },
       initialVotes: {},
       finalVotes: {},
       modalDismissed: {}
     };
     round.set("proposalHistory", [...history, newProposal]);
+
+    const existing = player.get("heartbeat") || [];
+    player.set("heartbeat", [...existing, ["proposal", now, newProposal.id]]);
 
     // Switch to Proposal tab
     handleTabChange("proposal");

@@ -192,17 +192,13 @@ Empirica.onGameStart(({ game }) => {
     }
   });
 
-
-  // Initialize participant timestamps for presence tracking via Daily.co API
-  game.set("participantTimestamps", {});
-
   // initialize rounds and stages
-    // ROUND 1 -- Assign actual task based on flipOrder
   const round = game.addRound({
     name: "Negotiation Game",
   });
 
-    // ROUND 2 STAGE 1 -- TASK DESCRIPTION
+  // add demo stage here
+
   round.addStage({
     name: "Read Negotiation Role",
     duration: readRoleTime,

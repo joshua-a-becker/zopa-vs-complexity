@@ -23,6 +23,17 @@ export function Stage({ profileComponent }) {
     }
   }, [game.get("forceQuit"), player]);
 
+  // Heartbeat: append a timestamp every 60 seconds
+  useEffect(() => {
+    const tick = () => {
+      const existing = player.get("heartbeat") || [];
+      player.set("heartbeat", [...existing, Date.now()]);
+    };
+    tick(); // record immediately on mount
+    const interval = setInterval(tick, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   if (player.stage.get("submit")) {
     if (players.length === 1) {
       return <Loading />;
