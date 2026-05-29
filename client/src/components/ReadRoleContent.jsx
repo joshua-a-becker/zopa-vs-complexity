@@ -76,8 +76,7 @@ export function ReadRoleContent({ profileComponent }) {
             You have been assigned a specific role with unique objectives and priorities.
           </p><br/>
           <p>
-            Review your narrative below to understand your interests, goals, and points. During negotiation, work with other participants to find
-            mutually beneficial solutions.
+            Review your narrative below to understand your interests, goals, and points. During the negotiation, work together with the other participants to find a deal that everyone will accept.
           </p><br/>
           <ul className="list-disc list-outside pl-5 space-y-2 mt-2">
             <li><strong>What determines how much I earn?</strong> Points earned from any agreement become your bonus on Prolific (1 point = £1.00). No agreement means no bonus.</li>
