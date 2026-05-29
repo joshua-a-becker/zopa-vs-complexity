@@ -117,7 +117,7 @@ export function ReadRoleContent({ profileComponent }) {
 
           {/* 3. Scoring Section */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-2xl font-bold text-blue-900 mb-4">Scoring (1 point = $1.00) </h3>
+            <h3 className="text-2xl font-bold text-blue-900 mb-4">Scoring (1 point = £1.00) </h3>
 
             {/* Table Header */}
             <div className="flex items-center px-4 py-2 mb-1">

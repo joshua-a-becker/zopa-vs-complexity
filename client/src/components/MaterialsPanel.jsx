@@ -406,7 +406,7 @@ export function MaterialsPanel({
                 {/* Right side: Total Points (1/3 width) */}
                 <div className="flex-[4] flex flex-col items-center justify-start">
                   <div className="text-center bg-white rounded-lg p-6 shadow-md w-full">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Points (1 point = $1.00)</h3>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Points (1 point = £1.00)</h3>
                     <div className="text-5xl font-bold mb-4">
                       <span className="text-blue-600">
                         {calculateTotalPoints().toFixed(2)}
