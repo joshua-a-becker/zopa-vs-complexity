@@ -76,16 +76,16 @@ export function ReadRoleContent({ profileComponent }) {
             You have been assigned a specific role with unique objectives and priorities.
           </p><br/>
           <p>
-            Review your narrative carefully to understand your interests and goals. Then examine the scoresheet to see how
-            different outcomes affect your final score. During negotiation, work with other participants to find
+            Review your narrative below to understand your interests, goals, and points. During negotiation, work with other participants to find
             mutually beneficial solutions.
           </p><br/>
-          <p>
-            Your goal is to reach an agreement that maximizes your score based on your role's scoresheet, which is shown below.
-          </p><br/>
-          {/* <p>
-            Your bonus will be equal to the points you get!  1 point = $1 dollar.
-          </p> */}
+          <ul className="list-disc list-outside pl-5 space-y-2 mt-2">
+            <li><strong>What determines how much I earn?</strong> Points earned from any agreement become your bonus on Prolific (1 point = £1.00). No agreement means no bonus.</li>
+            <li><strong>How can we reach an agreement?</strong> All three people must accept the same final proposal, which must be submitted officially in the system. A verbal agreement is not enough! You may need to submit and vote on multiple proposals to reach agreement.</li>
+            <li><strong>What happens if we don't reach an agreement?</strong> If your group does not reach an agreement, everyone will keep working from home. This outcome is worth 0 points. (No bonus.)</li>
+            <li><strong>What if my group is incomplete?</strong> If someone quits or stops responding, you may end the game early by clicking the 'quit' button.</li>
+            <li><strong>How should I prepare?</strong> Get into character! Think about how you would introduce yourself, what you want, and how you might advocate for your best outcome.</li>
+          </ul>
         </div>
 
           {/* 1. Narrative Section */}
@@ -99,7 +99,7 @@ export function ReadRoleContent({ profileComponent }) {
           </div>
 
           {/* 2. What if I don't reach agreement? (BATNA) */}
-          {(roleBATNA || roleRP !== undefined) && (
+          {/*(roleBATNA || roleRP !== undefined) && (
             <div className="bg-white rounded-lg shadow-sm p-4">
               <h4 className="text-base font-bold text-gray-900 mb-2">
                 What if I don't reach agreement?
@@ -113,7 +113,7 @@ export function ReadRoleContent({ profileComponent }) {
                 </p>
               )}
             </div>
-          )}
+          )*/}
 
           {/* 3. Scoring Section */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -168,9 +168,10 @@ export function ReadRoleContent({ profileComponent }) {
                       }`}>
                         {includeOption.score >= 0 ? '+' : ''}{includeOption.score} pts
                       </span>
-                      <span className="text-sm text-gray-600 flex-1 ml-4">
-                        {includeOption.reason}
-                      </span>
+                      <span
+                        className="text-sm text-gray-600 flex-1 ml-4"
+                        dangerouslySetInnerHTML={{ __html: includeOption.reason }}
+                      />
                     </div>
                   );
                 })}
@@ -189,7 +190,7 @@ export function ReadRoleContent({ profileComponent }) {
                     <div className={`text-sm font-semibold ${
                       calculateTotalPoints() >= roleRP ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {calculateTotalPoints() >= roleRP ? '✓ Beats your BATNA!' : '✗ Below your BATNA'}
+                      {calculateTotalPoints() >= roleRP ? '✓ Beats your alternative!' : '✗ Worse than your alternative.'}
                     </div>
                   )}
                 </div>

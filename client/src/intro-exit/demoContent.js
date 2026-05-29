@@ -12,7 +12,7 @@ You're excited about this living situation, but you have specific preferences fo
 
 ## How This Works
 
-Below is your personal scoresheet showing how much each house rule matters to you. Higher scores mean that option is more important to you. Your goal is to negotiate an agreement that gives you the highest total score possible.
+You are provided personal scoresheet showing how much each house rule matters to you. Higher scores mean that option is more important to you. Your goal is to negotiate an agreement that gives you the highest total score possible.
 
 Each reason begins with a broader issue category, such as Personal Life at Home, Shared Kitchen Use, Household Chores and Comfort, or Quiet and Common Space. These categories are there to help you understand the broader interest behind each preference.
 
@@ -40,7 +40,7 @@ export const demoScoresheet = {
     {
       option: "Yes",
       score: 12,
-      reason: "PERSONAL LIFE AT HOME: You have a cat you're bringing, so the apartment needs to work for your everyday life."
+      reason: "<b>PERSONAL LIFE AT HOME:</b> You have a cat you're bringing, so the apartment needs to work for your everyday life."
     },
     {
       option: "No",
@@ -53,7 +53,7 @@ export const demoScoresheet = {
     {
       option: "Yes",
       score: 10,
-      reason: "PERSONAL LIFE AT HOME: Your partner visits often on weekends, so overnight guests matter to you."
+      reason: "<b>PERSONAL LIFE AT HOME:</b> Your partner visits often on weekends, so overnight guests matter to you."
     },
     {
       option: "No",
@@ -66,7 +66,7 @@ export const demoScoresheet = {
     {
       option: "Yes",
       score: 8,
-      reason: "SHARED KITCHEN USE: More kitchen storage makes it easier to cook and use the kitchen together."
+      reason: "<b>SHARED KITCHEN USE:</b> More kitchen storage makes it easier to cook and use the kitchen together."
     },
     {
       option: "No",
@@ -79,7 +79,7 @@ export const demoScoresheet = {
     {
       option: "Yes",
       score: -9,
-      reason: "SHARED KITCHEN USE: You prefer to buy your own food and keep groceries separate."
+      reason: "<b>SHARED KITCHEN USE:</b> You prefer to buy your own food and keep groceries separate."
     },
     {
       option: "No",
@@ -92,7 +92,7 @@ export const demoScoresheet = {
     {
       option: "Yes",
       score: 0,
-      reason: "HOUSEHOLD CHORES AND COMFORT: You are flexible on this."
+      reason: "<b>HOUSEHOLD CHORES AND COMFORT:</b> You are flexible on this."
     },
     {
       option: "No",
@@ -105,7 +105,7 @@ export const demoScoresheet = {
     {
       option: "Yes",
       score: -7,
-      reason: "HOUSEHOLD CHORES AND COMFORT: You prefer warmer temperatures and don't want the apartment kept too cold in winter."
+      reason: "<b>HOUSEHOLD CHORES AND COMFORT:</b> You prefer warmer temperatures and don't want the apartment kept too cold in winter."
     },
     {
       option: "No",
@@ -118,7 +118,7 @@ export const demoScoresheet = {
     {
       option: "Yes",
       score: -5,
-      reason: "QUIET AND COMMON SPACE: You prefer quiet evenings and don't want late nights to disrupt the apartment."
+      reason: "<b>QUIET AND COMMON SPACE:</b> You prefer quiet evenings and don't want late nights to disrupt the apartment."
     },
     {
       option: "No",
@@ -131,7 +131,7 @@ export const demoScoresheet = {
     {
       option: "Yes",
       score: -11,
-      reason: "QUIET AND COMMON SPACE: You have strong preferences against this living room setup."
+      reason: "<b>QUIET AND COMMON SPACE</b>: You have strong preferences against this living room setup."
     },
     {
       option: "No",

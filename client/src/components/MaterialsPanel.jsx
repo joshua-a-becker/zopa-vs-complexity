@@ -298,7 +298,7 @@ export function MaterialsPanel({
               : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
           }`}
         >
-          Tips
+          Instructions
         </button>
         <button
           onClick={() => setShowQuitModal(true)}
@@ -394,9 +394,10 @@ export function MaterialsPanel({
                         }`}>
                           {includeOption.score >= 0 ? '+' : ''}{includeOption.score} pts
                         </span>
-                        <span className="text-sm text-gray-600 flex-1 ml-4">
-                          {includeOption.reason}
-                        </span>
+                        <span
+                          className="text-sm text-gray-600 flex-1 ml-4"
+                          dangerouslySetInnerHTML={{ __html: includeOption.reason }}
+                        />
                       </div>
                     );
                   })}
@@ -415,7 +416,7 @@ export function MaterialsPanel({
                       <div className={`text-sm font-semibold ${
                         calculateTotalPoints() >= roleRP ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {calculateTotalPoints() >= roleRP ? '✓ Beats your BATNA!' : '✗ Below your BATNA'}
+                        {calculateTotalPoints() >= roleRP ? '✓ Beats your alternative!' : '✗ Worse than your alternative.'}
                       </div>
                     )}
                   </div>
@@ -483,7 +484,7 @@ export function MaterialsPanel({
                           <p className={`text-sm font-semibold mt-1 ${
                             proposalPoints >= roleRP ? 'text-green-600' : 'text-red-600'
                           }`}>
-                            {proposalPoints >= roleRP ? '✓ Beats your BATNA' : '✗ Below your BATNA'}
+                            {proposalPoints >= roleRP ? '✓ Beats your alternative!' : '✗ Worse than your alternative.'}
                           </p>
                         )}
                       </div>
@@ -642,10 +643,22 @@ export function MaterialsPanel({
         {activeTab === "tips" && (
           <div className="space-y-4">
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Tips on Negotiation
-              </h3>
-              <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: tips }} />
+              {/* Instructions at top */}
+
+              <ul className="list-disc list-outside pl-5 space-y-2 mt-2">
+                <li><strong>What determines how much I earn?</strong> Points earned from any agreement become your bonus on Prolific (1 point = £1.00). No agreement means no bonus.</li>
+                <li><strong>How can we reach an agreement?</strong> All three people must accept the same final proposal, which must be submitted officially in the system. A verbal agreement is not enough! You may need to submit and vote on multiple proposals to reach agreement.</li>
+                <li><strong>What happens if we don't reach an agreement?</strong> If your group does not reach an agreement, everyone will keep working from home. This outcome is worth 0 points. (No bonus.)</li>
+                <li><strong>What if my group is incomplete?</strong> If someone quits or stops responding, you may end the game early by clicking the 'quit' button.</li>
+                <li><strong>How should I prepare?</strong> Get into character! Think about how you would introduce yourself, what you want, and how you might advocate for your best outcome.</li>
+              </ul>
+              <br/><br/>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  Tips on Negotiation
+                </h3>
+                <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: tips }} />
+              </div>
             </div>
           </div>
         )}

@@ -375,9 +375,10 @@ export function DemoMaterialsPanel({
                         }`}>
                           {includeOption.score >= 0 ? '+' : ''}{includeOption.score} pts
                         </span>
-                        <span className="text-sm text-gray-600 flex-1 ml-4">
-                          {includeOption.reason}
-                        </span>
+                        <span
+                          className="text-sm text-gray-600 flex-1 ml-4"
+                          dangerouslySetInnerHTML={{ __html: includeOption.reason }}
+                        />
                       </div>
                     );
                   })}
@@ -396,7 +397,7 @@ export function DemoMaterialsPanel({
                       <div className={`text-sm font-semibold ${
                         calculateTotalPoints() >= roleRP ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {calculateTotalPoints() >= roleRP ? '✓ Beats your BATNA!' : '✗ Below your BATNA'}
+                        {calculateTotalPoints() >= roleRP ? '✓ Beats your alternative!' : '✗ Worse than your alternative.'}
                       </div>
                     )}
                   </div>
@@ -471,7 +472,7 @@ export function DemoMaterialsPanel({
                           <p className={`text-sm font-semibold mt-1 ${
                             proposalPoints >= roleRP ? 'text-green-600' : 'text-red-600'
                           }`}>
-                            {proposalPoints >= roleRP ? '✓ Beats your BATNA' : '✗ Below your BATNA'}
+                            {proposalPoints >= roleRP ? '✓ Beats your alternative!' : '✗ Worse than your alternative.'}
                           </p>
                         )}
                       </div>

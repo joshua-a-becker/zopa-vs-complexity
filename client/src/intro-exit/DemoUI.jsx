@@ -228,12 +228,12 @@ export function DemoUI({
                   <h4 className="text-base font-bold text-gray-900 mb-2">
                     What if I don't reach agreement?
                   </h4>
-                  {roleBATNA && (
-                    <p className="text-sm text-gray-700 mb-1">{roleBATNA}</p>
-                  )}
+                  {/*roleBATNA && (
+                    <p className="text-sm text-gray-700 mb-1">If you don't reach agreement, you will earn 0 points (no bonus).</p>
+                  )*/}
                   {roleRP !== undefined && (
                     <p className="text-sm text-gray-700">
-                      If you don't reach agreement, you will earn <span className="font-bold">{roleRP} points</span>.
+                      If you don't reach agreement, you will earn <span className="font-bold">0 points</span> (no bonus).
                     </p>
                   )}
                 </div>
@@ -281,9 +281,10 @@ export function DemoUI({
                             }`}>
                               {includeOption.score >= 0 ? '+' : ''}{includeOption.score} pts
                             </span>
-                            <span className="text-sm text-gray-600 flex-1 ml-4">
-                              {includeOption.reason}
-                            </span>
+                            <span
+                              className="text-sm text-gray-600 flex-1 ml-4"
+                              dangerouslySetInnerHTML={{ __html: includeOption.reason }}
+                            />
                           </div>
                         );
                       })}
@@ -300,7 +301,7 @@ export function DemoUI({
                         <div className={`text-sm font-semibold ${
                           calculateTotalPoints() >= roleRP ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {calculateTotalPoints() >= roleRP ? '✓ Beats your BATNA!' : '✗ Below your BATNA'}
+                          {calculateTotalPoints() >= roleRP ? '✓ Beats your alternative!' : '✗ Worse than your alternative.'}
                         </div>
                       )}
                     </div>
@@ -373,8 +374,8 @@ export function DemoUI({
                             : 'text-red-600'
                         }`}>
                           {calculateProposalPoints(displayData.currentProposal.options) >= roleRP
-                            ? '✓ Beats your BATNA'
-                            : '✗ Below your BATNA'}
+                            ? '✓ Beats your alternative'
+                            : '✗ Worse than your alternative'}
                         </p>
                       )}
                     </div>
