@@ -125,7 +125,12 @@ export default function App() {
   }, [callState]);
 
   function introSteps({ game, player }) {
-    
+
+    // console.log("game")
+    // console.log(game)
+    player.set("batchFullEndingMessage", game?.get("treatment")?.batchFullEndingMessage);
+    // console.log(player.get("batchFullEndingMessage"))
+
     // convenience function
     const skipIntro = urlParams.get("skipIntro");
     

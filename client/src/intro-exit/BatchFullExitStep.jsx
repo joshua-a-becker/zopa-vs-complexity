@@ -1,11 +1,12 @@
 import React from "react";
-import { useGame } from "@empirica/core/player/classic/react";
+import { usePlayer } from "@empirica/core/player/classic/react";
 
 export function BatchFullExitStep({ next }) {
-  const game = useGame();
+  const player = usePlayer();
   const batchFullEndingMessage =
-    game?.get("treatment")?.batchFullEndingMessage || "";
+    player?.get("batchFullEndingMessage") || "";
 
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full p-8 md:p-12">
