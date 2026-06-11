@@ -40,7 +40,7 @@ export function CustomLobby() {
               Please wait up to 5 minutes for other participants.
             </p><br/>
             <p>
-              If we can't assign you to a group within 5 minutes, we'll pay you $1.00 for your time.
+              If we can't assign you to a group within 5 minutes, we'll pay you £1.00 for your time.
             </p>
           </div>
         </div>

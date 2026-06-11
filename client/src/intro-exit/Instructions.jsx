@@ -11,10 +11,10 @@ export function Instructions({ next }) {
   const otherPlayers = playerCount - 1;
 
   const section1 = [
-    <>In this activity, you must reach agreement with <span className="font-bold">{otherPlayers} other player{otherPlayers !== 1 ? "s" : ""}</span> on a set of options for a hypothetical shared vacation.</>,
+    <>In this activity, you must reach agreement with <span className="font-bold">{otherPlayers} other player{otherPlayers !== 1 ? "s" : ""}</span> on a set of options for a hypothetical shared office space.</>,
     <>You will be assigned a scoresheet that gives points for different options, with some options giving <span className="font-bold text-red-600">negative points</span>.</>,
     <>You will seek to reach agreement on a proposal whose total score across different options yields <span className="font-bold text-green-600">positive points</span>.</>,
-    <>After the activity, you will receive a <span className="font-bold">bonus payment</span> equal to the number of points you earn.</>,
+    <>After the activity, you will receive a <span className="font-bold">bonus payment</span> equal to the number of points you earn (1 point = £1.00).</>,
   ];
 
   const section2 = [

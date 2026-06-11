@@ -126,8 +126,10 @@ export default function App() {
 
   function introSteps({ game, player }) {
 
+    // console.log("game")
+    console.log("batchFullEndingMessage")
+    // console.log(game)
     player.set("batchFullEndingMessage", game?.get("treatment")?.batchFullEndingMessage);
-
 
     // convenience function
     const skipIntro = urlParams.get("skipIntro");
@@ -193,7 +195,7 @@ export default function App() {
   // hasJoinedCall is never reset to false - the call persists across VideoChat mount/unmount
   // This ensures the call stays connected as users navigate between stages
   useEffect(() => {
-    console.log("UPDATED")
+    console.log("UPDATED-2026-05-29")
     // Wait for all required data before joining
     if (!mediaStream || !callJoinData || hasJoinedCall) {
       return;

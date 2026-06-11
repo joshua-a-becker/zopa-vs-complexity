@@ -38,11 +38,11 @@ export function Introduction({ next }) {
           </p>
           <br/>
             <p className="text-base leading-relaxed">
-              You will have <span className="font-semibold">{secToMinSec(game.get("treatment").negotiateTime)}</span> to try to reach a satisfactory agreement. Your goal is to get as many points as possible.  
+              You will then have time to try to reach a satisfactory agreement.  Your goal is to get as many points as possible.  Points determine your bonus (1 point = £1.00).
             </p>
-            {/* <br/><p className="text-base leading-relaxed">
-              Points determine your bonus on Prolific. 1 point = $1 dollar.
-            </p> */}
+            {/*<br/><p className="text-base leading-relaxed">
+               If the game takes too long, we will cut you off (with a 5 min warning) to stay within Prolific hourly pay rates.
+            </p>*/}
           </div>
 
           <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-lg">

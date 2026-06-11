@@ -23,9 +23,10 @@ export function TimeCommitment({ next }) {
         <div className="space-y-6 text-gray-700">
           <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-lg">
             <p className="text-base leading-relaxed">
-              This task will require approximately <span className="font-semibold">{totalMin} minutes</span> of your time. 
-              <br/><br/>In this activity, you will complete a collaborative decision-making process with <span className="font-semibold">{playerCount - 1} other {playerCount - 1 === 1 ? "participant" : "participants"}</span> <span style={{ color: "red", fontWeight: "bold" }}>on a video call</span>.
-              <br/><br/>If you leave early, they will be unable to continue.
+              
+              In this activity, you will complete a collaborative decision-making process with <span className="font-semibold">{playerCount - 1} other {playerCount - 1 === 1 ? "participant" : "participants"}</span> <span style={{ color: "red", fontWeight: "bold" }}>on a video call</span>.
+              <br/><br/>You can end the task at any time with no penalty.  If you leave before reaching agreement, the other participants will be unable to continue and nobody will get a bonus.
+              <br/><br/>We expect this task will take approximately 30 minutes.
             </p>
           </div>
 

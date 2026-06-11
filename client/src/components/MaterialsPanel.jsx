@@ -824,7 +824,7 @@ export function MaterialsPanel({
                 Are you sure you want to quit?
               </h3>
               <p className="text-lg text-gray-700">
-                This will end the game for everybody. The only reason to quit is if one or more players have stopped responding, such that you cannot continue.
+                This will end the game for everybody, forefitting the change to get a bonus.  You should talk this through with other players before quitting.
               </p>
             </div>
             <div className="flex flex-col gap-3">
