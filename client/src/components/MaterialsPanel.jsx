@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import Markdown from "react-markdown";
 import { usePlayer, useStage, useRound, useGame } from "@empirica/core/player/classic/react";
 
+const QUIT_COUNTDOWN_SECONDS = 15;
+// Extra time non-initiators wait past zero before force-ending the game themselves,
+// covering clock skew between clients and an initiator who disconnected mid-countdown.
+const QUIT_GRACE_SECONDS = 5;
+
 export function MaterialsPanel({
   roleName,
   roleNarrative,
@@ -22,8 +27,7 @@ export function MaterialsPanel({
   const [showBlankProposalModal, setShowBlankProposalModal] = useState(false);
   const [showQuitModal, setShowQuitModal] = useState(false);
   const [showQuitConfirmModal, setShowQuitConfirmModal] = useState(false);
-  const [showQuitCountdownModal, setShowQuitCountdownModal] = useState(false);
-  const [quitCountdown, setQuitCountdown] = useState(15);
+  const [quitSecondsLeft, setQuitSecondsLeft] = useState(QUIT_COUNTDOWN_SECONDS);
 
   // Check if welcome modal has been shown before (stored in player state)
   const hasSeenWelcomeModal = player.get("hasSeenWelcomeModal") || false;
@@ -106,21 +110,37 @@ export function MaterialsPanel({
     }
   }, [currentProposal?.finalVotes, playerCount, player]);
 
-  // Quit countdown timer
+  // Quit countdown: driven by shared game state so every participant sees it.
+  // Each client counts down locally from quitRequest.startedAt — no per-second server writes.
+  const quitRequest = game.get("quitRequest");
   useEffect(() => {
-    if (!showQuitCountdownModal) {
-      setQuitCountdown(15);
+    if (!quitRequest) {
+      setQuitSecondsLeft(QUIT_COUNTDOWN_SECONDS);
       return;
     }
-    if (quitCountdown <= 0) {
-      game.set("forceQuitBy", player.id);
-      game.set("forceQuit", true);
-      setShowQuitCountdownModal(false);
-      return;
-    }
-    const timer = setTimeout(() => setQuitCountdown(prev => prev - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [showQuitCountdownModal, quitCountdown]);
+
+    const tick = () => {
+      const elapsed = (Date.now() - quitRequest.startedAt) / 1000;
+      const remaining = Math.max(0, QUIT_COUNTDOWN_SECONDS - Math.floor(elapsed));
+      setQuitSecondsLeft(remaining);
+
+      if (game.get("forceQuit")) return;
+
+      const isInitiator = quitRequest.by === player.id;
+      const deadline = isInitiator
+        ? QUIT_COUNTDOWN_SECONDS
+        : QUIT_COUNTDOWN_SECONDS + QUIT_GRACE_SECONDS;
+
+      if (elapsed >= deadline) {
+        game.set("forceQuitBy", quitRequest.by);
+        game.set("forceQuit", true);
+      }
+    };
+
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [quitRequest?.startedAt, quitRequest?.by, player.id]);
 
   // Flash the Proposal tab when there's a pending proposal
   useEffect(() => {
@@ -871,7 +891,13 @@ export function MaterialsPanel({
               <button
                 onClick={() => {
                   setShowQuitConfirmModal(false);
-                  setShowQuitCountdownModal(true);
+                  const now = Date.now();
+                  const byName = player.get("displayName") || player.id;
+                  const quitLog = game.get("quitLog") || [];
+                  game.set("quitLog", [...quitLog, { event: "initiated", by: player.id, byName, timestamp: now }]);
+                  const existing = player.get("heartbeat") || [];
+                  player.set("heartbeat", [...existing, ["quitInitiated", now]]);
+                  game.set("quitRequest", { by: player.id, byName, startedAt: now });
                 }}
                 className="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold"
               >
@@ -882,22 +908,42 @@ export function MaterialsPanel({
         </div>
       )}
 
-      {/* Quit Countdown Modal - Step 3 */}
-      {showQuitCountdownModal && (
+      {/* Quit Countdown Modal - Step 3 (shared: shown to all participants) */}
+      {quitRequest && !game.get("forceQuit") && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4">
             <div className="text-center mb-6">
               <div className="text-6xl mb-4">⏳</div>
-              <h3 className="text-2xl font-bold text-red-600 mb-3">
-                The game will end in {quitCountdown} second{quitCountdown !== 1 ? 's' : ''}
-              </h3>
+              {quitRequest.by === player.id ? (
+                <h3 className="text-2xl font-bold text-red-600 mb-3">
+                  The game will end in {quitSecondsLeft} second{quitSecondsLeft !== 1 ? 's' : ''}
+                </h3>
+              ) : (
+                <>
+                  <h3 className="text-2xl font-bold text-red-600 mb-3">
+                    {quitRequest.byName} has clicked the quit button
+                  </h3>
+                  <p className="text-lg text-gray-700">
+                    The game will end in {quitSecondsLeft} second{quitSecondsLeft !== 1 ? 's' : ''} unless {quitRequest.byName} cancels.
+                  </p>
+                </>
+              )}
             </div>
-            <button
-              onClick={() => setShowQuitCountdownModal(false)}
-              className="w-full px-6 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold text-lg"
-            >
-              Cancel — Continue Game
-            </button>
+            {quitRequest.by === player.id && (
+              <button
+                onClick={() => {
+                  const now = Date.now();
+                  const quitLog = game.get("quitLog") || [];
+                  game.set("quitLog", [...quitLog, { event: "canceled", by: player.id, byName: quitRequest.byName, timestamp: now }]);
+                  const existing = player.get("heartbeat") || [];
+                  player.set("heartbeat", [...existing, ["quitCanceled", now]]);
+                  game.set("quitRequest", null);
+                }}
+                className="w-full px-6 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold text-lg"
+              >
+                Cancel — Continue Game
+              </button>
+            )}
           </div>
         </div>
       )}
