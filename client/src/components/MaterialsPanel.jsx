@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import Markdown from "react-markdown";
+import React, { useState, useEffect, useRef } from "react";
+import { RoleNotesCard } from "./RoleNotesCard";
+import { CheckboxCalculator, ProposalItems, pointsOf as scoresheetPoints, voteColor as voteColorFor } from "./CheckboxCalculator";
 import { usePlayer, useStage, useRound, useGame } from "@empirica/core/player/classic/react";
 
 const QUIT_COUNTDOWN_SECONDS = 15;
@@ -20,7 +21,6 @@ export function MaterialsPanel({
   const game = useGame();
   const { playerCount } = game.get("treatment");
   const tips = game.get("tips") || "";
-  const [activeTab, setActiveTab] = useState("calculator");
   const [selectedOptions, setSelectedOptions] = useState({});
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
   const [showNegativePointsModal, setShowNegativePointsModal] = useState(false);
@@ -32,7 +32,8 @@ export function MaterialsPanel({
   // Check if welcome modal has been shown before (stored in player state)
   const hasSeenWelcomeModal = player.get("hasSeenWelcomeModal") || false;
   const [showWelcomeModal, setShowWelcomeModal] = useState(!hasSeenWelcomeModal);
-  const [flashProposalTab, setFlashProposalTab] = useState(false);
+  const proposalsColumnRef = useRef(null);
+  const [wiggleStoppedId, setWiggleStoppedId] = useState(null); // proposal id whose wiggle the user interrupted
 
   // Get proposal history from round state (single source of truth)
   const history = round.get("proposalHistory") || [];
@@ -142,33 +143,6 @@ export function MaterialsPanel({
     return () => clearInterval(timer);
   }, [quitRequest?.startedAt, quitRequest?.by, player.id]);
 
-  // Flash the Proposal tab when there's a pending proposal
-  useEffect(() => {
-    if (pendingProposal && activeTab !== "proposal") {
-      const interval = setInterval(() => {
-        setFlashProposalTab(prev => !prev);
-      }, 1000); // Flash every second
-
-      return () => clearInterval(interval);
-    } else {
-      setFlashProposalTab(false);
-    }
-  }, [pendingProposal, activeTab]);
-
-  // Handle tab change
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    // Scroll to top of page
-    window.scrollTo(0, 0);
-  };
-
-  // Calculate current total points
-  const calculateTotalPoints = () => {
-    return Object.entries(roleScoresheet).reduce((sum, [category]) => {
-      const optionIdx = selectedOptions[category] ?? 1; // Default to exclude (index 1)
-      return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
-    }, 0);
-  };
 
   // Handle proposal submission
   const handleSubmitProposal = () => {
@@ -180,6 +154,13 @@ export function MaterialsPanel({
       return;
     }
 
+    // Submitting counts as your Accept vote, so the same rule applies: you
+    // can't put forward a deal worth negative points to you.
+    if (pointsOf(selectedOptions) < 0) {
+      setShowNegativePointsModal("submit");
+      return;
+    }
+
     const now = Date.now();
     const newProposal = {
       id: `${now}-${player.id}`,
@@ -187,7 +168,9 @@ export function MaterialsPanel({
       submittedByName: player.get("displayName") || player.id,
       timestamp: now,
       options: { ...selectedOptions },
-      initialVotes: {},
+      // Submitting counts as the proposer's Accept vote: people never vote on
+      // their own proposal (as in creative-negotiation / workshop-app).
+      initialVotes: { [player.id]: "accept" },
       finalVotes: {},
       modalDismissed: {}
     };
@@ -195,9 +178,6 @@ export function MaterialsPanel({
 
     const existing = player.get("heartbeat") || [];
     player.set("heartbeat", [...existing, ["proposal", now, newProposal.id]]);
-
-    // Switch to Proposal tab
-    handleTabChange("proposal");
   };
 
   // Handle vote on proposal (initial votes)
@@ -234,8 +214,8 @@ export function MaterialsPanel({
     // Set the calculator checkboxes to match the proposal
     setSelectedOptions(proposalOptions);
 
-    // Switch to calculator tab
-    handleTabChange("calculator");
+    // The calculator sits near the top of the proposals column.
+    proposalsColumnRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   // Handle finalize decision (finalize or continue)
@@ -268,82 +248,54 @@ export function MaterialsPanel({
     setShowFinalizeModal(false);
   };
 
+  // Instructions content (no counterpart in creative-negotiation; kept as a tab
+  // in the left card).
+  const instructions = (
+    <div>
+      <ul className="list-disc list-outside pl-5 space-y-2 mt-2 text-gray-700">
+        <li><strong>What determines how much I earn?</strong> Points earned from any agreement become your bonus on Prolific (1 point = £1.00). No agreement means no bonus.</li>
+        <li><strong>How can we reach an agreement?</strong> All three people must accept the same final proposal, which must be submitted officially in the system. A verbal agreement is not enough! You may need to submit and vote on multiple proposals to reach agreement.</li>
+        <li><strong>What happens if we don't reach an agreement?</strong> If your group does not reach an agreement, everyone will keep working from home. This outcome is worth 0 points. (No bonus.)</li>
+        <li><strong>What if my group is incomplete?</strong> If someone quits or stops responding, you may end the game early by clicking the 'quit' button.</li>
+        <li><strong>How should I prepare?</strong> Get into character! Think about how you would introduce yourself, what you want, and how you might advocate for your best outcome.</li>
+      </ul>
+      {tips && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            Tips on Negotiation
+          </h3>
+          <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: tips }} />
+        </div>
+      )}
+    </div>
+  );
+
+  // Points of a proposal to this player.
+  const pointsOf = (options) => scoresheetPoints(roleScoresheet, options);
+  const renderProposalItems = (proposal, small = false) => (
+    <ProposalItems roleScoresheet={roleScoresheet} proposal={proposal} small={small} />
+  );
+
+  const isOwnPending = pendingProposal?.submittedBy === player.id;
+
   return (
-    <div className="w-full bg-gray-300 p-6 flex flex-col relative min-h-screen">
+    <div className="w-full min-h-screen bg-gray-300 p-6 pb-16 relative">
       {/* Bottom fade overlay */}
-      <div className="fixed left-0 bottom-0 w-[70%] h-12 bg-gradient-to-t from-gray-300 to-transparent pointer-events-none z-10"></div>
+      <div className="fixed left-0 bottom-0 w-[85%] h-12 bg-gradient-to-t from-gray-300 to-transparent pointer-events-none z-10"></div>
 
-      {/* Tab Navigation - cleaner style with all-around borders */}
-      <div className="flex gap-2 mb-2">
-        <button
-          onClick={() => handleTabChange("narrative")}
-          className={`px-4 py-2 rounded font-medium transition-all border ${
-            activeTab === "narrative"
-              ? "bg-white text-blue-600 border-blue-400 shadow"
-              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
-          }`}
-        >
-          Narrative
-        </button>
-        <button
-          onClick={() => handleTabChange("calculator")}
-          className={`px-4 py-2 rounded font-medium transition-all border ${
-            activeTab === "calculator"
-              ? "bg-white text-blue-600 border-blue-400 shadow"
-              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
-          }`}
-        >
-          Scoring
-        </button>
-        <button
-          onClick={() => handleTabChange("proposal")}
-          className={`px-4 py-2 rounded font-medium transition-all border ${
-            activeTab === "proposal"
-              ? "bg-white text-blue-600 border-blue-400 shadow"
-              : pendingProposal && flashProposalTab
-              ? "bg-red-100 text-red-700 border-red-400 shadow-md"
-              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
-          }`}
-        >
-          Proposal
-          {pendingProposal && (
-            <span className="ml-2 inline-flex items-center justify-center w-2 h-2 bg-red-500 rounded-full"></span>
-          )}
-        </button>
-        <button
-          onClick={() => handleTabChange("tips")}
-          className={`px-4 py-2 rounded font-medium transition-all border ${
-            activeTab === "tips"
-              ? "bg-white text-blue-600 border-blue-400 shadow"
-              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
-          }`}
-        >
-          Instructions
-        </button>
-        <button
-          onClick={() => setShowQuitModal(true)}
-          className="px-4 py-2 rounded font-medium transition-all border bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200 hover:border-gray-400"
-        >
-          Quit
-        </button>
-      </div>
+      {/* Two columns: role/notes/instructions on the left, proposals on the
+          right. No inner scroll boxes: the whole page scrolls as one. */}
+      <div className="flex gap-4 items-start">
+        <div className="w-1/2 min-w-0">
+          <RoleNotesCard
+            roleNarrative={roleNarrative}
+            instructions={instructions}
+            onQuit={() => setShowQuitModal(true)}
+          />
+        </div>
 
-      {/* Tab Content */}
-      <div className="flex-1">
-        {activeTab === "narrative" && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Your Role
-              </h3>
-              <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed">
-                <Markdown>{roleNarrative}</Markdown>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "calculator" && (
+        {/* Proposals column */}
+        <div ref={proposalsColumnRef} className="w-1/2 min-w-0 scroll-mt-6">
           <div className="space-y-4">
             {/* BATNA Card */}
             {(roleBATNA || roleRP !== undefined) && (
@@ -362,184 +314,83 @@ export function MaterialsPanel({
               </div>
             )}
 
-            {/* Main Scoring Area */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            {/* Calculator: feature checkboxes, with the live total + buttons beside them */}
+            <CheckboxCalculator
+              roleScoresheet={roleScoresheet}
+              selectedOptions={selectedOptions}
+              onChange={setSelectedOptions}
+              roleRP={roleRP}
+              footer={
+                <>
+                  <button
+                    onClick={handleSubmitProposal}
+                    disabled={pendingProposal !== null}
+                    className={`px-4 py-2 rounded font-semibold transition-colors text-sm whitespace-nowrap ${
+                      pendingProposal !== null
+                        ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                        : "bg-green-600 text-white hover:bg-green-700"
+                    }`}
+                  >
+                    {pendingProposal !== null ? "Proposal Pending" : "Submit Proposal"}
+                  </button>
+                  <button
+                    onClick={() => setSelectedOptions({})}
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium"
+                  >
+                    Reset All
+                  </button>
+                </>
+              }
+            />
 
-              {/* Table Header */}
-              <div className="flex items-center px-4 py-2 mb-1">
-                <span className="w-8"></span> {/* Checkbox space */}
-                <span className="text-xs font-bold text-gray-700 uppercase flex-shrink-0 w-[140px]">
-                  Feature
-                </span>
-                <span className="text-xs font-bold text-gray-700 uppercase flex-shrink-0 w-[80px] text-center">
-                  Points
-                </span>
-                <span className="text-xs font-bold text-gray-700 uppercase flex-1 ml-4">
-                  Reason
-                </span>
-              </div>
-
-              {/* Main content area with rows and total points side by side */}
-              <div className="flex gap-6">
-                {/* Left side: Scoresheet rows (2/3 width) */}
-                <div className="flex-[9] space-y-2">
-                  {Object.entries(roleScoresheet)
-                    .map(([category, options]) => {
-                    const includeOption = options[0];
-                    const isChecked = selectedOptions[category] === 0;
-
-                    return (
-                      <div key={category} className="flex items-center bg-white rounded px-4 py-2.5 border border-blue-300">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={(e) => {
-                            setSelectedOptions(prev => {
-                              if (e.target.checked) {
-                                return { ...prev, [category]: 0 };
-                              } else {
-                                return { ...prev, [category]: 1 };
-                              }
-                            });
-                          }}
-                          className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer mr-3"
-                        />
-                        <span className="text-sm font-semibold text-gray-800 flex-shrink-0 w-[140px]">
-                          {category.replace(/_/g, " ")}
-                        </span>
-                        <span className={`text-base font-bold flex-shrink-0 w-[80px] text-center ${
-                          isChecked
-                            ? (includeOption.score >= 0 ? 'text-blue-600' : 'text-red-600')
-                            : 'text-gray-400'
-                        }`}>
-                          {includeOption.score >= 0 ? '+' : ''}{includeOption.score} pts
-                        </span>
-                        <span
-                          className="text-sm text-gray-600 flex-1 ml-4"
-                          dangerouslySetInnerHTML={{ __html: includeOption.reason }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Right side: Total Points (1/3 width) */}
-                <div className="flex-[4] flex flex-col items-center justify-start">
-                  <div className="text-center bg-white rounded-lg p-6 shadow-md w-full">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Points (1 point = £1.00)</h3>
-                    <div className="text-5xl font-bold mb-4">
-                      <span className="text-blue-600">
-                        {calculateTotalPoints().toFixed(2)}
-                      </span>
-                    </div>
-                    {roleRP !== undefined && (
-                      <div className={`text-sm font-semibold ${
-                        calculateTotalPoints() >= roleRP ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {calculateTotalPoints() >= roleRP ? '✓ Beats your alternative!' : '✗ Worse than your alternative.'}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-6 flex flex-col gap-2 w-full">
-                    <button
-                      onClick={handleSubmitProposal}
-                      disabled={pendingProposal !== null}
-                      className={`px-4 py-2 rounded font-semibold transition-colors text-sm ${
-                        pendingProposal !== null
-                          ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                          : "bg-green-600 text-white hover:bg-green-700"
-                      }`}
-                    >
-                      {pendingProposal !== null ? "Proposal Pending" : "Submit Proposal"}
-                    </button>
-                    <button
-                      onClick={() => setSelectedOptions({})}
-                      className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium"
-                    >
-                      Reset All
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "proposal" && (
-          <div className="space-y-4">
             {/* Pending Proposal */}
             {pendingProposal ? (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-4">
+              <div
+                onClick={() => setWiggleStoppedId(pendingProposal.id)}
+                className={`bg-white rounded-lg shadow-md p-6 ${
+                  isOwnPending || pendingProposal.initialVotes[player.id] || wiggleStoppedId === pendingProposal.id ? "" : "animate-wiggle"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 mb-4">
                   <h3 className="text-xl font-bold text-gray-900">
                     Current Proposal
                   </h3>
-                  {pendingProposal.submittedBy === player.id ? (
-                    <span className="px-4 py-2 bg-blue-100 text-blue-700 font-bold text-lg rounded">
+                  {isOwnPending ? (
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 font-bold text-sm rounded">
                       YOUR PROPOSAL
                     </span>
                   ) : (
-                    <span className="px-4 py-2 bg-amber-100 text-amber-700 font-bold text-lg rounded">
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 font-bold text-sm rounded">
                       SUBMITTED BY: {pendingProposal.submittedByName}
                     </span>
                   )}
                 </div>
 
-                {/* Calculate points for this player */}
                 {(() => {
-                  const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
-                    const optionIdx = pendingProposal.options[category] ?? 1;
-                    return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
-                  }, 0);
+                  const proposalPoints = pointsOf(pendingProposal.options);
 
                   return (
-                    <div className="mb-6">
-                      <div className="text-center mb-4">
-                        <p className="text-sm text-gray-600 mb-1">Value to you:</p>
-                        <p className="text-4xl font-bold text-blue-600">
-                          {proposalPoints.toFixed(2)} points
-                        </p>
-                        {roleRP !== undefined && (
-                          <p className={`text-sm font-semibold mt-1 ${
-                            proposalPoints >= roleRP ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {proposalPoints >= roleRP ? '✓ Beats your alternative!' : '✗ Worse than your alternative.'}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Show proposal details */}
-                      <div className="bg-blue-50 rounded p-4 mb-4">
-                        <h4 className="text-sm font-bold text-gray-700 mb-2">Proposal Details:</h4>
-                        <div className="space-y-1">
-                          {Object.entries(roleScoresheet).map(([category]) => {
-                            const optionIdx = pendingProposal.options[category] ?? 1;
-                            const isIncluded = optionIdx === 0;
-                            return (
-                              <div key={category} className="flex items-center text-sm">
-                                <span className={`w-4 h-4 mr-2 rounded ${isIncluded ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                                <span className="text-gray-700">{category.replace(/_/g, " ")}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Vote buttons or status */}
+                    <div className="mb-2">
+                      {/* Vote buttons or status, above the proposal */}
                       {pendingProposal.initialVotes[player.id] ? (
-                        <div className="text-center p-4 bg-gray-100 rounded">
+                        <div className="text-center p-4 bg-gray-100 rounded mb-4">
                           <p className="text-sm text-gray-600">
-                            You voted: <span className="font-bold">
-                              {pendingProposal.initialVotes[player.id] === "accept" ? "✓ Accept" : "✗ Reject"}
-                            </span>
+                            {isOwnPending ? (
+                              <span className="font-bold">Your proposal</span>
+                            ) : (
+                              <>
+                                You voted: <span className="font-bold">
+                                  {pendingProposal.initialVotes[player.id] === "accept" ? "✓ Accept" : "✗ Reject"}
+                                </span>
+                              </>
+                            )}
                           </p>
-                          <p className="text-base font-semibold text-gray-700 mt-2">
+                          <p className="text-xs text-gray-500 mt-1">
                             Waiting for other players... ({Object.keys(pendingProposal.initialVotes).length}/{playerCount} voted)
                           </p>
                         </div>
                       ) : (
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 mb-4">
                           <button
                             onClick={() => handleVote(pendingProposal.id, "accept")}
                             className="flex-1 px-4 py-3 bg-green-600 text-white rounded hover:bg-green-700 transition-colors font-semibold"
@@ -554,13 +405,35 @@ export function MaterialsPanel({
                           </button>
                         </div>
                       )}
+
+                      {/* Proposal: details on the left, value to this player on the right */}
+                      <div className="bg-blue-50 rounded p-4 flex gap-4 items-start">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-bold text-gray-700 mb-2">Proposal Details:</h4>
+                          {renderProposalItems(pendingProposal)}
+                        </div>
+                        <div className="shrink-0 text-center bg-white rounded p-3 border border-gray-300 min-w-[140px]">
+                          <p className="text-sm text-gray-600 mb-1">Value to you</p>
+                          <p className="text-3xl font-bold text-blue-600">
+                            {proposalPoints.toFixed(2)}
+                          </p>
+                          <p className="text-xs text-gray-500">points</p>
+                          {roleRP !== undefined && (
+                            <p className={`text-sm font-semibold mt-1 ${
+                              proposalPoints >= roleRP ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {proposalPoints >= roleRP ? '✓ Beats your alternative!' : '✗ Worse than your alternative.'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   );
                 })()}
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                <p className="text-gray-500">No pending proposal. Submit a proposal from the Scoring tab.</p>
+                <p className="text-gray-500">No pending proposal. Choose features above, then Submit Proposal.</p>
               </div>
             )}
 
@@ -572,77 +445,35 @@ export function MaterialsPanel({
                 </h3>
                 <div className="space-y-3">
                   {[...allHistoryProposals].reverse().map((proposal) => {
-                    // Calculate points for this player
-                    const proposalPoints = Object.entries(roleScoresheet).reduce((sum, [category]) => {
-                      const optionIdx = proposal.options[category] ?? 1;
-                      return sum + (roleScoresheet[category]?.[optionIdx]?.score || 0);
-                    }, 0);
+                    const proposalPoints = pointsOf(proposal.options);
 
                     // Count yes votes (from initial votes)
                     const yesVotes = Object.values(proposal.initialVotes).filter(v => v === "accept").length;
 
-                    // Calculate acceptance percentage for color coding
-                    const acceptancePercentage = (yesVotes / playerCount) * 100;
-
-                    // Determine color based on percentage: red (0%) -> yellow (50%) -> green (100%)
-                    let voteColor;
-                    if (acceptancePercentage === 0) {
-                      voteColor = "text-red-400 opacity-95";
-                    } else if (acceptancePercentage < 50) {
-                      voteColor = "text-orange-500 opacity-95";
-                    } else if (acceptancePercentage === 50) {
-                      voteColor = "text-yellow-600";
-                    } else if (acceptancePercentage < 100) {
-                      voteColor = "text-lime-600";
-                    } else {
-                      voteColor = "text-green-600";
-                    }
+                    const voteColor = voteColorFor(yesVotes, playerCount);
 
                     return (
                       <div key={proposal.id} className="bg-gray-50 rounded p-4 border border-gray-200">
                         <div className="flex items-start justify-between gap-4 mb-3">
                           {/* Proposal items list */}
-                          <div className="flex-1">
-                            <h5 className="text-xs font-bold text-gray-600 uppercase mb-2">Proposal Items:</h5>
-                            <div className="space-y-1">
-                              {Object.entries(roleScoresheet).map(([category]) => {
-                                const optionIdx = proposal.options[category] ?? 1;
-                                const isIncluded = optionIdx === 0;
-                                return (
-                                  <div key={category} className="flex items-center text-xs">
-                                    <span className={`w-3 h-3 mr-2 rounded ${isIncluded ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                                    <span className="text-gray-700">{category.replace(/_/g, " ")}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                          <div className="flex-1 min-w-0">
+                            <h5 className="text-xs font-bold text-gray-600 uppercase mb-2">
+                              {proposal.submittedBy === player.id ? "Your proposal:" : `Proposal by ${proposal.submittedByName}:`}
+                            </h5>
+                            {renderProposalItems(proposal, true)}
                           </div>
 
-                          {/* Right column: Submitter badge + Vote count and points */}
-                          <div className="flex flex-col items-end gap-3">
-                            {/* Submitter badge */}
-                            {proposal.submittedBy === player.id ? (
-                              <span className="px-3 py-1 bg-blue-100 text-blue-700 font-bold text-sm rounded">
-                                YOUR PROPOSAL
-                              </span>
-                            ) : (
-                              <span className="px-3 py-1 bg-amber-100 text-amber-700 font-bold text-sm rounded">
-                                SUBMITTED BY: {proposal.submittedByName}
-                              </span>
-                            )}
-
-                            {/* Vote count and points */}
-                            <div className="text-center bg-white rounded p-3 border border-gray-300 min-w-[120px]">
-                              <p className={`text-3xl font-bold ${voteColor} mb-1`}>
-                                {yesVotes}/{playerCount}
-                              </p>
-                              <p className="text-xs text-gray-500 uppercase font-semibold mb-2">
-                                Accepted
-                              </p>
-                              <p className="text-lg font-bold text-gray-700">
-                                {proposalPoints.toFixed(2)} pts
-                              </p>
-                            </div>
+                          {/* Vote count and points */}
+                          <div className="text-center bg-white rounded p-3 border border-gray-300 min-w-[120px]">
+                            <p className={`text-3xl font-bold ${voteColor} mb-1`}>
+                              {yesVotes}/{playerCount}
+                            </p>
+                            <p className="text-xs text-gray-500 uppercase font-semibold mb-2">
+                              Accepted
+                            </p>
+                            <p className="text-lg font-bold text-gray-700">
+                              {proposalPoints.toFixed(2)} pts
+                            </p>
                           </div>
                         </div>
                         <button
@@ -658,30 +489,7 @@ export function MaterialsPanel({
               </div>
             )}
           </div>
-        )}
-
-        {activeTab === "tips" && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              {/* Instructions at top */}
-
-              <ul className="list-disc list-outside pl-5 space-y-2 mt-2">
-                <li><strong>What determines how much I earn?</strong> Points earned from any agreement become your bonus on Prolific (1 point = £1.00). No agreement means no bonus.</li>
-                <li><strong>How can we reach an agreement?</strong> All three people must accept the same final proposal, which must be submitted officially in the system. A verbal agreement is not enough! You may need to submit and vote on multiple proposals to reach agreement.</li>
-                <li><strong>What happens if we don't reach an agreement?</strong> If your group does not reach an agreement, everyone will keep working from home. This outcome is worth 0 points. (No bonus.)</li>
-                <li><strong>What if my group is incomplete?</strong> If someone quits or stops responding, you may end the game early by clicking the 'quit' button.</li>
-                <li><strong>How should I prepare?</strong> Get into character! Think about how you would introduce yourself, what you want, and how you might advocate for your best outcome.</li>
-              </ul>
-              <br/><br/>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  Tips on Negotiation
-                </h3>
-                <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: tips }} />
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Finalize Modal - Popup */}
@@ -795,10 +603,12 @@ export function MaterialsPanel({
             <div className="text-center mb-6">
               <div className="text-6xl mb-4">⚠️</div>
               <h3 className="text-2xl font-bold text-red-600 mb-3">
-                Cannot Accept Deal
+                {showNegativePointsModal === "submit" ? "Cannot Submit Proposal" : "Cannot Accept Deal"}
               </h3>
               <p className="text-lg text-gray-700">
-                You can't accept negative points.
+                {showNegativePointsModal === "submit"
+                  ? "You can't propose a deal worth negative points to you."
+                  : "You can't accept negative points."}
               </p>
             </div>
             <button

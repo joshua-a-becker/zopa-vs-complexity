@@ -21,7 +21,8 @@ export function VideoNegotiate({ profileComponent }) {
 
   return (
     <div className="w-full min-h-screen flex">
-      <div className="w-[70%]">
+      {/* Materials scroll with the page; the video panel below stays fixed. */}
+      <div className="w-[85%]">
         <MaterialsPanel
           roleName={roleName}
           roleNarrative={roleNarrative}
@@ -30,7 +31,7 @@ export function VideoNegotiate({ profileComponent }) {
           roleRP={roleRP}
         />
       </div>
-      <div className="w-[30%] fixed right-0 top-0 h-screen">
+      <div className="w-[15%] fixed right-0 top-0 h-screen">
         <InteractionPanel profileComponent={profileComponent} />
       </div>
     </div>

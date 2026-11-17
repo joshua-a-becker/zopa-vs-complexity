@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useContext } from "react";
 import { usePlayer, usePlayers, useGame } from "@empirica/core/player/classic/react";
 import { DailyCallContext } from "../App";
 import { VolumeX, MicOff, VideoOff, Video } from "lucide-react";
+import { getTrackedUserMedia } from "../mediaTracks";
 
 // Every video tile is a square of the same size, local and remote alike: as
 // large as the tile allows, capped at 85% of the column width (leaving a margin
@@ -150,7 +151,7 @@ const LocalVideoComponent = React.memo(({ localVideoRef, displayName, isHidden, 
   );
 });
 
-const RemoteVideoComponent = React.memo(({ stream, name, sessionId, onRequestRefresh, videoState, audioState }) => {
+const RemoteVideoComponent = React.memo(({ stream, name, sessionId, onRequestRefresh, videoState, audioState, isWaitingForPlayer = false }) => {
   const ref = useRef();
   const retryCountRef = useRef(0);
   const maxRetries = 3;
@@ -223,7 +224,7 @@ const RemoteVideoComponent = React.memo(({ stream, name, sessionId, onRequestRef
               <div className="flex flex-col items-center text-white">
                 {/* Camera off icon */}
                 <VideoOff className="h-5 w-5 text-white" />
-                <span className="text-sm">Camera Off</span>
+                <span className="text-sm">{isWaitingForPlayer ? "Waiting for player..." : "Camera Off"}</span>
               </div>
             </div>
           )}
@@ -337,11 +338,18 @@ export function VideoChat({ defaultHideSelf = false }) {
   // Destructure call state from context
   const { remoteStreams, participantNames, participantVideoStates, participantAudioStates, localVideoTrack } = callState;
 
-  // Ensure media stream is available (handles page refresh after intro)
-  // VideoChat only mounts when user is in game stages (past intro/DisplayNameEntry)
+  // The camera/mic stay fully off (no getUserMedia, so no browser recording
+  // indicator, and no Daily join, so nothing recorded) until the player
+  // dismisses the negotiation welcome modal with "Let's Go!" (MaterialsPanel
+  // sets hasSeenWelcomeModal). The join effect in App.jsx waits on mediaStream.
+  const awaitingLetsGo = !player?.get("hasSeenWelcomeModal");
+
+  // Acquire the media stream. The gate in DisplayNameEntry released the camera
+  // after checking it, so this is where capture (re)starts, on the devices the
+  // player picked there.
   const hasRequestedMediaRef = useRef(false);
   useEffect(() => {
-    if (mediaStream || hasRequestedMediaRef.current) {
+    if (awaitingLetsGo || mediaStream || hasRequestedMediaRef.current) {
       return;
     }
 
@@ -360,14 +368,14 @@ export function VideoChat({ defaultHideSelf = false }) {
           audio: storedAudioDeviceId ? { deviceId: { exact: storedAudioDeviceId } } : true
         };
 
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const stream = await getTrackedUserMedia(constraints);
         setMediaStream(stream);
         // console.log("VideoChat: Media stream acquired");
       } catch (err) {
         console.error("VideoChat: Failed to get media stream:", err);
         // If specific devices fail, try with defaults
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({
+          const stream = await getTrackedUserMedia({
             video: true,
             audio: true
           });
@@ -380,7 +388,7 @@ export function VideoChat({ defaultHideSelf = false }) {
     };
 
     requestMedia();
-  }, [mediaStream, setMediaStream, player]);
+  }, [awaitingLetsGo, mediaStream, setMediaStream, player]);
 
   // Toggle function for hiding/showing self video
   const toggleSelfVideoVisibility = () => {
@@ -592,6 +600,23 @@ export function VideoChat({ defaultHideSelf = false }) {
     );
   }
 
+  // Other players in this game who have no Daily session yet. Daily's user_id
+  // is the Empirica player id (see the local-participant filter above).
+  const joinedPlayerIds = new Set(
+    Object.values(allDailyParticipants).map((participant) => participant.user_id)
+  );
+  const waitingPlayers = (players || []).filter(
+    (p) => p.id !== player?.id && !joinedPlayerIds.has(p.id)
+  );
+
+  if (awaitingLetsGo) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-600 text-center">Video will start when you click "Let's Go!"</p>
+      </div>
+    );
+  }
+
   if (!mediaStream) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -640,6 +665,21 @@ export function VideoChat({ defaultHideSelf = false }) {
           </div>
         );
       })}
+
+      {/* Placeholder tiles for teammates not in the call yet (still on the
+          "Let's Go!" modal, or still connecting): drawn like a camera-off,
+          muted tile so the layout is complete from the start. */}
+      {waitingPlayers.map((p) => (
+        <div key={`waiting-${p.id}`} className="flex-1 min-h-0 overflow-hidden">
+          <RemoteVideoComponent
+            name={p.get("displayName") || "Participant"}
+            sessionId={`waiting-${p.id}`}
+            videoState="off"
+            audioState="off"
+            isWaitingForPlayer
+          />
+        </div>
+      ))}
     </div>
   );
 }

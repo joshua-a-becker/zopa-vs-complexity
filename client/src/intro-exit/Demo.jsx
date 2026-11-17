@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { usePlayer } from "@empirica/core/player/classic/react";
+import Markdown from "react-markdown";
 import { DemoUI } from "./DemoUI";
 import {
   demoNarrative,
@@ -14,13 +15,14 @@ import {
  *
  * States:
  * - INTRO: Show initial modal explaining the demo
- * - VIEW_NARRATIVE: User must click Narrative tab (tab blinks)
- * - VIEW_SCORING: User must click Scoring tab (tab blinks)
+ * - VIEW_NARRATIVE: User reads the practice role (shown in a modal)
+ * - VIEW_SCORING: (legacy; no longer entered — the calculator is always visible)
  * - MAKE_PROPOSAL_1: User creates their first proposal
- * - VOTE_ON_OWN_1: User votes on their own proposal (will fail)
+ * - (VOTE_ON_OWN_1/2: legacy, no longer entered — submitting counts as the
+ *    user's Accept vote, as in the real negotiation, and the scripted players
+ *    vote it down straight away)
  * - SHOW_FAILED_1: Show modal explaining proposal failed, prompt to modify
  * - MAKE_PROPOSAL_2: User modifies and resubmits
- * - VOTE_ON_OWN_2: User votes on their modified proposal (will also fail)
  * - SHOW_COMPUTER_PROPOSAL: Show modal about computer's proposal
  * - VOTE_ON_COMPUTER: User votes on computer's proposal (must accept)
  * - FINALIZE: User finalizes the deal
@@ -48,39 +50,29 @@ const MODALS = {
     title: "Demo Negotiation",
     message: (
       <>
-        This is a demo. <span className="font-bold text-blue-600">Start by clicking the Narrative tab</span> to learn about your role in this negotiation.
+        This is a short practice negotiation. It shows you how the screen works. <span className="font-bold text-blue-600">Start by reading your practice role.</span>
       </>
     ),
-    buttonText: "OK"
+    buttonText: "Read my role"
   },
-  NARRATIVE_VIEWED: {
-    emoji: "📖",
-    title: "Narrative View",
+  ROLE: {
+    title: "Read your practice role",
+    wide: true,
     message: (
-      <>
-        This is the narrative view. It gives your background story. Next, <span className="font-bold text-blue-600">click the Scoring tab</span> to see how proposals are scored, then try making a proposal.
-      </>
+      <div className="text-left prose prose-gray max-w-none text-gray-700 max-h-[55vh] overflow-auto pr-2">
+        <Markdown>{demoNarrative}</Markdown>
+      </div>
     ),
-    buttonText: "OK"
+    buttonText: "I've read my role"
   },
   SCORING_VIEWED: {
     emoji: "🧮",
     title: "Scoring Calculator",
-    message: "Now, use the scoring calculator to submit a proposal to your fictional roommates.",
-    buttonText: "OK"
-  },
-  PROPOSAL_SUBMITTED: {
-    emoji: "✅",
-    emojiSize: "text-4xl",
-    title: "Proposal Submitted",
-    message: "Great! Now you have to vote on it, even though it's your own proposal.",
-    buttonText: "OK"
-  },
-  MODIFIED_PROPOSAL_SUBMITTED: {
-    emoji: "✅",
-    emojiSize: "text-4xl",
-    title: "Modified Proposal Submitted",
-    message: "Good! Now vote on your modified proposal.",
+    message: (
+      <>
+        Your role stays on the left (Role tab), next to your private Notes and the Instructions. On the right is the <span className="font-bold text-blue-600">scoring calculator</span>: select features to see what a deal is worth to you, then use it to submit a proposal to your fictional roommates.
+      </>
+    ),
     buttonText: "OK"
   },
   PROPOSAL_FAILED: {
@@ -88,7 +80,7 @@ const MODALS = {
     title: "Try Modifying",
     message: (
       <>
-        Everyone has now voted—unfortunately, your proposal didn't pass. Click the <span className="font-bold text-blue-600">Modify</span> button below your failed proposal to adjust it and try again. You can also modify other people's proposals.
+        Submitting a proposal counts as your vote to accept it, so you never vote on your own proposals. The other players have now voted—unfortunately, your proposal didn't pass. Click the <span className="font-bold text-blue-600">Modify</span> button below your failed proposal to adjust it and try again. You can also modify other people's proposals.
       </>
     ),
     buttonText: "OK"
@@ -123,14 +115,29 @@ export function Demo({ next }) {
   const player = usePlayer();
 
   // Single source of truth: the demo state
+  // A saved state from the old flow (voting on your own proposal) restarts the demo.
+  const savedState = player.get("demo_state");
+  const isLegacyState = savedState === STATES.VOTE_ON_OWN_1 || savedState === STATES.VOTE_ON_OWN_2;
   const [state, setState] = useState(() => {
-    return player.get("demo_state") || STATES.INTRO;
+    return (!isLegacyState && savedState) || STATES.INTRO;
   });
 
   // Track proposals the user has made (just for display)
   const [userProposals, setUserProposals] = useState(() => {
-    return player.get("demo_userProposals") || [];
+    return isLegacyState ? [] : (player.get("demo_userProposals") || []);
   });
+
+  // Whether the user has clicked Modify on a past proposal. The second
+  // proposal must start from Modify, so that step actually teaches it.
+  const [modifyUsed, setModifyUsed] = useState(() => {
+    return isLegacyState ? false : !!player.get("demo_modifyUsed");
+  });
+  const handleModify = () => {
+    if (state === STATES.MAKE_PROPOSAL_2 && !modifyUsed) {
+      setModifyUsed(true);
+      player.set("demo_modifyUsed", true);
+    }
+  };
 
   // Modal visibility (controlled by state)
   const [showModal, setShowModal] = useState(true);
@@ -162,7 +169,7 @@ export function Demo({ next }) {
   const getModalForState = () => {
     switch (currentModal) {
       case "INTRO": return MODALS.INTRO;
-      case "NARRATIVE_VIEWED": return MODALS.NARRATIVE_VIEWED;
+      case "ROLE": return MODALS.ROLE;
       case "SCORING_VIEWED": return MODALS.SCORING_VIEWED;
       case "PROPOSAL_SUBMITTED": return MODALS.PROPOSAL_SUBMITTED;
       case "MODIFIED_PROPOSAL_SUBMITTED": return MODALS.MODIFIED_PROPOSAL_SUBMITTED;
@@ -175,21 +182,6 @@ export function Demo({ next }) {
     }
   };
 
-  // Handle tab change
-  const handleTabChange = (tab) => {
-    if (state === STATES.VIEW_NARRATIVE && tab === "narrative") {
-      // User clicked Narrative tab, move to VIEW_SCORING and show modal
-      saveState(STATES.VIEW_SCORING);
-      setCurrentModal("NARRATIVE_VIEWED");
-      setShowModal(true);
-    } else if (state === STATES.VIEW_SCORING && tab === "calculator") {
-      // User clicked Scoring tab, show modal before allowing proposal
-      setCurrentModal("SCORING_VIEWED");
-      setShowModal(true);
-    }
-    // For other states, tab change doesn't affect demo state
-  };
-
   // Handle modal close
   const handleModalClose = () => {
     setShowModal(false);
@@ -197,8 +189,11 @@ export function Demo({ next }) {
     // State transitions when closing modals
     if (currentModal === "INTRO") {
       saveState(STATES.VIEW_NARRATIVE);
-    } else if (currentModal === "NARRATIVE_VIEWED") {
-      // Stay in VIEW_SCORING, just close the modal
+      setCurrentModal("ROLE");
+      setShowModal(true);
+    } else if (currentModal === "ROLE") {
+      setCurrentModal("SCORING_VIEWED");
+      setShowModal(true);
     } else if (currentModal === "SCORING_VIEWED") {
       // User closed scoring modal, now they can make a proposal
       saveState(STATES.MAKE_PROPOSAL_1);
@@ -217,33 +212,36 @@ export function Demo({ next }) {
   };
 
   // Handle proposal submission
+  // Submitting counts as the user's Accept vote (people never vote on their
+  // own proposal). The scripted players then vote it down 2/3.
   const handleProposalSubmit = (proposalOptions) => {
-    if (state === STATES.MAKE_PROPOSAL_1) {
-      const newProposal = {
-        id: `proposal-1-${Date.now()}`,
-        options: proposalOptions,
-        submittedBy: "user",
-        status: "pending" // Will become "failed" after vote
-      };
-      saveProposals([newProposal]);
-      saveState(STATES.VOTE_ON_OWN_1);
-      setCurrentModal("PROPOSAL_SUBMITTED");
-      setShowModal(true);
-    } else if (state === STATES.MAKE_PROPOSAL_2) {
-      const newProposal = {
-        id: `proposal-2-${Date.now()}`,
-        options: proposalOptions,
-        submittedBy: "user",
-        status: "pending"
-      };
-      // Mark first proposal as failed, add second
-      const updated = userProposals.map(p => ({ ...p, status: "failed" }));
-      updated.push(newProposal);
-      saveProposals(updated);
-      saveState(STATES.VOTE_ON_OWN_2);
-      setCurrentModal("MODIFIED_PROPOSAL_SUBMITTED");
-      setShowModal(true);
+    if (state !== STATES.MAKE_PROPOSAL_1 && state !== STATES.MAKE_PROPOSAL_2) return;
+
+    // Same rule as the real negotiation: you can't propose a deal worth
+    // negative points to you.
+    if (calculateProposalPoints(proposalOptions) < 0) {
+      setShowNegativePointsModal("submit");
+      return;
     }
+
+    const n = state === STATES.MAKE_PROPOSAL_1 ? 1 : 2;
+    const newProposal = {
+      id: `proposal-${n}-${Date.now()}`,
+      options: proposalOptions,
+      submittedBy: "user",
+      status: "failed",
+      userVote: "accept"
+    };
+    if (n === 1) {
+      saveProposals([newProposal]);
+      saveState(STATES.SHOW_FAILED_1);
+      setCurrentModal("PROPOSAL_FAILED");
+    } else {
+      saveProposals([...userProposals, newProposal]);
+      saveState(STATES.SHOW_COMPUTER_PROPOSAL);
+      setCurrentModal("COMPUTER_PROPOSAL");
+    }
+    setShowModal(true);
   };
 
   // Handle vote on proposal
@@ -340,8 +338,14 @@ export function Demo({ next }) {
     data.canSubmitProposal = state === STATES.MAKE_PROPOSAL_1 || state === STATES.MAKE_PROPOSAL_2;
 
     // Set blocked message for early states
-    if (state === STATES.INTRO || state === STATES.VIEW_NARRATIVE) {
-      data.submitBlockedMessage = "Please click the Narrative tab";
+    if (state === STATES.INTRO || state === STATES.VIEW_NARRATIVE || state === STATES.VIEW_SCORING) {
+      data.submitBlockedMessage = "Please read your practice role first.";
+    }
+
+    // The second proposal has to start from the Modify button.
+    if (state === STATES.MAKE_PROPOSAL_2 && !modifyUsed) {
+      data.submitBlockedMessage = "First click the Modify button under your proposal in the Proposal History, then adjust it and submit again.";
+      data.highlightModify = true;
     }
 
     // Add user proposals to history (with computed display data)
@@ -415,27 +419,25 @@ export function Demo({ next }) {
   const modalContent = getModalForState();
 
   return (
-    <div className="h-screen flex">
-      {/* Left side: Demo UI (70% width) */}
-      <div className="w-[70%]">
+    <div className="min-h-screen flex">
+      {/* Left side: Demo UI (85% width, as in the real negotiation); scrolls with the page */}
+      <div className="w-[85%]">
         <DemoUI
-          roleName="Demo Role"
           roleNarrative={demoNarrative}
           roleScoresheet={demoScoresheet}
           roleBATNA={demoBATNA}
           roleRP={demoRP}
           tips={demoTips}
           displayData={displayData}
-          demoState={state}
           onProposalSubmit={handleProposalSubmit}
           onVote={handleVote}
           onFinalizeVote={handleFinalizeVote}
-          onTabChange={handleTabChange}
+          onModify={handleModify}
         />
       </div>
 
-      {/* Right side: Placeholder for video chat (30% width) */}
-      <div className="w-[30%] bg-gray-800 flex items-center justify-center">
+      {/* Right side: Placeholder for video chat (15% width), fixed like the real video panel */}
+      <div className="w-[15%] fixed right-0 top-0 h-screen bg-gray-800 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">🎥</div>
           <p className="text-white text-xl font-semibold">
@@ -447,10 +449,12 @@ export function Demo({ next }) {
       {/* Demo Modal */}
       {showModal && modalContent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-lg w-full mx-4">
-            <div className={`${modalContent.emojiSize || "text-8xl"} mb-4 text-center`}>{modalContent.emoji}</div>
+          <div className={`bg-white rounded-lg shadow-2xl p-8 w-full mx-4 ${modalContent.wide ? "max-w-3xl" : "max-w-lg"}`}>
+            {modalContent.emoji && (
+              <div className={`${modalContent.emojiSize || "text-8xl"} mb-4 text-center`}>{modalContent.emoji}</div>
+            )}
             <h2 className="text-2xl font-bold mb-4 text-center">{modalContent.title}</h2>
-            <p className="text-lg text-gray-700 mb-6 text-center">{modalContent.message}</p>
+            <div className="text-lg text-gray-700 mb-6 text-center">{modalContent.message}</div>
             <button
               onClick={handleModalClose}
               className="w-full bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 font-bold text-xl"
@@ -468,10 +472,12 @@ export function Demo({ next }) {
             <div className="text-center mb-6">
               <div className="text-6xl mb-4">⚠️</div>
               <h3 className="text-2xl font-bold text-red-600 mb-3">
-                Cannot Accept Deal
+                {showNegativePointsModal === "submit" ? "Cannot Submit Proposal" : "Cannot Accept Deal"}
               </h3>
               <p className="text-lg text-gray-700">
-                You can't accept negative points.
+                {showNegativePointsModal === "submit"
+                  ? "You can't propose a deal worth negative points to you."
+                  : "You can't accept negative points."}
               </p>
             </div>
             <button

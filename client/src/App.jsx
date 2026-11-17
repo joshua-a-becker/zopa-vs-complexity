@@ -18,6 +18,7 @@ import { ForceQuitExitStep } from './intro-exit/ForceQuitExitStep.jsx';
 import { BatchFullExitStep } from './intro-exit/BatchFullExitStep.jsx';
 import {FollowupQuestion} from './intro-exit/FollowupQuestion.jsx';
 import DailyIframe from "@daily-co/daily-js";
+import { stopAllTrackedStreams } from "./mediaTracks";
 
 // Create context for Daily.co call management (includes media stream)
 export const DailyCallContext = createContext(null);
@@ -100,6 +101,9 @@ export default function App() {
   const [callJoinData, setCallJoinData] = useState(null);
   const [hasJoinedCall, setHasJoinedCall] = useState(false);
   const participantTracksRef = useRef({});
+  // Participant poll timers started in handleJoined; cleared on teardown so they
+  // don't keep polling a destroyed call object.
+  const pollTimersRef = useRef([]);
 
   const [callState, setCallState] = useState({
     remoteStreams: {},
@@ -409,14 +413,15 @@ export default function App() {
             }
           });
         }, 500); // Poll every 500ms
+        pollTimersRef.current.push(fastPollInterval);
 
         // After 10 seconds, switch to slow polling to catch rejoiners
-        setTimeout(() => {
+        const switchToSlowPoll = setTimeout(() => {
           clearInterval(fastPollInterval);
           // console.log("Switching to slow polling for rejoiners");
 
           // Slow polling continues indefinitely to catch people who rejoin
-          setInterval(() => {
+          const slowPollInterval = setInterval(() => {
             const currentParticipants = callObject.participants();
             const currentRemoteIds = Object.keys(currentParticipants).filter(id => id !== "local");
 
@@ -541,7 +546,9 @@ export default function App() {
               };
             });
           }, 2000); // Poll every 2 seconds (slow but catches rejoiners)
+          pollTimersRef.current.push(slowPollInterval);
         }, 10000);
+        pollTimersRef.current.push(switchToSlowPoll);
 
         if (local) {
           const displayName = local.userData?.displayName || "You";
@@ -941,6 +948,66 @@ export default function App() {
     }
   }, [setCallState]);
 
+  // Fully release the Daily call AND the local getUserMedia capture. Used by the
+  // stages that show no video (prep stages, exit steps): this ends the
+  // recording/transcription and — by stopping every local track — turns off the
+  // browser camera/mic indicator. VideoChat re-acquires media and rejoins on its
+  // own if it mounts again. Idempotent: safe to call when already torn down.
+  const teardownCall = useCallback(async () => {
+    pollTimersRef.current.forEach((t) => { clearInterval(t); clearTimeout(t); });
+    pollTimersRef.current = [];
+
+    const callObject = callObjectRef.current;
+    if (callObject) {
+      // Guard each step independently: a rejected network call must NOT skip
+      // destroy(), which is what releases Daily's own clones of the camera track.
+      try {
+        if (callStateRef.current.isRecording) await callObject.stopRecording();
+      } catch (err) { console.error("teardownCall: stopRecording failed", err); }
+      try {
+        if (callStateRef.current.isTranscribing) await callObject.stopTranscription();
+      } catch (err) { console.error("teardownCall: stopTranscription failed", err); }
+      try {
+        const local = callObject.participants?.()?.local;
+        if (local?.tracks) {
+          Object.values(local.tracks).forEach((t) => {
+            t?.persistentTrack?.stop?.();
+            t?.track?.stop?.();
+          });
+        }
+      } catch (err) { console.error("teardownCall: stopping local Daily tracks failed", err); }
+      try {
+        await callObject.leave();
+      } catch (err) { console.error("teardownCall: leave failed", err); }
+      try {
+        callObject.destroy();
+      } catch (err) { console.error("teardownCall: destroy failed", err); }
+    }
+
+    callObjectRef.current = null;
+    participantTracksRef.current = {};
+
+    setMediaStream((prev) => {
+      prev?.getTracks().forEach((track) => track.stop());
+      return null;
+    });
+    // Stop every getUserMedia stream the app ever opened (gate preview,
+    // retries, double mounts) — the indicator only clears once all have ended.
+    stopAllTrackedStreams();
+
+    setCallState({
+      remoteStreams: {},
+      participantNames: {},
+      participantRepStatus: {},
+      participantVideoStates: {},
+      participantAudioStates: {},
+      isRecording: false,
+      isTranscribing: false,
+      localVideoTrack: null,
+    });
+    setHasJoinedCall(false);
+  }, []);
+
   // Create context value object with useMemo to prevent unnecessary re-renders
   // Note: setMediaStream and setCallState are stable (from useState), so don't need to be in deps
   // Note: registerCallData is stable (from useCallback with empty deps)
@@ -957,7 +1024,8 @@ export default function App() {
     isVideoEnabled,
     setIsVideoEnabled,
     setIsVideoChatMounted,
-  }), [mediaStream, callState, registerCallData, refreshRemoteParticipant, isAudioEnabled, isVideoEnabled]);
+    teardownCall,
+  }), [mediaStream, callState, registerCallData, refreshRemoteParticipant, teardownCall, isAudioEnabled, isVideoEnabled]);
 
   return (
     <EmpiricaParticipant url={url} ns={playerKey} modeFunc={EmpiricaClassic}>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Button } from "../components/Button.jsx";
 import { MediaPermissionGate } from "../components/MediaPermissionGate.jsx";
 import { DailyCallContext } from "../App.jsx";
+import { stopAllTrackedStreams } from "../mediaTracks";
 
 import { usePlayer } from "@empirica/core/player/classic/react";
 
@@ -57,9 +58,7 @@ export function DisplayNameEntry({ next }) {
   };
 
   // Handle permissions granted with device IDs
-  const handlePermissionsGranted = (stream, videoDeviceId, audioDeviceId) => {
-    setMediaStream(stream);
-
+  const handlePermissionsGranted = (stream, videoDeviceId, audioDeviceId, audioEnabled, videoEnabled) => {
     // Store device IDs in player data for later use
     if (videoDeviceId) {
       player.set("videoDeviceId", videoDeviceId);
@@ -67,6 +66,31 @@ export function DisplayNameEntry({ next }) {
     if (audioDeviceId) {
       player.set("audioDeviceId", audioDeviceId);
     }
+
+    // Persist the mic/camera choice from the gate so it carries into the
+    // negotiation. Honor an explicit choice; otherwise seed a default only when
+    // unset (never clobbering a prior choice). Same history format as VideoChat.
+    if (audioEnabled !== undefined) {
+      player.set("audioEnabled", audioEnabled);
+      player.set("audioHistory", [[audioEnabled ? "on" : "off", Date.now()]]);
+    } else if (player.get("audioEnabled") === undefined) {
+      player.set("audioEnabled", true);
+      player.set("audioHistory", [["on", Date.now()]]);
+    }
+    if (videoEnabled !== undefined) {
+      player.set("videoEnabled", videoEnabled);
+      player.set("videoHistory", [[videoEnabled ? "on" : "off", Date.now()]]);
+    } else if (player.get("videoEnabled") === undefined) {
+      player.set("videoEnabled", true);
+      player.set("videoHistory", [["on", Date.now()]]);
+    }
+
+    // The gate only checks that capture works. Nothing uses the camera/mic
+    // until the negotiation stage, so release it now: the browser recording
+    // indicator goes dark. VideoChat re-acquires the same devices (stored
+    // above) once the player clicks "Let's Go!".
+    stopAllTrackedStreams();
+    setMediaStream(null);
   };
 
   return (
@@ -74,25 +98,27 @@ export function DisplayNameEntry({ next }) {
       onPermissionsGranted={handlePermissionsGranted}
       storedVideoDeviceId={storedVideoDeviceId}
       storedAudioDeviceId={storedAudioDeviceId}
+      storedAudioEnabled={player?.get("audioEnabled")}
+      storedVideoEnabled={player?.get("videoEnabled")}
     >
-      <div className="mt-3 sm:mt-5 p-10 max-w-2xl mx-auto">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-          Welcome to the Study!
-        </h2>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+        <div className="bg-white rounded-xl shadow-xl max-w-xl w-full p-8 md:p-12">
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-4">👋</div>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 tracking-wide uppercase">
+              Choose a Display Name
+            </h1>
+            <div className="w-24 h-1 bg-indigo-600 mx-auto rounded-full"></div>
+          </div>
 
-        <div className="text-sm text-gray-700 space-y-4 mb-8">
-          <p>
-            Before we begin, we'd like you to choose a display name that will be visible to your teammates during the video calls.
+          <p className="text-lg leading-relaxed text-gray-800 text-center mb-8">
+            This name will be shown to the other players during the video call.
+            Your first name works well.
           </p>
-          <p>
-            <strong>Please enter a display name, e.g. your first name.</strong>
-          </p>
-        </div>
 
-        <div className="space-y-4">
           <div>
-            <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-2">
-              Display Name
+            <label htmlFor="displayName" className="block text-sm font-semibold text-gray-700 mb-2">
+              Display name
             </label>
             <input
               type="text"
@@ -103,19 +129,24 @@ export function DisplayNameEntry({ next }) {
                 setError(""); // Clear error when user types
               }}
               onKeyPress={handleKeyPress}
-              placeholder="Enter your display name..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g. Alex"
+              className={`w-full px-4 py-3 text-lg border-2 rounded-lg focus:outline-none focus:ring-4 transition-colors ${
+                error
+                  ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                  : "border-gray-300 focus:border-indigo-500 focus:ring-indigo-100"
+              }`}
               maxLength={20}
               autoFocus
             />
-            {error && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
-            )}
+            <div className="mt-2 flex justify-between text-sm">
+              <span className="text-red-600">{error}</span>
+              <span className="text-gray-400 tabular-nums">{displayName.length}/20</span>
+            </div>
           </div>
 
-          <div className="text-center pt-4">
+          <div className="mt-8 flex justify-end">
             <Button handleClick={handleSubmit}>
-              Continue
+              <span className="text-lg px-4">Continue</span>
             </Button>
           </div>
         </div>

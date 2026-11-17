@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
+import { DailyCallContext } from "../App.jsx";
 import { usePlayer, useGame } from "@empirica/core/player/classic/react";
 import { Button } from "../components/Button";
 
 export function FollowupQuestion({ next }) {
+  // The game is over: leave the video call and release the camera/mic.
+  const { teardownCall } = useContext(DailyCallContext);
+  useEffect(() => { teardownCall(); }, [teardownCall]);
   const player = usePlayer();
   const game = useGame();
 

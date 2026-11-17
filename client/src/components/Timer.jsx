@@ -29,11 +29,14 @@ export function Timer() {
 
  return (
    <>
-     <div className={`flex flex-col items-center ${isVideoNegotiate && !isUnder5Min ? "invisible" : ""}`}>
-       Time Remaining<h1 className="tabular-nums text-3xl text-gray-500 font-semibold">
-          {humanTimer(remaining)}
-       </h1>
-     </div>
+     {/* In the negotiation the timer takes no space until the last 5 minutes. */}
+     {!(isVideoNegotiate && !isUnder5Min) && (
+       <div className="flex flex-col items-center whitespace-nowrap">
+         Time Remaining<h1 className="tabular-nums text-3xl text-gray-500 font-semibold">
+            {humanTimer(remaining)}
+         </h1>
+       </div>
+     )}
 
 
      {showModal && (

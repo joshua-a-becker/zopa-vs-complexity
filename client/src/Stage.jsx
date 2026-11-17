@@ -5,7 +5,8 @@ import {
   useGame,
 } from "@empirica/core/player/classic/react";
 import { Loading } from "@empirica/core/player/react";
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
+import { DailyCallContext } from "./App";
 //import { InteractiveDemo } from "./components/InteractiveDemo";
 import { ReadRole } from "./components/ReadRole";
 import { ReadyToNegotiate } from "./components/ReadyToNegotiate";
@@ -16,6 +17,17 @@ export function Stage({ profileComponent }) {
   const players = usePlayers();
   const stage = useStage();
   const game = useGame();
+  const { teardownCall } = useContext(DailyCallContext);
+  const stageName = stage.get("name");
+
+  // Only the negotiation uses video. On the prep stages, make sure no call or
+  // local capture is live, so the browser recording indicator stays dark and
+  // nothing is recorded. (Must run before the early returns below.)
+  const isPrepStage =
+    stageName === "Read Negotiation Role" || stageName === "Ready To Negotiate";
+  useEffect(() => {
+    if (isPrepStage) teardownCall();
+  }, [isPrepStage, teardownCall]);
 
   // Force submit if game was force-quit
   useEffect(() => {
@@ -46,8 +58,6 @@ export function Stage({ profileComponent }) {
       </div>
     );
   }
-
-  const stageName = stage.get("name");
 
   // Render component based on stage name
   if (stageName === "Interactive Demo") {
